@@ -1,0 +1,16 @@
+[
+    {"code": "nsg", "name": "Nam Sài Gòn"},
+    {"code": "gvp", "name": "Gò Vấp"},
+    {"code": "pto", "name": "Phú Thọ"},
+    {"code": "tbh", "name": "Tân Bình"},
+    {"code": "wle", "name": "Tây Hồ Hà Nội"},
+    {"code": "bdh", "name": "Hà Nội Center"},
+    {"code": "vih", "name": "Vinh"},
+    {"code": "dng", "name": "Đà Nẵng"},
+    {"code": "ntg", "name": "Nha Trang"},
+    {"code": "ptt", "name": "Phan Thiết"},
+    {"code": "vtu", "name": "Vũng Tàu"},
+    {"code": "dni", "name": "Đồng Nai"},
+    {"code": "bdg", "name": "Bình Dương"},
+    {"code": "cto", "name": "Cần Thơ"}
+]

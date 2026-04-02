@@ -1,0 +1,29 @@
+services:
+  # Database with Vector Extension
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: nutri_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: nutri
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  # GUI for Postgres
+  pgweb:
+    image: sosedoff/pgweb
+    container_name: nutri_pgweb
+    environment:
+      PGWEB_DATABASE_URL: postgres://postgres:password@postgres:5432/nutri?sslmode=disable
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+    restart: always
+
+volumes:
+  postgres_data:

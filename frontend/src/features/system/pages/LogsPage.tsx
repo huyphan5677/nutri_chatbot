@@ -1,0 +1,190 @@
+import { Bot, Pause, Play, RefreshCw, Server, Terminal } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { fetchLogs } from "../api/systemApi";
+
+export const LogsPage = () => {
+  const [logType, setLogType] = useState<"app" | "ai">("app");
+  const [lineCount, setLineCount] = useState<number>(100);
+  const [logs, setLogs] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAutoRefresh, setIsAutoRefresh] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const logsContainerRef = useRef<HTMLDivElement>(null);
+
+  const loadLogs = async (showLoadingState = true) => {
+    if (showLoadingState) setIsLoading(true);
+    setError(null);
+    try {
+      const data = await fetchLogs(logType, lineCount);
+      setLogs(data);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch logs");
+    } finally {
+      if (showLoadingState) setIsLoading(false);
+    }
+  };
+
+  // Auto-refresh Hook
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (isAutoRefresh) {
+      interval = setInterval(() => {
+        loadLogs(false); // don't flash loading spinner
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isAutoRefresh, logType, lineCount]);
+
+  // Initial load on type change
+  useEffect(() => {
+    loadLogs(true);
+  }, [logType, lineCount]);
+
+  // Auto-scroll to bottom when new logs arrive
+  useEffect(() => {
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scrollTop =
+        logsContainerRef.current.scrollHeight;
+    }
+  }, [logs]);
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Terminal className="w-8 h-8 text-[#FF5C5C]" />
+              System Logs
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Real-time troubleshooting and monitoring
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-100 w-full md:w-fit overflow-hidden">
+            {/* Tab Toggle */}
+            <div className="flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
+              <button
+                onClick={() => setLogType("app")}
+                className={`flex-1 sm:flex-initial flex justify-center items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                  logType === "app"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-900"
+                }`}
+              >
+                <Server className="w-4 h-4 shrink-0" /> App
+              </button>
+              <button
+                onClick={() => setLogType("ai")}
+                className={`flex-1 sm:flex-initial flex justify-center items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                  logType === "ai"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-900"
+                }`}
+              >
+                <Bot className="w-4 h-4 shrink-0" /> AI Agents
+              </button>
+            </div>
+
+            {/* Controls */}
+            <div className="hidden sm:block h-6 w-px bg-gray-200 shrink-0"></div>
+
+            <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+              <select
+                value={lineCount}
+                onChange={(e) => setLineCount(Number(e.target.value))}
+                className="flex-1 sm:flex-none bg-white border border-gray-200 text-sm font-medium text-gray-700 rounded-lg px-2 lg:px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-gray-200"
+              >
+                <option value={50}>50 lines</option>
+                <option value={100}>100 lines</option>
+                <option value={200}>200 lines</option>
+                <option value={500}>500 lines</option>
+                <option value={1000}>1K lines</option>
+              </select>
+
+              <button
+                onClick={() => setIsAutoRefresh(!isAutoRefresh)}
+                className={`flex-1 sm:flex-none flex justify-center items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                  isAutoRefresh
+                    ? "bg-green-100 text-green-700 hover:bg-green-200 border border-green-200"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-transparent"
+                }`}
+              >
+                {isAutoRefresh ? (
+                  <Pause className="w-4 h-4 shrink-0" />
+                ) : (
+                  <Play className="w-4 h-4 shrink-0" />
+                )}
+                Auto-refresh
+              </button>
+
+              <button
+                onClick={() => loadLogs()}
+                disabled={isLoading}
+                className="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 p-2 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50 shrink-0"
+              >
+                <RefreshCw
+                  className={`w-5 h-5 ${isLoading ? "animate-spin" : ""}`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Log Viewer Pane */}
+        <div className="bg-[#1e1e1e] rounded-2xl shadow-xl border border-gray-800 overflow-hidden flex flex-col h-[70vh]">
+          <div className="bg-[#2d2d2d] px-4 py-3 flex items-center gap-2 border-b border-gray-700">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            </div>
+            <span className="text-gray-400 text-xs ml-2 font-mono">
+              tail -n {lineCount} logs/
+              {logType === "app" ? "nutri.log" : "ai_agent.log"}
+            </span>
+          </div>
+
+          <div
+            ref={logsContainerRef}
+            className="flex-1 overflow-y-auto p-4 font-mono text-sm"
+          >
+            {error && (
+              <div className="text-red-400 mb-4 bg-red-900/20 p-3 rounded-lg border border-red-900/50">
+                Error connecting to log server: {error}
+              </div>
+            )}
+
+            {!error && logs.length === 0 && !isLoading && (
+              <div className="text-gray-500 italic">
+                No logs found for this context...
+              </div>
+            )}
+
+            {!error &&
+              logs.map((line, index) => {
+                // Syntax highlighting parsing logic
+                let colorClass = "text-gray-300";
+                if (line.includes(" ERROR "))
+                  colorClass = "text-red-400 font-bold";
+                else if (line.includes(" WARN "))
+                  colorClass = "text-yellow-400";
+                else if (line.includes(" INFO ")) colorClass = "text-blue-300";
+                else if (line.includes(" DEBUG ")) colorClass = "text-gray-500";
+
+                return (
+                  <div
+                    key={index}
+                    className={`whitespace-pre-wrap ${colorClass} leading-relaxed hover:bg-white/5 px-2 -mx-2 rounded transition-colors break-words`}
+                  >
+                    {line}
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
