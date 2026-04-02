@@ -66,18 +66,19 @@ sequenceDiagram
 ### BMR/TDEE Calculation
 
 Uses the Mifflin-St Jeor equation:
+
 - Male: `10 * weight + 6.25 * height - 5 * age + 5`
 - Female: `10 * weight + 6.25 * height - 5 * age - 161`
 
-TDEE = BMR * activity multiplier:
+TDEE = BMR \* activity multiplier:
 
-| Level | Multiplier |
-|---|---|
-| sedentary | 1.2 |
-| light | 1.375 |
-| moderate | 1.55 |
-| active | 1.725 |
-| very_active | 1.9 |
+| Level       | Multiplier |
+| ----------- | ---------- |
+| sedentary   | 1.2        |
+| light       | 1.375      |
+| moderate    | 1.55       |
+| active      | 1.725      |
+| very_active | 1.9        |
 
 ## 3. Chat Streaming Flow
 
@@ -127,7 +128,7 @@ sequenceDiagram
         end
 
         loop Stream Events
-            C<<--R: SSE events from Queue
+            R-->>C: SSE events from Queue
         end
     end
 ```
@@ -142,6 +143,7 @@ Language-specific fallbacks are provided for Vietnamese and English.
 
 If the agent stream fails due to invalid chat history or output parsing errors,
 the system:
+
 1. Sends a `retrying` event to the client.
 2. Resets all partial state.
 3. Creates a recovery thread ID (`{original_id}-recovery-{uuid}`).
@@ -198,7 +200,7 @@ sequenceDiagram
   "name": "Menu Apr 02",
   "start_date": "2026-04-02",
   "end_date": "2026-04-04",
-  "ai_context_summary": {"profile": "..."},
+  "ai_context_summary": { "profile": "..." },
   "summary_markdown": "**Day 1**\n- ...",
   "days": [
     {
@@ -271,13 +273,13 @@ sequenceDiagram
 The workflow includes robust ingredient parsing (`_parse_ingredient_entry`)
 that handles multiple formats:
 
-| Input Format | Example | Parsed Name | Parsed Grams |
-|---|---|---|---|
-| Leading weight | "200g chicken breast" | "chicken breast" | 200 |
-| Trailing weight | "Chicken breast: 200g" | "Chicken breast" | 200 |
-| Dict-like string | "{'name': 'Rice', 'grams': 300}" | "Rice" | 300 |
-| Plain text | "Salt and pepper" | "Salt and pepper" | null |
-| Kilogram unit | "1.5 kg rice" | "rice" | 1500 |
+| Input Format     | Example                          | Parsed Name       | Parsed Grams |
+| ---------------- | -------------------------------- | ----------------- | ------------ |
+| Leading weight   | "200g chicken breast"            | "chicken breast"  | 200          |
+| Trailing weight  | "Chicken breast: 200g"           | "Chicken breast"  | 200          |
+| Dict-like string | "{'name': 'Rice', 'grams': 300}" | "Rice"            | 300          |
+| Plain text       | "Salt and pepper"                | "Salt and pepper" | null         |
+| Kilogram unit    | "1.5 kg rice"                    | "rice"            | 1500         |
 
 ## 5. Grocery Shopping Flow
 
@@ -325,11 +327,11 @@ sequenceDiagram
 
 ### Shopping Strategies
 
-| Strategy | Behavior |
-|---|---|
-| `lotte_priority` | Search Lotte Mart first, fall back to WinMart |
+| Strategy           | Behavior                                      |
+| ------------------ | --------------------------------------------- |
+| `lotte_priority`   | Search Lotte Mart first, fall back to WinMart |
 | `winmart_priority` | Search WinMart first, fall back to Lotte Mart |
-| `cost_optimized` | Search both, select cheapest option per item |
+| `cost_optimized`   | Search both, select cheapest option per item  |
 
 ## 6. Recipe Search Flow
 
@@ -353,12 +355,12 @@ sequenceDiagram
 
 ## 7. Background Task Summary
 
-| Task | Trigger | Blocking | Agent Used |
-|---|---|---|---|
-| Recompute metabolism | Onboarding submit/update | No | None (pure calculation) |
-| Enrich health profiles | Onboarding submit/update | No | EnrichMetadataAgent |
-| Generate grocery list | Meal plan persistence | Configurable | GroceryListGeneratorAgent |
-| Process shopping order | Shopping start | No | FridgeCheckAgent + Mart APIs |
+| Task                   | Trigger                  | Blocking     | Agent Used                   |
+| ---------------------- | ------------------------ | ------------ | ---------------------------- |
+| Recompute metabolism   | Onboarding submit/update | No           | None (pure calculation)      |
+| Enrich health profiles | Onboarding submit/update | No           | EnrichMetadataAgent          |
+| Generate grocery list  | Meal plan persistence    | Configurable | GroceryListGeneratorAgent    |
+| Process shopping order | Shopping start           | No           | FridgeCheckAgent + Mart APIs |
 
 All background tasks use `asyncio.create_task()` except the shopping order
 which uses FastAPI's `BackgroundTasks` dependency.
