@@ -14,10 +14,16 @@ export interface MealPlanDraft {
   meal_plan_id?: string;
 }
 
+export interface ToolProgress {
+  step: string;
+  preview?: string;
+}
+
 export interface ToolState {
   name: string;
   status: "running" | "done";
   result_snippet?: string;
+  progress_logs?: ToolProgress[];
 }
 
 export interface ChatMessage {

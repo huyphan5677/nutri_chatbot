@@ -377,6 +377,13 @@ async def chat_stream_endpoint(
                             draft = event.get("meal_plan_draft")
                             if isinstance(draft, dict):
                                 current_meal_plan_draft = draft
+                    elif kind == "on_custom_event":
+                        if event.get("name") == "meal_plan_progress":
+                            prog_data = event.get("data", {})
+                            await q.put(
+                                f"data: {json.dumps({'type': 'tool_progress', 'step': prog_data.get('step', ''), 'preview': prog_data.get('preview', '')})}\n\n"
+                            )
+                        continue  # We sent it manually, don't forward raw event
                     elif kind == "message_break":
                         # Persist current segment before opening the next assistant message.
                         persisted = await persist_current_reply(update_session=False)

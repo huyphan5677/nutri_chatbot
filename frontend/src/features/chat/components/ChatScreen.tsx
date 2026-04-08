@@ -109,8 +109,25 @@ function ThoughtProcessViewer({
                   {TOOL_NAMES[t.name] || `Running ${t.name.replace(/_/g, " ")}`}
                 </span>
               </div>
+              {t.progress_logs && t.progress_logs.length > 0 && (
+                <div className="pl-6 flex flex-col gap-1.5 mt-1.5">
+                  {t.progress_logs.map((log, lIdx) => (
+                    <div key={lIdx} className="flex flex-col text-[11px]">
+                      <div className="text-gray-500 font-medium flex gap-1.5 items-center">
+                        <span className="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />
+                        {log.step}
+                      </div>
+                      {log.preview && (
+                        <div className="pl-4 mt-0.5 text-gray-400/90 whitespace-pre-wrap">
+                          {log.preview}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
               {t.status === "done" && t.result_snippet && (
-                <div className="pl-6 text-[11px] text-gray-400 italic line-clamp-2 max-w-[95%]">
+                <div className="pl-6 text-[11px] text-gray-400 italic line-clamp-2 max-w-[95%] mt-1">
                   "{t.result_snippet}"
                 </div>
               )}
@@ -442,6 +459,36 @@ export default function ChatScreen() {
               }
               return next;
             });
+          } else if (event.type === "tool_progress") {
+            setMessages((prev) => {
+              const next = [...prev];
+              for (let i = next.length - 1; i >= 0; i--) {
+                if (next[i].role === "assistant") {
+                  const currentTools = next[i].tools || [];
+                  const reqTools = [...currentTools];
+                  for (let j = reqTools.length - 1; j >= 0; j--) {
+                    if (reqTools[j].status === "running") {
+                      const currentLogs = reqTools[j].progress_logs || [];
+                      reqTools[j] = {
+                        ...reqTools[j],
+                        progress_logs: [
+                          ...currentLogs,
+                          { step: event.step, preview: event.preview },
+                        ],
+                      };
+                      break;
+                    }
+                  }
+                  next[i] = {
+                    ...next[i],
+                    tools: reqTools,
+                  };
+                  break;
+                }
+              }
+              return next;
+            });
+            setTimeout(scrollToBottom, 20);
           } else if (event.type === "message_break") {
             setMessages((prev) => [
               ...prev,
@@ -759,7 +806,7 @@ export default function ChatScreen() {
           {} as Record<string, typeof shoppingItems>,
         );
 
-        const lines: string[] = ["Shopping list cho menu này:"];
+        const lines: string[] = ["🛍️ 🛒:"];
         Object.entries(grouped).forEach(([category, items]) => {
           lines.push(`\n[${category}]`);
           items.forEach((item) => {
