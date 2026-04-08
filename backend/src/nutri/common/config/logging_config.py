@@ -26,6 +26,7 @@ AI_LOGGER_NAMES = [
     "nutri.api.routers.recipes",
     "nutri.api.routers.menus",
     "nutri.api.routers.onboarding",
+    "nutri.api.routers.memory",
 ]
 
 

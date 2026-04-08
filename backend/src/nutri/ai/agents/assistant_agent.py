@@ -92,17 +92,17 @@ class AssistantAgent:
             web_search_info,
         ]
 
-    async def _get_app(self, thread_id: str):
+    async def _get_app(self, thread_id: str, memories_context: str = ""):
         """Lazy load the agent with the postgres checkpointer."""
         checkpointer = await get_postgres_checkpointer()
         return create_react_agent(
             self.llm,
             tools=self.tools,
             checkpointer=checkpointer,
-            prompt=self.get_system_message(),
+            prompt=self.get_system_message(memories_context),
         )
 
-    def get_system_message(self) -> SystemMessage:
+    def get_system_message(self, memories_context: str = "") -> SystemMessage:
         language_code = normalize_language(self.language, default="en")
         prompt = f"""
         # IDENTITY
@@ -113,6 +113,11 @@ class AssistantAgent:
         Detected user language code: {language_code}.
         If a tool returns English text, rewrite and present it in language code {language_code}.
         If language detection confidence is low, default to English.
+
+        # USER MEMORY & PREFERENCES
+        These are past facts and preferences learned about the user:
+        {memories_context if memories_context else "No past memory available."}
+        Use these explicitly to adapt your answering style, tone, and dietary constraints when appropriate.
 
         # CORE BEHAVIOR
         - **ACT IMMEDIATELY** on clear user requests. Never respond with confirmations like
@@ -198,8 +203,11 @@ class AssistantAgent:
         """
         return SystemMessage(content=prompt)
 
-    async def chat_stream(self, user_message: str, thread_id: str = None):
+    async def chat_stream(self, user_message: str, thread_id: str = None, top_memories: int = 5):
         """Process a user message and yield the assistant's reply as a stream of chunks."""
+        import asyncio
+        from nutri.ai.memory import get_nutri_memory
+
         if not thread_id:
             thread_id = str(uuid.uuid4())
 
@@ -222,7 +230,54 @@ class AssistantAgent:
             }
         }
 
-        app_with_prompt = await self._get_app(thread_id)
+        memories_str = ""
+        yield {"type": "tool_start", "name": "memory_retrieval"}
+
+        try:
+            nutri_memory = get_nutri_memory()
+
+            # 1. Fire-and-forget memory extraction
+            async def add_memory_task():
+                try:
+                    await asyncio.to_thread(nutri_memory.add, [{"role": "user", "content": user_message}], user_id=self.user_id)
+                except Exception as e:
+                    logger.warning("Failed to add memory: %s", e)
+
+            asyncio.create_task(add_memory_task())
+
+            # 2. Search relevant past memories
+            results = await asyncio.to_thread(nutri_memory.search, user_message, user_id=self.user_id, limit=top_memories)
+
+            actual_results = []
+            if isinstance(results, list):
+                actual_results = results
+            elif isinstance(results, dict) and "results" in results:
+                actual_results = results["results"]
+
+            memories_list = []
+            for m in actual_results:
+                if isinstance(m, dict):
+                    memories_list.append(m.get("memory") or m.get("text") or "")
+                elif isinstance(m, str):
+                    memories_list.append(m)
+
+            if memories_list:
+                # Deduplicate and filter empty
+                memories_list = list(dict.fromkeys([m.strip() for m in memories_list if m.strip()]))
+                memories_str = "\n".join(f"- {m}" for m in memories_list)
+                logger.info("Found %d memories for user %s", len(memories_list), self.user_id)
+        except Exception as e:
+            logger.warning("Mem0 execution error: %s", e)
+
+        # Notify UI about memory retrieval completion
+        logger.info("Memory retrieval completed | memories_str=%s", memories_str)
+        yield {
+            "type": "tool_end",
+            "name": "memory_retrieval",
+            "result_snippet": memories_str if memories_str else "No relevant past preferences found."
+        }
+
+        app_with_prompt = await self._get_app(thread_id, memories_str)
 
         inputs = {"messages": [("user", user_message)]}
         total_chunks = 0

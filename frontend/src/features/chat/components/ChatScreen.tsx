@@ -35,6 +35,7 @@ const TOOL_NAMES: Record<string, string> = {
   create_meal_plan: "Creating meal plan...",
   web_search_info: "Web search...",
   get_health_goals: "Getting health goals...",
+  memory_retrieval: "Retrieving past preferences...",
 };
 
 function ThoughtProcessViewer({

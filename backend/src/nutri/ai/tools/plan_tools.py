@@ -55,6 +55,28 @@ async def _build_metabolic_context(user_id: str, language: str) -> str:
     lines.append(
         "If TDEE is available, anchor daily kcal planning around TDEE and goal."
     )
+
+    # Inject Mem0 long-term memory
+    try:
+        from nutri.ai.memory import get_nutri_memory
+        import asyncio
+        nutri_memory = get_nutri_memory()
+        
+        # Search for general dining preferences
+        query = "Food preferences, dislikes, cooking time, meal rules"
+        results = await asyncio.to_thread(nutri_memory.search, query, user_id=user_id, limit=5)
+        
+        memories = [m.get("memory") for m in results] if isinstance(results, list) else []
+        if memories:
+            lines.append("\n[USER LONG-TERM MEMORY & PREFERENCES]")
+            lines.append("CRITICAL: You MUST respect the following specific facts we learned about this user:")
+            for m in memories:
+                if m:
+                    lines.append(f"- {m}")
+    except Exception as e:
+        import logging
+        logging.getLogger("nutri.ai.plan_tools").warning("Failed to inject mem0 into plan_tools: %s", e)
+
     return "\n".join(lines)
 
 

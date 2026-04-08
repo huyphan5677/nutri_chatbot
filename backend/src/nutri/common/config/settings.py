@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     # Web search API
     TAVILY_API_KEY: str
 
+    # Mem0 Vector Memory
+    MEM0_EMBEDDING_PROVIDER: str = "openai"
+    MEM0_EMBEDDING_MODEL: str = "jina-embeddings-v5-text-small"
+    MEM0_EMBEDDING_API_KEY: str | None = None
+    MEM0_EMBEDDING_API_BASE: str = "https://api.jina.ai/v1"
+    MEM0_EMBEDDING_DIMS: int = 1024
+
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         if self.DATABASE_URL:
