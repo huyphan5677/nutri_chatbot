@@ -24,6 +24,7 @@ AI_LOGGER_NAMES = [
     "nutri.core.grocery.mart_search",
     "nutri.core.grocery.shopping_bg",
     "nutri.api.routers.recipes",
+    "nutri.api.routers.menus",
     "nutri.api.routers.onboarding",
 ]
 
