@@ -29,5 +29,5 @@ EXPOSE 80
 # docker build -t nutri-frontend:latest .
 
 # Push image
-# docker tag nutri-frontend:latest mocdiep/nutri-frontend:08042026_2136
-# docker push mocdiep/nutri-frontend:08042026_2136
+# docker tag nutri-frontend:latest mocdiep/nutri-frontend:09042026_0123
+# docker push mocdiep/nutri-frontend:09042026_0123
