@@ -11,6 +11,11 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 logger = logging.getLogger("nutri.ai.agents.meal_plan")
 
 
+# ----------------------------------
+# Pydantic models — full meal detail
+# ----------------------------------
+
+
 class GeneratedMealData(BaseModel):
     name: str = Field(description="Name of the meal")
     description: Optional[str] = None
@@ -152,14 +157,140 @@ class DayMealsData(BaseModel):
         return value
 
 
+# -----------------------------------------------
+# Pydantic models — lightweight skeleton (Step 1)
+# -----------------------------------------------
+
+
+class SkeletonMeal(BaseModel):
+    """Lightweight meal placeholder — name + type + key ingredients only."""
+
+    name: str = Field(description="Unique dish name for this meal")
+    meal_type: str = Field(description="breakfast, lunch, dinner, or snack")
+    key_ingredients: List[str] = Field(
+        default_factory=list,
+        description="2-3 main ingredients to ensure no duplication across meals",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_skeleton_aliases(cls, value):
+        if not isinstance(value, dict):
+            return value
+        if not value.get("name") and value.get("meal_name"):
+            value["name"] = value.get("meal_name")
+        if not value.get("meal_type") and value.get("type"):
+            value["meal_type"] = value.get("type")
+        if not value.get("key_ingredients"):
+            for alias in ("main_ingredients", "primary_ingredients", "ingredients"):
+                if value.get(alias):
+                    val = value.get(alias)
+                    if isinstance(val, list):
+                        value["key_ingredients"] = val[:3]
+                    break
+        return value
+
+
+class SkeletonDayData(BaseModel):
+    """Skeleton output for a single day — meal names and types only."""
+
+    day_number: int = Field(description="The day number, e.g., 1, 2, 3")
+    meals: List[SkeletonMeal]
+    day_header: Optional[str] = None
+
+
+class SkeletonMultiDayData(BaseModel):
+    """Skeleton output for multiple days."""
+
+    days: List[SkeletonDayData]
+
+
+# -------------------
+# Shared retry helper
+# -------------------
+
+
+def _is_transient_llm_error(err: Exception) -> bool:
+    text = str(err).lower()
+    transient_markers = (
+        "internal_failure",
+        "status: 500",
+        "http 500",
+        "service unavailable",
+        "temporarily unavailable",
+        "deadline exceeded",
+        "rate limit",
+        "429",
+        "406",
+    )
+    return any(marker in text for marker in transient_markers)
+
+
+async def _invoke_with_retries(
+    llm,
+    messages: list,
+    fallback_messages: list | None = None,
+    max_retries: int = 5,
+    label: str = "LLM",
+):
+    """Generic retry wrapper for structured-output LLM calls."""
+    last_error = None
+    for attempt in range(max_retries + 1):
+        try:
+            invoke_msgs = messages if (attempt == 0 or not fallback_messages) else fallback_messages
+            return await llm.ainvoke(invoke_msgs)
+        except OutputParserException as e:
+            last_error = e
+            if attempt >= max_retries:
+                logger.error(
+                    "%s parse failed after max retries | retries=%d | error=%s",
+                    label, max_retries, str(e).splitlines()[0][:240],
+                )
+                raise
+            logger.warning(
+                "%s parse failed, retrying | retry=%d/%d | error=%s",
+                label, attempt + 1, max_retries, str(e).splitlines()[0][:240],
+            )
+        except Exception as e:
+            last_error = e
+            if not _is_transient_llm_error(e) or attempt >= max_retries:
+                logger.error(
+                    "%s failed (non-retryable or exhausted) | attempt=%d/%d | error=%s",
+                    label, attempt + 1, max_retries + 1, str(e).splitlines()[0][:240],
+                )
+                raise
+            logger.warning(
+                "%s transient error, retrying | retry=%d/%d | error=%s",
+                label, attempt + 1, max_retries, str(e).splitlines()[0][:240],
+            )
+            await asyncio.sleep(min(1 * (attempt + 1), 2.2))
+
+    raise last_error or RuntimeError(f"{label} failed without output")
+
+
+# -------------
+# MealPlanAgent
+# -------------
+
+
 class MealPlanAgent:
     """
     Stateless agent that generates a meal plan for a single day or multiple days.
-    Often called in a workflow loop to build a full week without hitting token limits.
+
+    Supports two generation strategies:
+    - Legacy: `agenerate_for_day()` — single LLM call per day (full output).
+    - Optimized: `agenerate_skeleton()` + `aenrich_meal()` — fast skeleton then
+      parallel enrichment per meal.
     """
 
     def __init__(self):
-        self.llm = get_llm().with_structured_output(DayMealsData)
+        self.full_llm = get_llm().with_structured_output(DayMealsData)
+        self.skeleton_llm = get_llm().with_structured_output(SkeletonMultiDayData)
+        self.enrich_llm = get_llm().with_structured_output(GeneratedMealData)
+
+    # --------------
+    # Shared helpers
+    # --------------
 
     def _build_user_msg(
         self,
@@ -182,6 +313,159 @@ class MealPlanAgent:
             user_msg += f"\nCustom Request: {custom_prompt}"
         return user_msg
 
+    # --------------------------------------------
+    # Step 1: Multi-day Skeleton generation (fast)
+    # --------------------------------------------
+
+    async def agenerate_multi_day_skeleton(
+        self,
+        user_profile_context: str,
+        total_days: int,
+        custom_prompt: Optional[str] = None,
+        max_parse_retries: int = 3,
+    ) -> SkeletonMultiDayData:
+        """Generate a lightweight skeleton for all days: meal names and types only."""
+
+        prompt = SystemPrompt(
+            background=[
+                "You are an expert nutritionist and meal planner.",
+                "You specialize in cuisine and provide practical meal plans.",
+                "Your task is to produce a SKELETON menu for MULTIPLE DAYS at once — dish names and meal types ONLY.",
+            ],
+            steps=[
+                "Review the user profile: number of people, dietary restrictions, and cuisine style.",
+                f"You must plan exactly {total_days} days.",
+                "CRITICAL: Review the entire plan across all days. Do NOT repeat the same main dish or main protein across the days to ensure variety.",
+                "By default, plan breakfast, lunch, dinner, and 1 afternoon snack per day. However, if the Custom Request asks for specific meals, respect that.",
+                "For each meal, provide: a unique dish name, meal_type, and 2-3 key_ingredients (main protein/starch/vegetable).",
+                "Ensure maximum variety: day 1 meals should look very different from day 2 meals.",
+                "Strictly respect dietary restrictions.",
+                "Prefer lighter cooking methods.",
+            ],
+            output=[
+                "Return a list of days.",
+                "For each day return day_number, day_header, and a list of meals.",
+                "For each meal return ONLY: name, meal_type, key_ingredients (2-3 items).",
+                "Do NOT include calories, macros, full ingredient lists, instructions, or any other detail.",
+            ],
+        )
+
+        user_msg = f"Generating a {total_days}-day meal plan.\n"
+        if user_profile_context:
+           user_msg += f"User Profile: {user_profile_context}\n"
+        if custom_prompt:
+            user_msg += f"\nCustom Request: {custom_prompt}"
+
+        messages = [SystemMessage(content=str(prompt)), HumanMessage(content=user_msg)]
+
+        logger.info(
+            "agenerate_multi_day_skeleton | generating %d days...",
+            total_days,
+        )
+
+        result = await _invoke_with_retries(
+            self.skeleton_llm,
+            messages=messages,
+            max_retries=max_parse_retries,
+            label=f"MultiDaySkeleton (days={total_days})",
+        )
+
+        logger.info(
+            "agenerate_multi_day_skeleton done | generated %d days",
+            len(result.days)
+        )
+        return result
+
+    # ---------------------------------------------------
+    # Step 2: Single-meal enrichment (called in parallel)
+    # ---------------------------------------------------
+
+    async def aenrich_meal(
+        self,
+        meal_name: str,
+        meal_type: str,
+        key_ingredients: List[str],
+        profile_context: str,
+        custom_prompt: Optional[str] = None,
+        max_parse_retries: int = 5,
+    ) -> GeneratedMealData:
+        """Enrich a single skeleton meal into full GeneratedMealData."""
+
+        key_ing_str = ", ".join(key_ingredients) if key_ingredients else "as appropriate"
+
+        prompt = SystemPrompt(
+            background=[
+                "You are an expert nutritionist and meal planner.",
+                "You are given a specific dish to detail. Provide COMPLETE nutritional and cooking information.",
+            ],
+            steps=[
+                f"Dish to detail: **{meal_name}** (meal_type: {meal_type}).",
+                f"Key ingredients to use: {key_ing_str}.",
+                "Provide: full ingredients list with gram weights, per_person_breakdown, calories, protein_grams, carbs_grams, fat_grams, fiber_grams, instructions, adjustment_tips, why (rationale), prep_time_minutes, cook_time_minutes, servings, dietary_tags.",
+                "If multiple people share this meal, include per-person portion/calorie lines in per_person_breakdown.",
+                "IMPORTANT: Use exact keys: name, meal_type, carbs_grams.",
+                "CRITICAL: Never return null for calories/protein_grams/carbs_grams/fat_grams; use 0 if unknown.",
+                "CRITICAL: ingredients must be a non-empty array with practical items and gram weights.",
+                "Prefer lighter cooking methods: grilling, steaming, boiling, light stir-fry.",
+                "Strictly respect any dietary restrictions mentioned in the profile or custom request.",
+            ],
+            output=[
+                "Return a single meal object with all fields filled.",
+                "name must match the provided dish name exactly.",
+                f"meal_type must be: {meal_type}",
+            ],
+        )
+
+        user_msg = f"Detail this meal: {meal_name} ({meal_type})\n"
+        if profile_context:
+            user_msg += f"\nUser Profile:\n{profile_context}\n"
+        if custom_prompt:
+            user_msg += f"\nCustom Request: {custom_prompt}"
+
+        messages = [SystemMessage(content=str(prompt)), HumanMessage(content=user_msg)]
+
+        fallback_prompt = SystemPrompt(
+            background=[
+                "You are an expert nutritionist.",
+                "Return ONLY schema-compliant data for GeneratedMealData.",
+                "Do not include markdown, prose, or shopping list text.",
+            ],
+            steps=[
+                f"Detail the meal: {meal_name} (meal_type: {meal_type}).",
+                "Must include: name, meal_type, ingredients, calories, protein_grams, carbs_grams, fat_grams, per_person_breakdown, adjustment_tips, why, instructions.",
+                "Use 'carbs_grams' key exactly. Never null for macro fields; use 0.",
+                "Ensure ingredients is a non-empty list.",
+            ],
+        )
+        fallback_messages = [
+            SystemMessage(content=str(fallback_prompt)),
+            HumanMessage(content=user_msg),
+        ]
+
+        logger.info("aenrich_meal | meal=%s (%s) | enriching...", meal_name, meal_type)
+
+        result = await _invoke_with_retries(
+            self.enrich_llm,
+            messages=messages,
+            fallback_messages=fallback_messages,
+            max_retries=max_parse_retries,
+            label=f"Enrich '{meal_name}'",
+        )
+
+        # Ensure the name and meal_type match the skeleton
+        result.name = meal_name
+        result.meal_type = meal_type
+
+        logger.info(
+            "aenrich_meal done | meal=%s | calories=%s | ingredients=%d",
+            meal_name, result.calories, len(result.ingredients),
+        )
+        return result
+
+    # ---------------------------------------------------------
+    # Legacy: full single-call generation (backward-compatible)
+    # ---------------------------------------------------------
+
     async def agenerate_for_day(
         self,
         user_profile_context: str,
@@ -191,21 +475,7 @@ class MealPlanAgent:
         custom_prompt: Optional[str] = None,
         max_parse_retries: int = 5,
     ) -> DayMealsData:
-        """Asynchronously generates a meal plan for a single day."""
-
-        def is_transient_llm_error(err: Exception) -> bool:
-            text = str(err).lower()
-            transient_markers = (
-                "internal_failure",
-                "status: 500",
-                "http 500",
-                "service unavailable",
-                "temporarily unavailable",
-                "deadline exceeded",
-                "rate limit",
-                "429",
-            )
-            return any(marker in text for marker in transient_markers)
+        """Asynchronously generates a meal plan for a single day (legacy single-call)."""
 
         prompt = SystemPrompt(
             background=[
@@ -267,67 +537,23 @@ class MealPlanAgent:
         )
 
         messages = [SystemMessage(content=str(prompt)), HumanMessage(content=user_msg)]
-        retry_messages = [
+        fallback_messages = [
             SystemMessage(content=str(fallback_prompt)),
             HumanMessage(content=user_msg),
         ]
+
         logger.info(
             "MealPlanAgent.agenerate_for_day | day=%d/%d", day_number, total_days
         )
-        last_error = None
-        result: Optional[DayMealsData] = None
-        for attempt in range(max_parse_retries + 1):
-            try:
-                # First attempt uses the rich prompt; retries enforce stricter output formatting.
-                invoke_messages = messages if attempt == 0 else retry_messages
-                result = await self.llm.ainvoke(invoke_messages)
-                break
-            except OutputParserException as e:
-                last_error = e
-                if attempt >= max_parse_retries:
-                    logger.error(
-                        "MealPlanAgent.agenerate_for_day parse failed after max retries | day=%d/%d | retries=%d | error=%s",
-                        day_number,
-                        total_days,
-                        max_parse_retries,
-                        str(e).splitlines()[0][:240],
-                    )
-                    raise
-                logger.warning(
-                    "MealPlanAgent.agenerate_for_day parse failed, retrying with strict output format | day=%d/%d | retry=%d/%d | error=%s",
-                    day_number,
-                    total_days,
-                    attempt + 1,
-                    max_parse_retries,
-                    str(e).splitlines()[0][:240],
-                )
-            except Exception as e:
-                last_error = e
-                if not is_transient_llm_error(e) or attempt >= max_parse_retries:
-                    logger.error(
-                        "MealPlanAgent.agenerate_for_day failed with non-retryable or exhausted error | day=%d/%d | attempt=%d/%d | error=%s",
-                        day_number,
-                        total_days,
-                        attempt + 1,
-                        max_parse_retries + 1,
-                        str(e).splitlines()[0][:240],
-                    )
-                    raise
 
-                logger.warning(
-                    "MealPlanAgent.agenerate_for_day transient LLM error, retrying | day=%d/%d | retry=%d/%d | error=%s",
-                    day_number,
-                    total_days,
-                    attempt + 1,
-                    max_parse_retries,
-                    str(e).splitlines()[0][:240],
-                )
-                await asyncio.sleep(min(0.8 * (attempt + 1), 2.0))
+        result = await _invoke_with_retries(
+            self.full_llm,
+            messages=messages,
+            fallback_messages=fallback_messages,
+            max_retries=max_parse_retries,
+            label=f"FullDay day={day_number}",
+        )
 
-        if result is None:
-            raise last_error or RuntimeError(
-                "MealPlanAgent.agenerate_for_day failed without parser output"
-            )
         logger.info(
             "MealPlanAgent.agenerate_for_day done | day=%d | meals=%d",
             day_number,

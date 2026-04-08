@@ -4,8 +4,14 @@ import datetime
 import logging
 import re
 import uuid
+from typing import List
 
-from nutri.ai.agents.meal_plan_agent import MealPlanAgent
+from nutri.ai.agents.meal_plan_agent import (
+    DayMealsData,
+    GeneratedMealData,
+    MealPlanAgent,
+    SkeletonMeal,
+)
 from nutri.ai.workflows.grocery_workflow import generate_grocery_list_background
 from nutri.core.auth.models import User
 from nutri.core.db.session import async_session_maker
@@ -15,6 +21,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 logger = logging.getLogger("nutri.ai.workflows.meal_plan")
+
+# Maximum number of parallel LLM calls for meal enrichment.
+MAX_ENRICH_CONCURRENCY = 4
 
 
 def _parse_number(val) -> int:
@@ -112,7 +121,7 @@ def _parse_ingredient_entry(raw_ingredient) -> tuple[str, float | None]:
 
     # Common pattern: "200g chicken breast" or "1.5 kg rice"
     leading_weight = re.match(
-        r"^\s*(\d+(?:[\.,]\d+)?)\s*(kg|kgs|kilogram|kilograms|g|gr|gram|grams)\b[\s:-]*(.+)$",
+        r"^\s*(\d+(?:[.,]\d+)?)\s*(kg|kgs|kilogram|kilograms|g|gr|gram|grams)\b[\s:-]*(.+)$",
         raw_text,
         flags=re.IGNORECASE,
     )
@@ -127,7 +136,7 @@ def _parse_ingredient_entry(raw_ingredient) -> tuple[str, float | None]:
 
     # Common pattern: "Chicken breast: 200g"
     trailing_weight = re.match(
-        r"^\s*(.+?)\s*[:\-]\s*(\d+(?:[\.,]\d+)?)\s*(kg|kgs|kilogram|kilograms|g|gr|gram|grams)\s*$",
+        r"^\s*(.+?)\s*[:\-]\s*(\d+(?:[.,]\d+)?)\s*(kg|kgs|kilogram|kilograms|g|gr|gram|grams)\s*$",
         raw_text,
         flags=re.IGNORECASE,
     )
@@ -173,36 +182,141 @@ async def _load_user_profile_context(db: AsyncSession, user_id: str):
 
     return user, profile_context
 
+# -------------------------------------------------
+# Draft generation — Skeleton → Parallel Enrichment
+# -------------------------------------------------
+
 
 async def generate_meal_plan_draft(
-    user_id: str, total_days: int, custom_prompt: str = ""
+    user_id: str, total_days: int, custom_prompt: str = "", config: dict | None = None
 ):
-    """Generate meal plan draft payload without persisting to meal tables."""
+    """Generate meal plan draft using 2-step: multi-day skeleton then global parallel enrichment.
+
+    Step 1: Single fast LLM call for the ENTIRE plan (all days) skeleton.
+    Step 2: Parallel enrichment of ALL meals across ALL days (max MAX_ENRICH_CONCURRENCY concurrent).
+    Fallback: If any part fails, fall back to day-by-day legacy agenerate_for_day.
+    """
+    from langchain_core.callbacks import adispatch_custom_event
+
+    async def _emit(step_msg: str, preview: str = ""):
+        if config:
+            await adispatch_custom_event(
+                "meal_plan_progress",
+                {"step": step_msg, "preview": preview},
+                config=config
+            )
 
     async with async_session_maker() as db:
         user, profile_context = await _load_user_profile_context(db, user_id)
         if not user:
             logger.error("Workflow Error: User %s not found.", user_id)
             return {"error": "User not found"}
+        await _emit("-> User profile loaded: ", profile_context[:200] + "...")
 
         agent = MealPlanAgent()
         previous_days_context = ""
         draft_days = []
 
-        for day in range(1, total_days + 1):
-            logger.info(
-                "Generating Day %d/%d draft for user %s...", day, total_days, user.id
-            )
+        # Step 1: Multi-day Skeleton
+        skeleton_multi = None
+        global_enrich_failed = False
+        enriched_meals_by_day = {}  # dict mapping day_index -> list of GeneratedMealData
+        skeleton_by_day = {}
 
-            day_data = await agent.agenerate_for_day(
+        try:
+            await _emit("Generating menu skeleton...")
+            skeleton_multi = await agent.agenerate_multi_day_skeleton(
                 user_profile_context=profile_context,
-                day_number=day,
                 total_days=total_days,
-                previous_days_context=previous_days_context,
                 custom_prompt=custom_prompt,
             )
 
+            # Map the skeleton days (0-indexed)
+            preview_lines = []
+            for idx, d in enumerate(skeleton_multi.days):
+                skeleton_by_day[idx] = d
+                day_meals = ", ".join([m.name for m in d.meals])
+                preview_lines.append(f"Day {idx + 1}: {day_meals}")
+
+            logger.info("Multi-Day Skeleton ready | %d days", len(skeleton_multi.days))
+            await _emit("-> Menu skeleton ready: ", "\n".join(preview_lines) + "...")
+
+            # Step 2: Global Parallel Enrichment
+            logger.info("Analyzing meal details...")
+            await _emit("Analyzing meal details...")
+            semaphore = asyncio.Semaphore(MAX_ENRICH_CONCURRENCY)
+
+            async def _enrich_w_day(d_idx: int, m_skeleton: SkeletonMeal, delay: float):
+                # Small stagger to prevent slamming the API simultaneously
+                if delay > 0:
+                    await asyncio.sleep(delay)
+                async with semaphore:
+                    res = await agent.aenrich_meal(
+                        meal_name=m_skeleton.name,
+                        meal_type=m_skeleton.meal_type,
+                        key_ingredients=m_skeleton.key_ingredients,
+                        profile_context=profile_context,
+                        custom_prompt=custom_prompt,
+                    )
+                    await _emit(
+                        f"Day {d_idx + 1}: {res.meal_type.capitalize()}",
+                        f"> {res.name}\n> Calories: {res.calories} kcal\n> Protein: {res.protein_grams}g | Carbs: {res.carbs_grams}g..."
+                    )
+                    return d_idx, res
+
+            all_tasks = []
+            delay_counter = 0.0
+            for d_idx, day_skel in enumerate(skeleton_multi.days):
+                enriched_meals_by_day[d_idx] = []
+                for m_skel in day_skel.meals:
+                    all_tasks.append(_enrich_w_day(d_idx, m_skel, delay=delay_counter))
+                    delay_counter += 0.3
+
+            logger.info("Spawning %d enrichment tasks globally", len(all_tasks))
+            results = await asyncio.gather(*all_tasks, return_exceptions=True)
+
+            for result in results:
+                if isinstance(result, Exception):
+                    logger.error("Enrichment task failed globally: %s", str(result).splitlines()[0][:240])
+                    raise result
+                d_idx, enriched_meal = result
+                enriched_meals_by_day[d_idx].append(enriched_meal)
+
+            logger.info("Global parallel enrichment complete")
+
+        except Exception as e:
+            logger.warning("Multi-day generation failed, falling back to legacy | error=%s", str(e).splitlines()[0][:240])
+            global_enrich_failed = True
+
+        # Reassembly & Legacy Fallback Loop
+        for day in range(1, total_days + 1):
+            d_idx = day - 1
             eat_date = datetime.date.today() + datetime.timedelta(days=day - 1)
+            day_data: DayMealsData | None = None
+
+            if not global_enrich_failed and d_idx in enriched_meals_by_day:
+                # Use successfully enriched meals
+                skel_day = skeleton_by_day.get(d_idx)
+                day_header = skel_day.day_header if skel_day else f"Day {day}"
+
+                day_data = DayMealsData(
+                    meals=enriched_meals_by_day[d_idx],
+                    day_header=day_header,
+                    daily_summary_lines=[],
+                    gap_fix=None,
+                )
+            else:
+                # Fallback to legacy single-call method day-by-day
+                logger.info("Running Day %d via legacy fallback...", day)
+                day_data = await agent.agenerate_for_day(
+                    user_profile_context=profile_context,
+                    day_number=day,
+                    total_days=total_days,
+                    previous_days_context=previous_days_context,
+                    custom_prompt=custom_prompt,
+                )
+
+            # Serialization and markdown building
             serialized_meals = [_serialize_generated_meal(m) for m in day_data.meals]
 
             daily_summary = []

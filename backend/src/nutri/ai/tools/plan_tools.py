@@ -69,6 +69,14 @@ async def create_meal_plan(
     """
     language = get_language_from_config(config)
     user_id = config.get("configurable", {}).get("user_id")
+    from langchain_core.callbacks import adispatch_custom_event
+
+    await adispatch_custom_event(
+        "meal_plan_progress",
+        {"step": "Reading user profile...", "preview": ""},
+        config=config,
+    )
+
     if not user_id:
         return "Authentication required to generate meal plans. Please ask the user to log in."
 
@@ -85,6 +93,7 @@ async def create_meal_plan(
         user_id=user_id,
         total_days=total_days,
         custom_prompt=effective_prompt,
+        config=config,
     )
     if draft_payload.get("error"):
         return {

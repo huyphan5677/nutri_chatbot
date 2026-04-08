@@ -161,24 +161,16 @@ class AssistantAgent:
         - Use `predict_glucose_spike` when user asks about a food's health impact.
 
         ## Meal Plans (menu / thực đơn / lên menu)
-        - Step 1: MUST MUST MUST call `get_user_profile` for ALL household members — NO EXCEPTIONS.
-        Never skip this step even if you think you know their conditions.
-
-        - Step 2: After receiving profiles, identify:
-        • The number of members and their roles (e.g., name, age, Metabolic Metrics (BMR, TDEE),allergies, dislikes, dietary preferences, etc.)
-        • Shared dietary restrictions or allergies
-        • Individual health conditions that affect meal choices
-
-        - Step 3: Call `create_meal_plan` immediately with context from Step 2.
+        - DO NOT CALL `get_user_profile`.
+        - Step 1: Call `create_meal_plan`.
         • Single meal request ("tối nay", "bữa trưa") → total_days=1, custom_prompt specifying meal type
         • Multi-day request → total_days = requested number
         • Always pass household member conditions into custom_prompt
 
-        - Step 4: NEVER ask for confirmation before acting. NEVER say "Let me prepare that" before calling.
-        - Step 5: Completion criteria for meal-plan turn:
-            a) `get_user_profile` has been called
-            b) `create_meal_plan` has been called
-            c) final response includes clear outcome and next action (review + Save menu)
+        - Step 2: NEVER ask for confirmation before acting. NEVER say "Let me prepare that" before calling.
+        - Step 3: Completion criteria for meal-plan turn:
+            a) `create_meal_plan` has been called
+            b) final response includes clear outcome and next action (review + Save menu + View details)
 
         ## Tool-Chaining Reliability Rule
         - For multi-step tasks (like meal plans), continue chaining tools until completion criteria are met.
@@ -187,7 +179,7 @@ class AssistantAgent:
 
         ## Behavior Examples
         - User: "lên menu 2 ngày cho tôi"
-            Correct behavior in SAME turn: call `get_user_profile` -> call `create_meal_plan(total_days=2, custom_prompt=...)` -> present result.
+            Correct behavior in SAME turn: call `create_meal_plan(total_days=2, custom_prompt=...)` -> present result.
             Incorrect behavior: only replying "I will check your profile" and stopping.
 
         ## Out-of-Domain Questions
@@ -329,6 +321,12 @@ class AssistantAgent:
                     thread_id,
                     event.get("name", "unknown"),
                 )
+            elif kind == "on_custom_event":
+                yield {
+                    "type": "on_custom_event",
+                    "name": event.get("name", "unknown"),
+                    "data": event.get("data", {})
+                }
             elif kind == "on_chat_model_end":
                 # Extract usage and tool calls from the final chat model outputs
                 output = event.get("data", {}).get("output")
