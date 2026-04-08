@@ -45,7 +45,7 @@ class DashboardStatusResponse(BaseModel):
 @router.get("/health")
 async def health_check():
     """Check if the system is healthy."""
-    logger.debug("Health check called")
+    logger.info("Health check called")
     return {"status": "ok"}
 
 
