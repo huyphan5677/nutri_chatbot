@@ -63,7 +63,7 @@ class GroceryListGeneratorAgent:
     def __init__(self):
         self.llm = get_llm().with_structured_output(GroceryListData)
 
-    async def agenerate(self, meal_plan_ingredients_context: str) -> GroceryListData:
+    async def agenerate(self, meal_plan_ingredients_context: str, max_retries: int = 5) -> GroceryListData:
         """Asynchronously generates a categorized shopping list from a meal plan."""
         try:
             from nutri.ai.language import detect_user_language
@@ -81,14 +81,13 @@ class GroceryListGeneratorAgent:
             steps=[
                 f"LANGUAGE RULE (MANDATORY): {lang_instruction}",
                 "ALL output text (item names, categories,...) MUST match that detected language.",
-                "CRITICAL: Keep ingredient names EXACTLY as provided in input. Never translate, localize, or rename ingredient names.",
-                "CRITICAL: Preserve quantity units and gram values from input when available (e.g. 150g stays 150g).",
-                "Analyze the raw ingredients list from the meal plan.",
-                "Combine identical items and sum their quantities appropriately.",
-                "Categorize them into logical supermarket sections, and write category labels in the detected input language.",
-                "MANDATORY CATEGORY: If ANY spices, seasonings, condiments, or flavor enhancers are present (e.g. salt, pepper, fish sauce, soy sauce, sugar, oil, olive oil, vinegar, chili, garlic powder, MSG, bouillon), they MUST be grouped under a single dedicated spices/seasonings category. In Vietnamese: 'Gia vị & Nước chấm', in English: 'Spices & Condiments', in other languages: use the equivalent local term.",
+                "CRITICAL NORMALIZATION: You MUST strip all preparation instructions, adjectives, state descriptions, and parentheses from ingredient names. Output ONLY the core, base generic ingredient name.",
+                "-> Examples: 'Hành lá thái nhỏ' -> 'Hành lá', 'Khoai lang vàng (nguyên vỏ, rửa sạch)' -> 'Khoai lang', 'Yến mạch nguyên hạt (khô, không đường)' -> 'Yến mạch', 'Gừng tươi băm nhuyễn' -> 'Gừng', 'Thịt bò xắt lát' -> 'Thịt bò'.",
+                "CRITICAL CATEGORY: Strictly use these exact standard categories: 'Rau củ quả', 'Thịt cá & Hải sản', 'Trứng & Sữa', 'Ngũ cốc & Thực phẩm khô', 'Gia vị & Nước chấm', 'Đậu hạt & Đậu phụ', 'Đồ uống', 'Khác'.",
+                "CRITICAL QUANTITY: Preserve gram values or counts accurately. Do not combine the item name with the count.",
+                "Combine identical underlying items within your payload and sum their quantities.",
                 "IMPORTANT: The output must be a flat array of GroceryItemData objects.",
-                "CRITICAL: Every item MUST include the 'name' field (the ingredient name, e.g., 'Olive Oil'). Do NOT omit the 'name'.",
+                "CRITICAL: Every item MUST include the 'name' field. Do NOT omit the 'name'.",
                 "CRITICAL: Use key name 'category' (NOT 'section') for the supermarket aisle field.",
             ],
         )
@@ -110,8 +109,40 @@ class GroceryListGeneratorAgent:
             if len(meal_plan_ingredients_context) > 100
             else meal_plan_ingredients_context,
         )
-        result = await self.llm.ainvoke(messages)
-        logger.info(
-            "GroceryListGeneratorAgent.agenerate done | items=%d", len(result.items)
-        )
-        return result
+
+        last_error = None
+        for attempt in range(max_retries + 1):
+            try:
+                result = await self.llm.ainvoke(messages)
+                logger.info(
+                    "GroceryListGeneratorAgent.agenerate done | items=%d", len(result.items)
+                )
+                return result
+            except Exception as e:
+                import asyncio
+                import random
+                last_error = e
+                err_text = str(e).lower()
+
+                # Check for Langchain "NoneType not iterable" parsing errors or standard rate limits
+                is_transient = (
+                    "nonetype" in err_text or
+                    "invalid_request" in err_text or
+                    "internal_failure" in err_text or
+                    "rate limit" in err_text or
+                    "service unavailable" in err_text or
+                    "429" in err_text or
+                    "406" in err_text or
+                    "500" in err_text
+                )
+
+                if not is_transient or attempt >= max_retries:
+                    logger.error("GroceryListGeneratorAgent parse failed | attempt=%d/%d | err=%s", attempt + 1, max_retries + 1, err_text[:240])
+                    raise
+
+                logger.warning("GroceryListGenerator transient error, retrying | attempt=%d/%d | err=%s", attempt + 1, max_retries, err_text[:240])
+                # Exponential backoff with jitter to help spread parallel collisions
+                sleep_time = min(2.0 * (2 ** attempt), 10.0) + random.uniform(0.1, 1.5)
+                await asyncio.sleep(sleep_time)
+
+        raise last_error or RuntimeError("GroceryListGenerator failed without output")
