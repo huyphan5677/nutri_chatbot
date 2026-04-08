@@ -88,7 +88,7 @@ async def log_requests(
         x_forwarded_for.split(",")[0].strip() if x_forwarded_for else client_host
     )
 
-    logger.debug("→ %s %s | ip=%s", request.method, request.url.path, actual_ip)
+    # logger.debug("→ %s %s | ip=%s", request.method, request.url.path, actual_ip)
 
     try:
         response = await call_next(request)
