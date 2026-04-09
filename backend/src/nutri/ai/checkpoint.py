@@ -1,11 +1,33 @@
 import logging
-from typing import Optional
+from typing import Any, Optional
 
+from langchain_core.messages.utils import (
+    count_tokens_approximately,
+    trim_messages,
+)
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from nutri.common.config.settings import settings
 from psycopg_pool import AsyncConnectionPool
 
 logger = logging.getLogger("nutri.ai.checkpoint")
+
+
+def pre_model_trim_messages(
+    state: dict[str, Any], max_tokens: int = 4096
+) -> dict[str, Any]:
+    messages = state.get("messages", [])
+    if not messages:
+        return {"llm_input_messages": []}
+
+    trimmed_messages = trim_messages(
+        messages,
+        strategy="last",
+        token_counter=count_tokens_approximately,
+        max_tokens=max_tokens,
+        start_on="human",
+        end_on=("human", "tool"),
+    )
+    return {"llm_input_messages": trimmed_messages}
 
 
 class CheckpointerManager:
