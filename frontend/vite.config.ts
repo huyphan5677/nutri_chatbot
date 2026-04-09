@@ -12,8 +12,8 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        // target: "http://backend:8000", // Use this when running in Docker
-        target: "http://localhost:8000", // Use this when running locally
+        target: "http://backend:8000", // Use this when running in Docker
+        // target: "http://localhost:8000", // Use this when running locally
         changeOrigin: true,
         secure: false,
       },
