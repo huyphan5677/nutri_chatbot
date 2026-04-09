@@ -4,11 +4,9 @@ import datetime
 import logging
 import re
 import uuid
-from typing import List
 
 from nutri.ai.agents.meal_plan_agent import (
     DayMealsData,
-    GeneratedMealData,
     MealPlanAgent,
     SkeletonMeal,
 )
@@ -182,6 +180,7 @@ async def _load_user_profile_context(db: AsyncSession, user_id: str):
 
     return user, profile_context
 
+
 # -------------------------------------------------
 # Draft generation — Skeleton → Parallel Enrichment
 # -------------------------------------------------
@@ -203,7 +202,7 @@ async def generate_meal_plan_draft(
             await adispatch_custom_event(
                 "meal_plan_progress",
                 {"step": step_msg, "preview": preview},
-                config=config
+                config=config,
             )
 
     async with async_session_maker() as db:
@@ -224,11 +223,18 @@ async def generate_meal_plan_draft(
         skeleton_by_day = {}
 
         try:
+            await _emit("Get menu previous...")
+            recent_menu_context = await agent.get_recent_menu_context(
+                config, num_of_pre_day=2
+            )
+            await _emit("-> Recent menu: ", recent_menu_context[:150] + "...")
+
             await _emit("Generating menu skeleton...")
             skeleton_multi = await agent.agenerate_multi_day_skeleton(
                 user_profile_context=profile_context,
                 total_days=total_days,
                 custom_prompt=custom_prompt,
+                recent_menu_context=recent_menu_context,
             )
 
             # Map the skeleton days (0-indexed)
@@ -260,7 +266,7 @@ async def generate_meal_plan_draft(
                     )
                     await _emit(
                         f"Day {d_idx + 1}: {res.meal_type.capitalize()}",
-                        f"> {res.name}\n> Calories: {res.calories} kcal\n> Protein: {res.protein_grams}g | Carbs: {res.carbs_grams}g..."
+                        f"> {res.name}\n> Calories: {res.calories} kcal\n> Protein: {res.protein_grams}g | Carbs: {res.carbs_grams}g...",
                     )
                     return d_idx, res
 
@@ -277,7 +283,10 @@ async def generate_meal_plan_draft(
 
             for result in results:
                 if isinstance(result, Exception):
-                    logger.error("Enrichment task failed globally: %s", str(result).splitlines()[0][:240])
+                    logger.error(
+                        "Enrichment task failed globally: %s",
+                        str(result).splitlines()[0][:240],
+                    )
                     raise result
                 d_idx, enriched_meal = result
                 enriched_meals_by_day[d_idx].append(enriched_meal)
@@ -285,7 +294,10 @@ async def generate_meal_plan_draft(
             logger.info("Global parallel enrichment complete")
 
         except Exception as e:
-            logger.warning("Multi-day generation failed, falling back to legacy | error=%s", str(e).splitlines()[0][:240])
+            logger.warning(
+                "Multi-day generation failed, falling back to legacy | error=%s",
+                str(e).splitlines()[0][:240],
+            )
             global_enrich_failed = True
 
         # Reassembly & Legacy Fallback Loop

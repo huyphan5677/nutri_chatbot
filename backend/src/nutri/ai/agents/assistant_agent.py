@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 from langchain_core.messages import SystemMessage
 from langgraph.prebuilt import create_react_agent
-from nutri.ai.checkpoint import get_postgres_checkpointer
+from nutri.ai.checkpoint import get_postgres_checkpointer, pre_model_trim_messages
 from nutri.ai.language import detect_user_language, normalize_language
 from nutri.ai.llm_client import get_llm
 from nutri.ai.tools.health_tools import (
@@ -19,12 +19,16 @@ from nutri.ai.tools.knowledge_tools import (
     get_diet_reference,
     web_search_info,
 )
+from nutri.ai.tools.menu_tools import (
+    get_detail_menu_previous_by_id,
+    get_overview_menu_previous,
+)
 from nutri.ai.tools.nutrition_tools import (
     calculate_bmr,
     predict_glucose_spike,
 )
 from nutri.ai.tools.plan_tools import create_meal_plan
-from nutri.ai.tools.profile_tools import get_user_profile, update_user_profile
+from nutri.ai.tools.profile_tools import get_user_profile
 
 logger = logging.getLogger("nutri.ai.agents.assistant")
 
@@ -82,7 +86,6 @@ class AssistantAgent:
         # Define available tools
         self.tools = [
             get_user_profile,
-            update_user_profile,
             predict_glucose_spike,
             calculate_bmr,
             create_meal_plan,
@@ -90,6 +93,8 @@ class AssistantAgent:
             get_diet_reference,
             enrich_attribute_metadata,
             web_search_info,
+            get_overview_menu_previous,
+            get_detail_menu_previous_by_id,
         ]
 
     async def _get_app(self, thread_id: str, memories_context: str = ""):
@@ -100,6 +105,7 @@ class AssistantAgent:
             tools=self.tools,
             checkpointer=checkpointer,
             prompt=self.get_system_message(memories_context),
+            pre_model_hook=pre_model_trim_messages,
         )
 
     def get_system_message(self, memories_context: str = "") -> SystemMessage:
@@ -134,64 +140,51 @@ class AssistantAgent:
 
         # RULES
 
-        ## BMR Calculation
+        ## 1, BMR Calculation
         - Step 1: After receiving profile data, check for required fields:
         weight, height, age, gender, activity_level.
         - Step 2a: All fields present → call `calculate_bmr` immediately.
         - Step 2b: Some fields missing → ask user ONLY for the specific missing fields,
         then call `calculate_bmr` once received.
-        - Step 3: Present BMR results in this exact structure (in user's language):
-            **Your BMR Results**
+        - Step 3: Present BMR results in detail structure and explain.
 
-            **Input used:** [gender] | [age]y | [weight]kg | [height]cm
+        ## 2, Meal Suggestions
+        - Step 1: Call `get_user_profile` first if user conditions/preferences are unknown.
+        - Step 2: Use `predict_glucose_spike` when user asks about a food's health impact.
 
-            **BMR: [value] kcal/day**
-            _(calories your body needs at complete rest)_
-
-            **TDEE by activity level:**
-            | Level | Multiplier | kcal/day |
-            |-------|-----------|----------|
-            | Sedentary      | x1.2   | [value] |
-            | Lightly active | x1.375 | [value] |
-            | Moderately active | x1.55 | [value] |
-            | Very active    | x1.725 | [value] |
-            | Extra active   | x1.9   | [value] |
-            → **Your level ([activity_level]): [TDEE] kcal/day**
-
-            **Goals:**
-            • Cut: [TDEE - 400] kcal | Maintain: [TDEE] kcal | Bulk: [TDEE + 400] kcal
-
-        ## Meal Suggestions
-        - Call `get_user_profile` first if user conditions/preferences are unknown.
-        - Use `predict_glucose_spike` when user asks about a food's health impact.
-
-        ## Meal Plans (menu / thực đơn / lên menu)
+        ## 3, Meal Plans (menu / thực đơn / lên menu / meal)
         - DO NOT CALL `get_user_profile`.
         - Step 1: Call `create_meal_plan`.
-        • Single meal request ("tối nay", "bữa trưa") → total_days=1, custom_prompt specifying meal type
-        • Multi-day request → total_days = requested number
-        • Always pass household member conditions into custom_prompt
+            • Single meal request ("tối nay", "bữa trưa", "morning", "lunch", "sáng",...) → total_days=1, and custom_prompt MUST explicitly say `Generate ONLY <meal_type> for the requested time. Do NOT include other meal types.`
+            • Multi-day request → total_days = requested number
+            • If the user asks only for one meal slot, custom_prompt must explicitly forbid the other meal slots. Example for "lên menu tối nay cho tôi": `Generate ONLY dinner for tonight. Do NOT include breakfast, lunch, or snack.`
 
         - Step 2: NEVER ask for confirmation before acting. NEVER say "Let me prepare that" before calling.
         - Step 3: Completion criteria for meal-plan turn:
             a) `create_meal_plan` has been called
-            b) final response includes clear outcome and next action (review + Save menu + View details)
+            b) final response includes clear outcome and next action (Review + Save menu + View details)
 
         ## Tool-Chaining Reliability Rule
         - For multi-step tasks (like meal plans), continue chaining tools until completion criteria are met.
         - Do not terminate early after only the first prerequisite tool.
         - If a tool returns partial data, continue with best valid next tool call instead of stopping.
 
-        ## Behavior Examples
+        ## Behavior Examples:
         - User: "lên menu 2 ngày cho tôi"
             Correct behavior in SAME turn: call `create_meal_plan(total_days=2, custom_prompt=...)` -> present result.
             Incorrect behavior: only replying "I will check your profile" and stopping.
+        - User: "lên menu tối nay cho tôi"
+            Correct behavior in SAME turn: call `create_meal_plan(total_days=1, custom_prompt="Generate ONLY dinner for tonight. Do NOT include breakfast, lunch, or snack.")` -> present result.
+            Incorrect behavior: generating a full-day menu.
 
-        ## Out-of-Domain Questions
+        ## 4, Get overview menu previous
+        When use tool get_overview_menu_previous => final friendly response MUST menu id for next action (View detail by id)
+
+        ## 5, Out-of-Domain Questions
         - If the question is outside nutrition/health, first state that you are a nutrition and wellness assistant.
         - State this in language code {language_code}.
         - Then use `web_search_info` to find and provide the answer.
-        - When `web_search_info` returns sources, include 1-3 source URLs in your final reply.
+        - When `web_search_info` returns sources, include 1-5 source URLs in your final reply.
         - Synthesize the result briefly; do not dump raw snippets unless user asks for raw output.
         - If web search has no usable result, clearly say so and suggest a refined query.
 
@@ -203,9 +196,12 @@ class AssistantAgent:
         """
         return SystemMessage(content=prompt)
 
-    async def chat_stream(self, user_message: str, thread_id: str = None, top_memories: int = 5):
+    async def chat_stream(
+        self, user_message: str, thread_id: str = None, top_memories: int = 5
+    ):
         """Process a user message and yield the assistant's reply as a stream of chunks."""
         import asyncio
+
         from nutri.ai.memory import get_nutri_memory
 
         if not thread_id:
@@ -239,14 +235,23 @@ class AssistantAgent:
             # 1. Fire-and-forget memory extraction
             async def add_memory_task():
                 try:
-                    await asyncio.to_thread(nutri_memory.add, [{"role": "user", "content": user_message}], user_id=self.user_id)
+                    await asyncio.to_thread(
+                        nutri_memory.add,
+                        [{"role": "user", "content": user_message}],
+                        user_id=self.user_id,
+                    )
                 except Exception as e:
                     logger.warning("Failed to add memory: %s", e)
 
             asyncio.create_task(add_memory_task())
 
             # 2. Search relevant past memories
-            results = await asyncio.to_thread(nutri_memory.search, user_message, user_id=self.user_id, limit=top_memories)
+            results = await asyncio.to_thread(
+                nutri_memory.search,
+                user_message,
+                user_id=self.user_id,
+                limit=top_memories,
+            )
 
             actual_results = []
             if isinstance(results, list):
@@ -263,9 +268,13 @@ class AssistantAgent:
 
             if memories_list:
                 # Deduplicate and filter empty
-                memories_list = list(dict.fromkeys([m.strip() for m in memories_list if m.strip()]))
+                memories_list = list(
+                    dict.fromkeys([m.strip() for m in memories_list if m.strip()])
+                )
                 memories_str = "\n".join(f"- {m}" for m in memories_list)
-                logger.info("Found %d memories for user %s", len(memories_list), self.user_id)
+                logger.info(
+                    "Found %d memories for user %s", len(memories_list), self.user_id
+                )
         except Exception as e:
             logger.warning("Mem0 execution error: %s", e)
 
@@ -274,7 +283,9 @@ class AssistantAgent:
         yield {
             "type": "tool_end",
             "name": "memory_retrieval",
-            "result_snippet": memories_str if memories_str else "No relevant past preferences found."
+            "result_snippet": memories_str
+            if memories_str
+            else "No relevant past preferences found.",
         }
 
         app_with_prompt = await self._get_app(thread_id, memories_str)
@@ -380,7 +391,7 @@ class AssistantAgent:
                 yield {
                     "type": "on_custom_event",
                     "name": event.get("name", "unknown"),
-                    "data": event.get("data", {})
+                    "data": event.get("data", {}),
                 }
             elif kind == "on_chat_model_end":
                 # Extract usage and tool calls from the final chat model outputs

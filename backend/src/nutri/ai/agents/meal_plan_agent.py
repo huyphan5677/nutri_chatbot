@@ -6,6 +6,7 @@ from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import HumanMessage, SystemMessage
 from nutri.ai.llm_client import get_llm
 from nutri.ai.system_prompt import SystemPrompt
+from nutri.ai.tools.menu_tools import get_overview_menu_previous
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 logger = logging.getLogger("nutri.ai.agents.meal_plan")
@@ -237,31 +238,46 @@ async def _invoke_with_retries(
     last_error = None
     for attempt in range(max_retries + 1):
         try:
-            invoke_msgs = messages if (attempt == 0 or not fallback_messages) else fallback_messages
+            invoke_msgs = (
+                messages
+                if (attempt == 0 or not fallback_messages)
+                else fallback_messages
+            )
             return await llm.ainvoke(invoke_msgs)
         except OutputParserException as e:
             last_error = e
             if attempt >= max_retries:
                 logger.error(
                     "%s parse failed after max retries | retries=%d | error=%s",
-                    label, max_retries, str(e).splitlines()[0][:240],
+                    label,
+                    max_retries,
+                    str(e).splitlines()[0][:240],
                 )
                 raise
             logger.warning(
                 "%s parse failed, retrying | retry=%d/%d | error=%s",
-                label, attempt + 1, max_retries, str(e).splitlines()[0][:240],
+                label,
+                attempt + 1,
+                max_retries,
+                str(e).splitlines()[0][:240],
             )
         except Exception as e:
             last_error = e
             if not _is_transient_llm_error(e) or attempt >= max_retries:
                 logger.error(
                     "%s failed (non-retryable or exhausted) | attempt=%d/%d | error=%s",
-                    label, attempt + 1, max_retries + 1, str(e).splitlines()[0][:240],
+                    label,
+                    attempt + 1,
+                    max_retries + 1,
+                    str(e).splitlines()[0][:240],
                 )
                 raise
             logger.warning(
                 "%s transient error, retrying | retry=%d/%d | error=%s",
-                label, attempt + 1, max_retries, str(e).splitlines()[0][:240],
+                label,
+                attempt + 1,
+                max_retries,
+                str(e).splitlines()[0][:240],
             )
             await asyncio.sleep(min(1 * (attempt + 1), 2.2))
 
@@ -291,6 +307,29 @@ class MealPlanAgent:
     # --------------
     # Shared helpers
     # --------------
+
+    async def get_recent_menu_context(
+        self, config: dict | None = None, num_of_pre_day: int = 2
+    ) -> str:
+        """Fetch the previous 2 days of menu history to avoid repetition."""
+        if not config:
+            return ""
+
+        try:
+            recent_menu_context = await get_overview_menu_previous.ainvoke(
+                {"section": str(num_of_pre_day)},
+                config=config,
+            )
+        except Exception as exc:
+            logger.warning("Failed to load recent menu context: %s", exc)
+            return ""
+
+        context_text = str(recent_menu_context or "").strip()
+        logger.info("get_recent_menu_context | context_text=%s...", context_text[:180])
+        if not context_text or context_text.startswith("No menus found"):
+            return ""
+
+        return context_text
 
     def _build_user_msg(
         self,
@@ -323,6 +362,7 @@ class MealPlanAgent:
         total_days: int,
         custom_prompt: Optional[str] = None,
         max_parse_retries: int = 3,
+        recent_menu_context: Optional[str] = None,
     ) -> SkeletonMultiDayData:
         """Generate a lightweight skeleton for all days: meal names and types only."""
 
@@ -336,7 +376,9 @@ class MealPlanAgent:
                 "Review the user profile: number of people, dietary restrictions, and cuisine style.",
                 f"You must plan exactly {total_days} days.",
                 "CRITICAL: Review the entire plan across all days. Do NOT repeat the same main dish or main protein across the days to ensure variety.",
-                "By default, plan breakfast, lunch, dinner, and 1 afternoon snack per day. However, if the Custom Request asks for specific meals, respect that.",
+                "By default, plan breakfast, lunch, dinner, and 1 afternoon snack per day ONLY when the Custom Request does not restrict meal scope.",
+                "CRITICAL: If the Custom Request says ONLY one or more specific meal slots such as dinner only, lunch only, breakfast only, snack only, 'toi nay', or 'bua trua', each day must contain ONLY those requested meal_type values.",
+                "CRITICAL: When the Custom Request restricts meal scope, NEVER auto-add breakfast, lunch, dinner, or snack outside the requested scope.",
                 "For each meal, provide: a unique dish name, meal_type, and 2-3 key_ingredients (main protein/starch/vegetable).",
                 "Ensure maximum variety: day 1 meals should look very different from day 2 meals.",
                 "Strictly respect dietary restrictions.",
@@ -345,6 +387,7 @@ class MealPlanAgent:
             output=[
                 "Return a list of days.",
                 "For each day return day_number, day_header, and a list of meals.",
+                "If the Custom Request limits meal scope, return only those meals for each day and no placeholders for other meal types.",
                 "For each meal return ONLY: name, meal_type, key_ingredients (2-3 items).",
                 "Do NOT include calories, macros, full ingredient lists, instructions, or any other detail.",
             ],
@@ -352,7 +395,12 @@ class MealPlanAgent:
 
         user_msg = f"Generating a {total_days}-day meal plan.\n"
         if user_profile_context:
-           user_msg += f"User Profile: {user_profile_context}\n"
+            user_msg += f"User Profile: {user_profile_context}\n"
+        if recent_menu_context:
+            user_msg += (
+                "\nMenus from the previous 2 days (avoid repeating these dishes or main proteins):\n"
+                f"{recent_menu_context}\n"
+            )
         if custom_prompt:
             user_msg += f"\nCustom Request: {custom_prompt}"
 
@@ -371,8 +419,7 @@ class MealPlanAgent:
         )
 
         logger.info(
-            "agenerate_multi_day_skeleton done | generated %d days",
-            len(result.days)
+            "agenerate_multi_day_skeleton done | generated %d days", len(result.days)
         )
         return result
 
@@ -391,7 +438,9 @@ class MealPlanAgent:
     ) -> GeneratedMealData:
         """Enrich a single skeleton meal into full GeneratedMealData."""
 
-        key_ing_str = ", ".join(key_ingredients) if key_ingredients else "as appropriate"
+        key_ing_str = (
+            ", ".join(key_ingredients) if key_ingredients else "as appropriate"
+        )
 
         prompt = SystemPrompt(
             background=[
@@ -458,7 +507,9 @@ class MealPlanAgent:
 
         logger.info(
             "aenrich_meal done | meal=%s | calories=%s | ingredients=%d",
-            meal_name, result.calories, len(result.ingredients),
+            meal_name,
+            result.calories,
+            len(result.ingredients),
         )
         return result
 
@@ -486,7 +537,8 @@ class MealPlanAgent:
             steps=[
                 "Review the user profile: number of people, each person's calorie target, dietary restrictions, and cuisine style.",
                 "Review previous days' meals to avoid repeating the same dish within a 2-day window.",
-                "By default, generate breakfast, lunch, dinner, and 1 afternoon snack. However, if the Custom Request asks for specific meals (e.g., only lunch or dinner, tối nay, trưa nay, sáng mai, đêm nay,...), generate ONLY those requested meals.",
+                "By default, generate breakfast, lunch, dinner, and 1 afternoon snack ONLY when the Custom Request does not restrict meal scope.",
+                "CRITICAL: If the Custom Request asks for specific meals (for example only lunch or dinner, toi nay, trua nay, sang mai, dem nay), generate ONLY those requested meals and NEVER add other meal types.",
                 "If multiple people share a meal, keep one shared dish name and include separate per-person portion/calorie lines in per_person_breakdown.",
                 "For each meal include: dish name, ingredients with gram weights, per-person calories, 1-2 adjustment tips, and short rationale.",
                 "At day level include daily totals per person and gap-vs-target lines in daily_summary_lines, with a concrete gap_fix when |gap| > 100 kcal.",
