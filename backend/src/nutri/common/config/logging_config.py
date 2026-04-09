@@ -45,12 +45,12 @@ def setup_logging(log_dir: str = "logs") -> None:
 
     formatter = logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT)
 
-    # ── Console handler (INFO and above) ──────────────────────────────────
+    # Console handler (INFO and above)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(formatter)
 
-    # ── Rotating file handler — App logs (DEBUG and above) ────────────────
+    # Rotating file handler — App logs (DEBUG and above)
     app_file_handler = logging.handlers.RotatingFileHandler(
         log_path / "nutri.log",
         maxBytes=10 * 1024 * 1024,
@@ -60,7 +60,7 @@ def setup_logging(log_dir: str = "logs") -> None:
     app_file_handler.setLevel(logging.DEBUG)
     app_file_handler.setFormatter(formatter)
 
-    # ── Rotating file handler — AI agent logs only ────────────────────────
+    # Rotating file handler — AI agent logs only
     ai_file_handler = logging.handlers.RotatingFileHandler(
         log_path / "ai_agent.log",
         maxBytes=10 * 1024 * 1024,
@@ -70,7 +70,7 @@ def setup_logging(log_dir: str = "logs") -> None:
     ai_file_handler.setLevel(logging.DEBUG)
     ai_file_handler.setFormatter(formatter)
 
-    # ── Nutri App Logger (HTTP, Routers, Core) ────────────────────────────
+    # Nutri App Logger (HTTP, Routers, Core)
     app_logger = logging.getLogger("nutri")
     app_logger.setLevel(logging.DEBUG)
     app_logger.propagate = False
@@ -78,7 +78,7 @@ def setup_logging(log_dir: str = "logs") -> None:
     app_logger.addHandler(console_handler)
     app_logger.addHandler(app_file_handler)
 
-    # ── AI Logger (Agents, LangChain) ─────────────────────────────────────
+    # AI Logger (Agents, LangChain)
     for name in AI_LOGGER_NAMES:
         ai_logger = logging.getLogger(name)
         ai_logger.setLevel(logging.DEBUG)
@@ -87,7 +87,7 @@ def setup_logging(log_dir: str = "logs") -> None:
         ai_logger.addHandler(console_handler)
         ai_logger.addHandler(ai_file_handler)
 
-    # ── Root logger (Third-party logs) ────────────────────────────────────
+    # Root logger (Third-party logs)
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     if not root_logger.handlers:
