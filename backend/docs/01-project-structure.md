@@ -32,10 +32,10 @@ The project uses a **uv workspace** with three member groups:
 members = ["libs/*", "src/*", "packages/*"]
 ```
 
-| Member | Path | Purpose |
-|---|---|---|
-| `nutri-backend` | `src/nutri` | Main application code |
-| `nutri-logger` | `libs/logger` | Shared structured logging library |
+| Member          | Path          | Purpose                           |
+| --------------- | ------------- | --------------------------------- |
+| `nutri-backend` | `src/nutri`   | Main application code             |
+| `nutri-logger`  | `libs/logger` | Shared structured logging library |
 
 ## 3. Source Package -- `src/nutri/`
 
@@ -66,7 +66,7 @@ src/nutri/
       knowledge_tools.py     # get_diet_reference, enrich_attribute_metadata, web_search_info
       nutrition_tools.py     # predict_glucose_spike, calculate_bmr
       plan_tools.py          # create_meal_plan
-      profile_tools.py       # get_user_profile, update_user_profile
+      profile_tools.py       # get_user_profile
       recipe_tools.py        # perform_recipe_web_search
 
     workflows/               # Multi-step orchestrations
@@ -162,6 +162,7 @@ graph LR
 ```
 
 Key constraints:
+
 - `common/` has no internal dependencies; it is a leaf module.
 - `core/` depends only on `common/` and the database layer.
 - `ai/` depends on `core/` (for models and DB access) and `common/`.

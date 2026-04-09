@@ -72,11 +72,11 @@ graph TB
 
 ### Component Types
 
-| Type | Description | Stateful | Examples |
-|---|---|---|---|
-| **Agent** | LLM-powered decision maker with defined input/output schemas | Varies | AssistantAgent (stateful), MealPlanAgent (stateless) |
-| **Tool** | Deterministic or LLM-backed function callable by agents | No | `get_user_profile`, `calculate_bmr` |
-| **Workflow** | Multi-step orchestration pipeline composing agents and DB operations | No | `meal_plan_workflow`, `grocery_workflow` |
+| Type         | Description                                                          | Stateful | Examples                                             |
+| ------------ | -------------------------------------------------------------------- | -------- | ---------------------------------------------------- |
+| **Agent**    | LLM-powered decision maker with defined input/output schemas         | Varies   | AssistantAgent (stateful), MealPlanAgent (stateless) |
+| **Tool**     | Deterministic or LLM-backed function callable by agents              | No       | `get_user_profile`, `calculate_bmr`                  |
+| **Workflow** | Multi-step orchestration pipeline composing agents and DB operations | No       | `meal_plan_workflow`, `grocery_workflow`             |
 
 ## 2. LLM Abstraction Layer
 
@@ -93,24 +93,24 @@ def get_llm(
 ) -> Union[ChatGoogleGenerativeAI, ChatOpenAI]:
 ```
 
-| Provider | Implementation | Default Model | Notes |
-|---|---|---|---|
-| `gemini` | `ChatGoogleGenerativeAI` | `gemini-2.5-flash` | Uses `GEMINI_API_KEY` and `GEMINI_API_ENDPOINT` |
-| `openai` | `ChatOpenAI` | `qwen3-vl-plus` | OpenAI-compatible endpoint (e.g. self-hosted Qwen) |
+| Provider | Implementation           | Default Model      | Notes                                              |
+| -------- | ------------------------ | ------------------ | -------------------------------------------------- |
+| `gemini` | `ChatGoogleGenerativeAI` | `gemini-2.5-flash` | Uses `GEMINI_API_KEY` and `GEMINI_API_ENDPOINT`    |
+| `openai` | `ChatOpenAI`             | `qwen3-vl-plus`    | OpenAI-compatible endpoint (e.g. self-hosted Qwen) |
 
 All agents call `get_llm()` without hard-coding provider details, enabling
 seamless model swapping via environment variables.
 
 ### 2.2 Temperature Strategy
 
-| Agent | Temperature | Rationale |
-|---|---|---|
-| AssistantAgent | 0.2 | Deterministic tool selection for action-oriented requests |
-| MealPlanAgent | 0.5 (default) | Creative variety in meal suggestions |
-| GroceryListAgent | 0.5 (default) | Balanced aggregation |
-| FridgeCheckAgent | 0.5 (default) | Balanced fuzzy matching |
-| SpikePredictorAgent | 0.5 (default) | Balanced analysis |
-| Recipe extraction | 0.1 | Precise structured extraction from web content |
+| Agent               | Temperature   | Rationale                                                 |
+| ------------------- | ------------- | --------------------------------------------------------- |
+| AssistantAgent      | 0.2           | Deterministic tool selection for action-oriented requests |
+| MealPlanAgent       | 0.5 (default) | Creative variety in meal suggestions                      |
+| GroceryListAgent    | 0.5 (default) | Balanced aggregation                                      |
+| FridgeCheckAgent    | 0.5 (default) | Balanced fuzzy matching                                   |
+| SpikePredictorAgent | 0.5 (default) | Balanced analysis                                         |
+| Recipe extraction   | 0.1           | Precise structured extraction from web content            |
 
 ### 2.3 Structured Output
 
@@ -152,6 +152,7 @@ sequenceDiagram
 ```
 
 Key implementation details:
+
 - Connection pool: `AsyncConnectionPool` with max 20 connections.
 - Autocommit mode with `prepare_threshold=0` for compatibility.
 - Initialised during FastAPI lifespan startup, closed on shutdown.
@@ -185,6 +186,7 @@ graph LR
 ```
 
 **Characteristics:**
+
 - **Stateful**: Conversation history persisted via Postgres checkpointer.
 - **Streaming**: Emits events via `astream_events` (v2 protocol).
 - **Language-aware**: Detects user language per message and responds
@@ -194,21 +196,21 @@ graph LR
 
 **Registered Tools:**
 
-| Tool | Purpose |
-|---|---|
-| `get_user_profile` | Retrieve user and family member profiles |
-| `update_user_profile` | Add allergies, conditions, goals |
-| `predict_glucose_spike` | Assess food glucose impact |
-| `calculate_bmr` | Compute Basal Metabolic Rate |
-| `create_meal_plan` | Trigger meal plan generation workflow |
-| `get_health_goals` | Retrieve family health goals |
-| `get_diet_reference` | Query dietary knowledge base |
-| `enrich_attribute_metadata` | Enrich condition/allergy metadata |
-| `web_search_info` | General web search (Tavily) |
+| Tool                        | Purpose                                  |
+| --------------------------- | ---------------------------------------- |
+| `get_user_profile`          | Retrieve user and family member profiles |
+| `predict_glucose_spike`     | Assess food glucose impact               |
+| `calculate_bmr`             | Compute Basal Metabolic Rate             |
+| `create_meal_plan`          | Trigger meal plan generation workflow    |
+| `get_health_goals`          | Retrieve family health goals             |
+| `get_diet_reference`        | Query dietary knowledge base             |
+| `enrich_attribute_metadata` | Enrich condition/allergy metadata        |
+| `web_search_info`           | General web search (Tavily)              |
 
 **System Prompt Architecture:**
 
 The system prompt is constructed dynamically and includes:
+
 1. Identity and language directives.
 2. Core behavior rules (act immediately, no confirmation-only replies).
 3. Non-negotiable execution contract (must call tools in same turn).
@@ -259,6 +261,7 @@ graph LR
 ```
 
 **Retry Strategy:**
+
 - Up to 5 retries on parse failures (`OutputParserException`).
 - First attempt uses a rich prompt; retries use a stricter fallback prompt
   that demands schema-only output.
@@ -296,6 +299,7 @@ shopping list.
 **Output**: `GroceryListData` containing `List[GroceryItemData]`.
 
 Key behaviors:
+
 - Detects ingredient language and responds in the same language.
 - Combines identical items and sums quantities.
 - Groups items into supermarket aisle categories.
@@ -332,6 +336,7 @@ graph LR
 ```
 
 Key behaviors:
+
 - **Short-circuit**: If inventory is empty, returns `buy` for all items
   without calling the LLM.
 - **Fuzzy name matching**: "Beef" matches "Australian Beef", "Lemon" matches
@@ -353,6 +358,7 @@ generate structured dietary metadata.
 submit/update. Not exposed via chat tools directly.
 
 **Output per condition**: `AttributeMetadata`:
+
 ```
 safety_level: "critical" | "warning" | "info"
 dietary_rules: List[str]
@@ -377,6 +383,7 @@ foods.
 **Input**: Food description string.
 
 **Output**: `SpikePredictionData`:
+
 ```
 food, risk_level ("low"/"medium"/"high"), estimated_gl,
 explanation, smart_fix, spike_reduction_percentage
@@ -391,18 +398,17 @@ Tools are LangChain `@tool`-decorated functions that the AssistantAgent can
 invoke during reasoning. Each tool receives a `RunnableConfig` parameter
 providing `user_id` and `language` from the conversation context.
 
-| Tool | Module | Async | Description |
-|---|---|---|---|
-| `get_user_profile` | profile_tools | Yes | Query User + FamilyMember data |
-| `update_user_profile` | profile_tools | Yes | Append allergy/condition to health_profile JSON |
-| `calculate_bmr` | nutrition_tools | No | Harris-Benedict BMR formula |
-| `predict_glucose_spike` | nutrition_tools | No | Delegates to SpikePredictorAgent |
-| `create_meal_plan` | plan_tools | Yes | Builds metabolic context and invokes meal_plan_workflow |
-| `get_health_goals` | health_tools | Yes | Returns BMR/TDEE/goals per family member |
-| `get_diet_reference` | knowledge_tools | No | LLM-generated dietary reference guide |
-| `enrich_attribute_metadata` | knowledge_tools | No | Delegates to EnrichMetadataAgent |
-| `web_search_info` | knowledge_tools | No | Tavily web search with formatted results |
-| `perform_recipe_web_search` | recipe_tools | Yes | Tavily search + LLM recipe extraction |
+| Tool                        | Module          | Async | Description                                             |
+| --------------------------- | --------------- | ----- | ------------------------------------------------------- |
+| `get_user_profile`          | profile_tools   | Yes   | Query User + FamilyMember data                          |
+| `calculate_bmr`             | nutrition_tools | No    | Harris-Benedict BMR formula                             |
+| `predict_glucose_spike`     | nutrition_tools | No    | Delegates to SpikePredictorAgent                        |
+| `create_meal_plan`          | plan_tools      | Yes   | Builds metabolic context and invokes meal_plan_workflow |
+| `get_health_goals`          | health_tools    | Yes   | Returns BMR/TDEE/goals per family member                |
+| `get_diet_reference`        | knowledge_tools | No    | LLM-generated dietary reference guide                   |
+| `enrich_attribute_metadata` | knowledge_tools | No    | Delegates to EnrichMetadataAgent                        |
+| `web_search_info`           | knowledge_tools | No    | Tavily web search with formatted results                |
+| `perform_recipe_web_search` | recipe_tools    | Yes   | Tavily search + LLM recipe extraction                   |
 
 ### Tool Context Propagation
 
@@ -474,6 +480,7 @@ graph LR
 
 Language detection uses `langdetect` with a deterministic seed. The detected
 language code is:
+
 1. Injected into the system prompt so the LLM responds in the correct language.
 2. Propagated to tools so tool outputs include language directives.
 3. Used for non-meaningful message fallback responses.
@@ -484,10 +491,10 @@ language code is:
 
 The chat router implements a two-attempt retry strategy:
 
-| Error Type | Detection | Recovery |
-|---|---|---|
-| Invalid chat history | `"do not have a corresponding ToolMessage"` | New thread ID (`{id}-recovery-{uuid}`) |
-| Output parse failure | `OutputParserException` or validation errors | Same retry with fresh thread |
+| Error Type           | Detection                                    | Recovery                               |
+| -------------------- | -------------------------------------------- | -------------------------------------- |
+| Invalid chat history | `"do not have a corresponding ToolMessage"`  | New thread ID (`{id}-recovery-{uuid}`) |
+| Output parse failure | `OutputParserException` or validation errors | Same retry with fresh thread           |
 
 On retry, the client receives a `retrying` SSE event, and all partial state
 (replies, tools, drafts) is reset.
@@ -503,12 +510,12 @@ The `MealPlanAgent` implements its own retry loop:
 
 ### 7.3 Agent Fallbacks
 
-| Agent | Failure Behavior |
-|---|---|
-| FridgeCheckAgent | Returns `buy` for all items |
+| Agent               | Failure Behavior                                     |
+| ------------------- | ---------------------------------------------------- |
+| FridgeCheckAgent    | Returns `buy` for all items                          |
 | EnrichMetadataAgent | Returns empty `AttributeMetadata` with error message |
-| GroceryListAgent | Propagates exception (handled by workflow) |
-| SpikePredictorAgent | Propagates exception (handled by tool) |
+| GroceryListAgent    | Propagates exception (handled by workflow)           |
+| SpikePredictorAgent | Propagates exception (handled by tool)               |
 
 ## 8. Data Flow Summary
 
@@ -530,7 +537,6 @@ graph TB
     C -- "General question" --> L["web_search_info"]
     L --> M["Stream answer with sources"]
 
-    C -- "Profile update" --> N["update_user_profile"]
     N --> O["Stream confirmation"]
 
     I --> P["User clicks Save Menu"]

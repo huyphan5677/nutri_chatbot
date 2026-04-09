@@ -29,7 +29,6 @@ import { ChatMessage, ChatSession, ToolState } from "../types/chat";
 
 const TOOL_NAMES: Record<string, string> = {
   get_user_profile: "Reading health profile...",
-  update_user_profile: "Updating health profile...",
   predict_glucose_spike: "Analyzing glucose spike...",
   calculate_bmr: "Calculating BMR...",
   create_meal_plan: "Creating meal plan...",
