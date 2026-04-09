@@ -51,9 +51,7 @@ def build_shopping_list_message(shopping_list: list[SaveMenuShoppingItem]) -> st
         key = item.category or "Other"
         grouped.setdefault(key, []).append(item)
 
-    lines: list[str] = [
-        "Shopping list is empty." if not shopping_list else "Here's your shopping list:"
-    ]
+    lines: list[str] = ["Shopping list is empty." if not shopping_list else "🛍️ 🛒"]
     for category, items in grouped.items():
         lines.append(f"\n[{category}]")
         for item in items:

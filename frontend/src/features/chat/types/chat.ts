@@ -12,6 +12,16 @@ export interface MealPlanDraft {
   summary_markdown?: string;
   saved?: boolean;
   meal_plan_id?: string;
+  // Full draft payload for interactive menu widget
+  days?: Array<{
+    day_number: number;
+    eat_date: string;
+    day_header?: string;
+    meals: Array<Record<string, any>>;
+  }>;
+  name?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 export interface ToolProgress {

@@ -82,10 +82,13 @@ export const menuApi = {
 
   saveMenuFromChat: async (
     chatMessageId: string,
+    modifiedDraft?: any,
   ): Promise<SaveMenuFromChatResponse> => {
-    const response = await api.post("/menus/save-from-chat", {
-      chat_message_id: chatMessageId,
-    });
+    const payload: any = { chat_message_id: chatMessageId };
+    if (modifiedDraft) {
+      payload.modified_draft = modifiedDraft;
+    }
+    const response = await api.post("/menus/save-from-chat", payload);
     return response.data;
   },
 

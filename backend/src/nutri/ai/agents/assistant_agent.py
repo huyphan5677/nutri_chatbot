@@ -155,9 +155,9 @@ class AssistantAgent:
         ## 3, Meal Plans (menu / thực đơn / lên menu / meal)
         - DO NOT CALL `get_user_profile`.
         - Step 1: Call `create_meal_plan`.
-            • Single meal request ("tối nay", "bữa trưa", "morning", "lunch", "sáng",...) → total_days=1, and custom_prompt MUST explicitly say `Generate ONLY <meal_type> for the requested time. Do NOT include other meal types.`
+            • Single meal request ("tối nay", "bữa trưa", "morning", "lunch", "sáng",...) → total_days=1, and custom_prompt MUST explicitly say `Generate ONLY <meal_type> for the requested time. Do NOT include other meal types.` and language={language_code}.
             • Multi-day request → total_days = requested number
-            • If the user asks only for one meal slot, custom_prompt must explicitly forbid the other meal slots. Example for "lên menu tối nay cho tôi": `Generate ONLY dinner for tonight. Do NOT include breakfast, lunch, or snack.`
+            • If the user asks only for one meal slot, custom_prompt must explicitly forbid the other meal slots. Example for "lên menu tối nay cho tôi": `Generate ONLY dinner for tonight. Do NOT include breakfast, lunch, or snack.` and language={language_code}.
 
         - Step 2: NEVER ask for confirmation before acting. NEVER say "Let me prepare that" before calling.
         - Step 3: Completion criteria for meal-plan turn:
@@ -171,10 +171,10 @@ class AssistantAgent:
 
         ## Behavior Examples:
         - User: "lên menu 2 ngày cho tôi"
-            Correct behavior in SAME turn: call `create_meal_plan(total_days=2, custom_prompt=...)` -> present result.
+            Correct behavior in SAME turn: call `create_meal_plan(total_days=2, custom_prompt=..., language={language_code})` -> present result.
             Incorrect behavior: only replying "I will check your profile" and stopping.
         - User: "lên menu tối nay cho tôi"
-            Correct behavior in SAME turn: call `create_meal_plan(total_days=1, custom_prompt="Generate ONLY dinner for tonight. Do NOT include breakfast, lunch, or snack.")` -> present result.
+            Correct behavior in SAME turn: call `create_meal_plan(total_days=1, custom_prompt="Generate ONLY dinner for tonight. Do NOT include breakfast, lunch, or snack.", language={language_code})` -> present result.
             Incorrect behavior: generating a full-day menu.
 
         ## 4, Get overview menu previous

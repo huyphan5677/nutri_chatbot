@@ -14,6 +14,7 @@ from nutri.api.routers import (
     auth,
     chat,
     collections,
+    draft_edit,
     grocery,
     inventory,
     memory,
@@ -128,7 +129,9 @@ app.include_router(
     profile.router, prefix=f"{settings.API_V1_STR}/profile", tags=["Profile"]
 )
 app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["Chat"])
-app.include_router(memory.router, prefix=f"{settings.API_V1_STR}/memory", tags=["Memory"])
+app.include_router(
+    memory.router, prefix=f"{settings.API_V1_STR}/memory", tags=["Memory"]
+)
 app.include_router(
     collections.router,
     prefix=f"{settings.API_V1_STR}/collections",
@@ -146,6 +149,9 @@ app.include_router(
 app.include_router(
     system.router, prefix=f"{settings.API_V1_STR}/system", tags=["System"]
 )
+app.include_router(
+    draft_edit.router, prefix=f"{settings.API_V1_STR}/draft", tags=["Draft Edit"]
+)
 
 
 if __name__ == "__main__":
@@ -154,6 +160,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "nutri.api.main:app",
         host="0.0.0.0",
-        port=18000,
+        port=8000,
         reload=True,
     )

@@ -187,7 +187,11 @@ async def _load_user_profile_context(db: AsyncSession, user_id: str):
 
 
 async def generate_meal_plan_draft(
-    user_id: str, total_days: int, custom_prompt: str = "", config: dict | None = None
+    user_id: str,
+    total_days: int,
+    custom_prompt: str = "",
+    language: str = "en",
+    config: dict | None = None,
 ):
     """Generate meal plan draft using 2-step: multi-day skeleton then global parallel enrichment.
 
@@ -235,6 +239,7 @@ async def generate_meal_plan_draft(
                 total_days=total_days,
                 custom_prompt=custom_prompt,
                 recent_menu_context=recent_menu_context,
+                language=language,
             )
 
             # Map the skeleton days (0-indexed)
@@ -263,6 +268,7 @@ async def generate_meal_plan_draft(
                         key_ingredients=m_skeleton.key_ingredients,
                         profile_context=profile_context,
                         custom_prompt=custom_prompt,
+                        language=language,
                     )
                     await _emit(
                         f"Day {d_idx + 1}: {res.meal_type.capitalize()}",
@@ -326,6 +332,7 @@ async def generate_meal_plan_draft(
                     total_days=total_days,
                     previous_days_context=previous_days_context,
                     custom_prompt=custom_prompt,
+                    language=language,
                 )
 
             # Serialization and markdown building

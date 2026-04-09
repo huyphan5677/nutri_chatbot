@@ -39,6 +39,7 @@ class MealPlanResponse(BaseModel):
 
 class SaveMenuFromChatRequest(BaseModel):
     chat_message_id: str
+    modified_draft: Optional[dict] = None
 
 
 class SaveMenuShoppingItem(BaseModel):

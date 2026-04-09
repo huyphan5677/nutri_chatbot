@@ -3,8 +3,8 @@
 from typing import Any, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
 import pydantic
+from pydantic import BaseModel, Field
 
 
 class IngredientSchema(BaseModel):
@@ -51,14 +51,14 @@ class RecipeList(BaseModel):
 class RecipeRead(RecipeBase):
     id: UUID
 
-    class Config:
-        from_attributes = True
+    model_config = pydantic.ConfigDict(from_attributes=True)
 
     @pydantic.field_validator("instructions", mode="before")
     @classmethod
     def parse_instructions(cls, v):
         if isinstance(v, str):
             import json
+
             try:
                 parsed = json.loads(v)
                 if isinstance(parsed, list):
@@ -73,22 +73,25 @@ class RecipeRead(RecipeBase):
     def parse_ingredients(cls, v):
         if isinstance(v, str):
             import json
+
             try:
                 parsed = json.loads(v)
                 if isinstance(parsed, list):
                     return parsed
             except Exception:
                 return []
-        
+
         if isinstance(v, list) and len(v) > 0 and hasattr(v[0], "ingredient"):
             res = []
             for ri in v:
                 amount_str = str(ri.quantity) if ri.quantity else None
-                res.append({
-                    "item": ri.ingredient.name if ri.ingredient else "Unknown",
-                    "amount": amount_str,
-                    "unit": ri.ingredient.base_unit if ri.ingredient else None
-                })
+                res.append(
+                    {
+                        "item": ri.ingredient.name if ri.ingredient else "Unknown",
+                        "amount": amount_str,
+                        "unit": ri.ingredient.base_unit if ri.ingredient else None,
+                    }
+                )
             return res
-            
+
         return v

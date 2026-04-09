@@ -1,6 +1,5 @@
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
-from nutri.ai.language import get_language_from_config
 from nutri.ai.workflows.meal_plan_workflow import generate_meal_plan_draft
 from nutri.core.db.session import async_session_maker
 from nutri.core.onboarding.models import FamilyMember
@@ -58,8 +57,9 @@ async def _build_metabolic_context(user_id: str, language: str) -> str:
 
     # Inject Mem0 long-term memory
     try:
-        from nutri.ai.memory import get_nutri_memory
         import asyncio
+
+        from nutri.ai.memory import get_nutri_memory
 
         nutri_memory = get_nutri_memory()
 
@@ -92,14 +92,17 @@ async def _build_metabolic_context(user_id: str, language: str) -> str:
 
 @tool
 async def create_meal_plan(
-    total_days: int, custom_prompt: str = "", *, config: RunnableConfig
+    total_days: int,
+    custom_prompt: str = "",
+    language: str = "en",
+    *,
+    config: RunnableConfig,
 ) -> dict:
     """
     Activates the deep workflow to generate a meal plan draft for the user (1-7 days).
     Use this whenever the user asks for a menu/thuc don, including single-day requests
     like tonight/today (use total_days=1 and include constraints via custom_prompt).
     """
-    language = get_language_from_config(config)
     user_id = config.get("configurable", {}).get("user_id")
     from langchain_core.callbacks import adispatch_custom_event
 
@@ -125,6 +128,7 @@ async def create_meal_plan(
         user_id=user_id,
         total_days=total_days,
         custom_prompt=effective_prompt,
+        language=language,
         config=config,
     )
     if draft_payload.get("error"):

@@ -221,6 +221,9 @@ async def save_menu_from_chat(
             status_code=400, detail="No meal plan draft found in this message"
         )
 
+    if payload.modified_draft:
+        draft = payload.modified_draft
+
     if draft.get("saved"):
         existing_items_result = await db.execute(
             select(GroceryItem)

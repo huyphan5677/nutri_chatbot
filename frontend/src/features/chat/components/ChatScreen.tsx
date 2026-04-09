@@ -26,6 +26,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import remarkGfm from "remark-gfm";
 import { chatApi } from "../api/chatApi";
 import { ChatMessage, ChatSession, ToolState } from "../types/chat";
+import MenuDraftWidget from "./MenuDraftWidget";
 
 const TOOL_NAMES: Record<string, string> = {
   get_user_profile: "Reading health profile...",
@@ -687,7 +688,11 @@ export default function ChatScreen() {
       value,
     );
 
-  const handleSaveMenu = async (messageId: string, draftId?: string) => {
+  const handleSaveMenu = async (
+    messageId: string,
+    draftId?: string,
+    modifiedDraft?: any,
+  ) => {
     let resolvedMessageId = messageId;
 
     if (!isLikelyUuid(resolvedMessageId)) {
@@ -775,7 +780,10 @@ export default function ChatScreen() {
       [messageId]: true,
     }));
     try {
-      const result = await menuApi.saveMenuFromChat(resolvedMessageId);
+      const result = await menuApi.saveMenuFromChat(
+        resolvedMessageId,
+        modifiedDraft,
+      );
       setMessages((prev) =>
         prev.map((m) =>
           m.id === resolvedMessageId ||
@@ -1213,10 +1221,12 @@ export default function ChatScreen() {
                       className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
                     >
                       <div
-                        className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-4 sm:px-5 py-3 ${
+                        className={`rounded-2xl px-4 sm:px-5 py-3 ${
                           msg.role === "user"
-                            ? "bg-primary text-white rounded-tr-sm"
-                            : "bg-white text-gray-800 rounded-tl-sm border border-gray-100 shadow-sm"
+                            ? "max-w-[85%] sm:max-w-[80%] bg-primary text-white rounded-tr-sm"
+                            : msg.meal_plan_draft?.days
+                              ? "w-full max-w-full bg-white text-gray-800 rounded-tl-sm border border-gray-100 shadow-sm"
+                              : "max-w-[85%] sm:max-w-[80%] bg-white text-gray-800 rounded-tl-sm border border-gray-100 shadow-sm"
                         }`}
                       >
                         {msg.role === "assistant" &&
@@ -1237,80 +1247,99 @@ export default function ChatScreen() {
                             />
                           ))}
 
-                        {msg.content && (
-                          <div
-                            className={`prose prose-sm max-w-none break-words ${msg.role === "user" ? "prose-invert" : ""}`}
-                          >
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                h1: ({ node, ...props }) => (
-                                  <h1
-                                    className="text-lg sm:text-xl font-bold mt-4 mb-2"
-                                    {...props}
-                                  />
-                                ),
-                                h2: ({ node, ...props }) => (
-                                  <h2
-                                    className="text-base sm:text-lg font-bold mt-3 mb-2"
-                                    {...props}
-                                  />
-                                ),
-                                h3: ({ node, ...props }) => (
-                                  <h3
-                                    className="text-sm sm:text-base font-bold mt-2 mb-1"
-                                    {...props}
-                                  />
-                                ),
-                                p: ({ node, ...props }) => (
-                                  <p
-                                    className="mb-2 last:mb-0 leading-relaxed"
-                                    {...props}
-                                  />
-                                ),
-                                ul: ({ node, ...props }) => (
-                                  <ul
-                                    className="list-disc pl-4 sm:pl-5 mb-2 space-y-1"
-                                    {...props}
-                                  />
-                                ),
-                                ol: ({ node, ...props }) => (
-                                  <ol
-                                    className="list-decimal pl-4 sm:pl-5 mb-2 space-y-1"
-                                    {...props}
-                                  />
-                                ),
-                                li: ({ node, ...props }) => (
-                                  <li className="" {...props} />
-                                ),
-                                strong: ({ node, ...props }) => (
-                                  <strong
-                                    className="font-semibold"
-                                    {...props}
-                                  />
-                                ),
-                                a: ({ node, ...props }) => (
-                                  <a
-                                    className="text-blue-500 hover:underline break-all"
-                                    {...props}
-                                  />
-                                ),
-                                code: ({ node, inline, ...props }: any) =>
-                                  inline ? (
-                                    <code
-                                      className="bg-black/5 rounded px-1 py-0.5 text-xs sm:text-sm font-mono break-all"
+                        {/* Interactive Menu Widget — replaces markdown when draft has days */}
+                        {msg.role === "assistant" &&
+                        msg.meal_plan_draft?.days &&
+                        msg.meal_plan_draft.days.length > 0 ? (
+                          <MenuDraftWidget
+                            draft={msg.meal_plan_draft}
+                            onSave={(modifiedDraft) =>
+                              handleSaveMenu(
+                                msg.id,
+                                msg.meal_plan_draft?.draft_id,
+                                modifiedDraft,
+                              )
+                            }
+                            isSaved={!!msg.meal_plan_draft.saved}
+                            mealPlanId={msg.meal_plan_draft.meal_plan_id}
+                            isSaving={!!saveMenuLoadingByMessage[msg.id]}
+                          />
+                        ) : (
+                          msg.content && (
+                            <div
+                              className={`prose prose-sm max-w-none break-words ${msg.role === "user" ? "prose-invert" : ""}`}
+                            >
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  h1: ({ node, ...props }) => (
+                                    <h1
+                                      className="text-lg sm:text-xl font-bold mt-4 mb-2"
                                       {...props}
                                     />
-                                  ) : (
-                                    <pre className="bg-black/5 rounded p-3 overflow-x-auto text-xs sm:text-sm font-mono mt-2 mb-2 w-full max-w-full">
-                                      <code {...props} />
-                                    </pre>
                                   ),
-                              }}
-                            >
-                              {msg.content}
-                            </ReactMarkdown>
-                          </div>
+                                  h2: ({ node, ...props }) => (
+                                    <h2
+                                      className="text-base sm:text-lg font-bold mt-3 mb-2"
+                                      {...props}
+                                    />
+                                  ),
+                                  h3: ({ node, ...props }) => (
+                                    <h3
+                                      className="text-sm sm:text-base font-bold mt-2 mb-1"
+                                      {...props}
+                                    />
+                                  ),
+                                  p: ({ node, ...props }) => (
+                                    <p
+                                      className="mb-2 last:mb-0 leading-relaxed"
+                                      {...props}
+                                    />
+                                  ),
+                                  ul: ({ node, ...props }) => (
+                                    <ul
+                                      className="list-disc pl-4 sm:pl-5 mb-2 space-y-1"
+                                      {...props}
+                                    />
+                                  ),
+                                  ol: ({ node, ...props }) => (
+                                    <ol
+                                      className="list-decimal pl-4 sm:pl-5 mb-2 space-y-1"
+                                      {...props}
+                                    />
+                                  ),
+                                  li: ({ node, ...props }) => (
+                                    <li className="" {...props} />
+                                  ),
+                                  strong: ({ node, ...props }) => (
+                                    <strong
+                                      className="font-semibold"
+                                      {...props}
+                                    />
+                                  ),
+                                  a: ({ node, ...props }) => (
+                                    <a
+                                      className="text-blue-500 hover:underline break-all"
+                                      {...props}
+                                    />
+                                  ),
+                                  code: ({ node, inline, ...props }: any) =>
+                                    inline ? (
+                                      <code
+                                        className="bg-black/5 rounded px-1 py-0.5 text-xs sm:text-sm font-mono break-all"
+                                        {...props}
+                                      />
+                                    ) : (
+                                      <pre className="bg-black/5 rounded p-3 overflow-x-auto text-xs sm:text-sm font-mono mt-2 mb-2 w-full max-w-full">
+                                        <code {...props} />
+                                      </pre>
+                                    ),
+                                }}
+                              >
+                                {msg.content}
+                              </ReactMarkdown>
+                            </div>
+                          )
                         )}
                       </div>
                       {/* Timestamp */}
@@ -1326,47 +1355,50 @@ export default function ChatScreen() {
                         </span>
                       )}
 
-                      {msg.role === "assistant" && msg.meal_plan_draft && (
-                        <div className="mt-2 px-1">
-                          {msg.meal_plan_draft.saved ? (
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="inline-flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                Saved Menu.
+                      {/* Legacy save button for drafts WITHOUT days data */}
+                      {msg.role === "assistant" &&
+                        msg.meal_plan_draft &&
+                        !msg.meal_plan_draft.days && (
+                          <div className="mt-2 px-1">
+                            {msg.meal_plan_draft.saved ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="inline-flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  Saved Menu.
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => navigate("/grocery")}
+                                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
+                                >
+                                  <ShoppingCart className="w-3.5 h-3.5" />
+                                  Go to Shopping...
+                                </button>
                               </div>
+                            ) : (
                               <button
                                 type="button"
-                                onClick={() => navigate("/grocery")}
-                                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
+                                onClick={() =>
+                                  handleSaveMenu(
+                                    msg.id,
+                                    msg.meal_plan_draft?.draft_id,
+                                  )
+                                }
+                                disabled={
+                                  !!saveMenuLoadingByMessage[msg.id] ||
+                                  (!isLikelyUuid(msg.id) &&
+                                    !msg.meal_plan_draft?.draft_id)
+                                }
+                                className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full border border-primary/30 bg-white text-primary hover:bg-primary/5 disabled:opacity-60 disabled:cursor-not-allowed"
                               >
-                                <ShoppingCart className="w-3.5 h-3.5" />
-                                Go to Shopping...
+                                {saveMenuLoadingByMessage[msg.id] ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : null}
+                                Save Menu
                               </button>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleSaveMenu(
-                                  msg.id,
-                                  msg.meal_plan_draft?.draft_id,
-                                )
-                              }
-                              disabled={
-                                !!saveMenuLoadingByMessage[msg.id] ||
-                                (!isLikelyUuid(msg.id) &&
-                                  !msg.meal_plan_draft?.draft_id)
-                              }
-                              className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full border border-primary/30 bg-white text-primary hover:bg-primary/5 disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                              {saveMenuLoadingByMessage[msg.id] ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : null}
-                              Save Menu
-                            </button>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </div>
+                        )}
                     </div>
                   </div>
                 ))}

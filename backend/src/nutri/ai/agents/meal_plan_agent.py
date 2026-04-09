@@ -363,9 +363,9 @@ class MealPlanAgent:
         custom_prompt: Optional[str] = None,
         max_parse_retries: int = 3,
         recent_menu_context: Optional[str] = None,
+        language: str = "en",
     ) -> SkeletonMultiDayData:
         """Generate a lightweight skeleton for all days: meal names and types only."""
-
         prompt = SystemPrompt(
             background=[
                 "You are an expert nutritionist and meal planner.",
@@ -385,6 +385,7 @@ class MealPlanAgent:
                 "Prefer lighter cooking methods.",
             ],
             output=[
+                f"You MUST respond entirely in this language: {language}.",
                 "Return a list of days.",
                 "For each day return day_number, day_header, and a list of meals.",
                 "If the Custom Request limits meal scope, return only those meals for each day and no placeholders for other meal types.",
@@ -435,13 +436,13 @@ class MealPlanAgent:
         profile_context: str,
         custom_prompt: Optional[str] = None,
         max_parse_retries: int = 5,
+        language: str = "en",
     ) -> GeneratedMealData:
         """Enrich a single skeleton meal into full GeneratedMealData."""
 
         key_ing_str = (
             ", ".join(key_ingredients) if key_ingredients else "as appropriate"
         )
-
         prompt = SystemPrompt(
             background=[
                 "You are an expert nutritionist and meal planner.",
@@ -459,6 +460,7 @@ class MealPlanAgent:
                 "Strictly respect any dietary restrictions mentioned in the profile or custom request.",
             ],
             output=[
+                f"You MUST respond entirely in this language: {language}.",
                 "Return a single meal object with all fields filled.",
                 "name must match the provided dish name exactly.",
                 f"meal_type must be: {meal_type}",
@@ -484,6 +486,7 @@ class MealPlanAgent:
                 "Must include: name, meal_type, ingredients, calories, protein_grams, carbs_grams, fat_grams, per_person_breakdown, adjustment_tips, why, instructions.",
                 "Use 'carbs_grams' key exactly. Never null for macro fields; use 0.",
                 "Ensure ingredients is a non-empty list.",
+                f"You MUST respond entirely in this language: {language}.",
             ],
         )
         fallback_messages = [
@@ -525,9 +528,9 @@ class MealPlanAgent:
         previous_days_context: Optional[str] = None,
         custom_prompt: Optional[str] = None,
         max_parse_retries: int = 5,
+        language: str = "en",
     ) -> DayMealsData:
         """Asynchronously generates a meal plan for a single day (legacy single-call)."""
-
         prompt = SystemPrompt(
             background=[
                 "You are an expert nutritionist and meal planner.",
@@ -550,6 +553,7 @@ class MealPlanAgent:
                 "Generate the meals for the requested day.",
             ],
             output=[
+                f"You MUST respond entirely in this language: {language}.",
                 "day_header: Day {N} - {X} people - Targets: {per-person kcal list}",
                 "For each meal return keys: meal_type, name, ingredients, per_person_breakdown, calories, adjustment_tips, why, instructions.",
                 "daily_summary_lines should include per-person total kcal, target, and gap.",
@@ -570,6 +574,7 @@ class MealPlanAgent:
                 "Use 'carbs_grams' key exactly.",
                 "Never output null for macro fields; use 0 when unknown.",
                 "Ensure ingredients is a non-empty list.",
+                f"You MUST respond entirely in this language: {language}.",
             ],
         )
 
