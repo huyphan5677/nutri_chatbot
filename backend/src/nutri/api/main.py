@@ -5,6 +5,8 @@ import time
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from nutri.ai.checkpoint import close_checkpointer, init_checkpointer
@@ -14,6 +16,7 @@ from nutri.api.routers import (
     collections,
     grocery,
     inventory,
+    memory,
     menus,
     onboarding,
     profile,
@@ -24,7 +27,6 @@ from nutri.common.config.logging_config import setup_logging
 from nutri.common.config.settings import settings
 from nutri.core.db.session import Base, engine
 from starlette.middleware.base import RequestResponseEndpoint
-from contextlib import asynccontextmanager
 
 setup_logging()
 logger = logging.getLogger("nutri.api")
@@ -36,7 +38,7 @@ async def lifespan(app: FastAPI):
     logger.info("Starting %s (env=%s)", settings.PROJECT_NAME, settings.ENVIRONMENT)
 
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(Base.metadata.create_all, checkfirst=True)
 
     logger.info("Database tables ready")
     await init_checkpointer()
@@ -49,7 +51,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json", lifespan=lifespan,
+    title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan,
 )
 
 
@@ -114,9 +118,6 @@ async def log_requests(
     return response
 
 
-
-
-
 # Include Routers
 app.include_router(
     onboarding.router, prefix=f"{settings.API_V1_STR}/onboarding", tags=["Onboarding"]
@@ -127,6 +128,7 @@ app.include_router(
     profile.router, prefix=f"{settings.API_V1_STR}/profile", tags=["Profile"]
 )
 app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["Chat"])
+app.include_router(memory.router, prefix=f"{settings.API_V1_STR}/memory", tags=["Memory"])
 app.include_router(
     collections.router,
     prefix=f"{settings.API_V1_STR}/collections",
@@ -152,6 +154,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "nutri.api.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=18000,
         reload=True,
     )
