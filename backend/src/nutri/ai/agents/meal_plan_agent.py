@@ -6,7 +6,7 @@ from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import HumanMessage, SystemMessage
 from nutri.ai.llm_client import get_llm
 from nutri.ai.system_prompt import SystemPrompt
-from nutri.ai.tools.menu_tools import get_overview_menu_previous
+from nutri.ai.tools.menu_tools import fetch_historical_diet_log
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 logger = logging.getLogger("nutri.ai.agents.meal_plan")
@@ -316,9 +316,17 @@ class MealPlanAgent:
             return ""
 
         try:
-            recent_menu_context = await get_overview_menu_previous.ainvoke(
-                {"section": str(num_of_pre_day)},
-                config=config,
+            language = (
+                config.get("configurable", {}).get("language", "en") if config else "en"
+            )
+            user_id = config.get("configurable", {}).get("user_id") if config else None
+            if not user_id:
+                return ""
+
+            recent_menu_context = await fetch_historical_diet_log(
+                user_id=user_id,
+                language=language,
+                days_to_look_back_in_past=str(num_of_pre_day),
             )
         except Exception as exc:
             logger.warning("Failed to load recent menu context: %s", exc)

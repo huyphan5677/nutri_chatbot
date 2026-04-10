@@ -16,9 +16,9 @@ from sqlalchemy.orm import selectinload
 logger = logging.getLogger("nutri.ai.tools.menu_tools")
 
 
-def _parse_section(section: str) -> int | None:
-    """Parse section into a day window or None for full history."""
-    text = str(section or "all").strip().lower()
+def _parse_days_back(days_text: str) -> int | None:
+    """Parse text into a day window for past history or None for full history."""
+    text = str(days_text or "all").strip().lower()
     if not text or text in {"all", "previous", "history", "all_previous"}:
         return None
 
@@ -30,7 +30,7 @@ def _parse_section(section: str) -> int | None:
         return max(int(match.group(1)), 1)
 
     raise ValueError(
-        "section must be 'all' or a positive day count such as '7', '7d', or 'days:7'"
+        "days_to_look_back_in_past must be 'all' or a positive day count such as '7', '7d', or 'days:7'"
     )
 
 
@@ -52,7 +52,7 @@ def _plan_matches_window(
 def _format_previous_menus(
     meal_plans: list[MealPlan],
     language: str,
-    section: str,
+    days_to_look_back: str,
     days_back: int | None,
 ) -> str:
     if not meal_plans:
@@ -67,7 +67,7 @@ def _format_previous_menus(
 
     lines = [
         "Previous menu history:",
-        f"Requested section: {section}",
+        f"Requested past timeframe: {days_to_look_back}",
         f"Target response language code: {language}",
     ]
 
@@ -114,25 +114,14 @@ def _format_previous_menus(
     return "\n".join(lines)
 
 
-@tool
-async def get_overview_menu_previous(
-    section: str = "all", *, config: RunnableConfig
+async def fetch_historical_diet_log(
+    user_id: str,
+    language: str,
+    days_to_look_back_in_past: str,
 ) -> str:
-    """
-    Retrieve the current user's previous meal plans.
-
-    Args:
-        section:
-            - "all": return all saved menu history.
-            - "<n>" / "7d" / "days:7": return menus that were used in the previous n days.
-    """
-    language = get_language_from_config(config)
-    user_id = config.get("configurable", {}).get("user_id")
-    if not user_id:
-        return "Authentication required to view previous menus."
-
+    """Internal function without LangChain tracing wrappers."""
     try:
-        days_back = _parse_section(section)
+        days_back = _parse_days_back(days_to_look_back_in_past)
     except ValueError as exc:
         return f"{exc}\nTarget response language code: {language}"
 
@@ -160,39 +149,62 @@ async def get_overview_menu_previous(
         ]
 
     logger.info(
-        "get_menu_previous | user_id=%s | section=%s | days_back=%s | matched=%d",
+        "fetch_historical_diet_log | user_id=%s | days_to_look_back=%s | matched=%d",
         user_id,
-        section,
-        days_back,
+        days_to_look_back_in_past,
         len(previous_meal_plans),
     )
 
     return _format_previous_menus(
         meal_plans=previous_meal_plans,
         language=language,
-        section=section,
+        days_to_look_back=days_to_look_back_in_past,
         days_back=days_back,
     )
 
 
-@tool
-async def get_detail_menu_previous_by_id(
-    menu_id: str, *, config: RunnableConfig
+@tool("view_historical_diet_log")
+async def get_overview_menu_previous(
+    days_to_look_back_in_past: str = "all", *, config: RunnableConfig
 ) -> str:
     """
-    Retrieve detailed information for one saved menu by id.
+    Retrieve the current user's PAST/PREVIOUS saved meal plans.
+
+    WARNING: DO NOT use this tool to CREATE, PLAN, or GENERATE new menus.
+    ONLY USE THIS TOOL when the user explicitly asks to view their history
+    or past menus (e.g., "show me the past menu from 2 days ago", "what did I eat last week?", "view all old menus").
 
     Args:
-        menu_id: Meal plan id returned by `get_overview_menu_previous`.
+        days_to_look_back_in_past:
+            - "all": return all saved past menu history.
+            - "<n>": return old menus from exactly n days in the past.
+    """
+    language = get_language_from_config(config)
+    user_id = config.get("configurable", {}).get("user_id")
+    if not user_id:
+        return "Authentication required to view previous menus."
+
+    return await fetch_historical_diet_log(user_id, language, days_to_look_back_in_past)
+
+
+@tool("view_historical_diet_log_detail")
+async def get_detail_menu_previous_by_id(
+    log_id: str, *, config: RunnableConfig
+) -> str:
+    """
+    Retrieve detailed information for one saved historical log by id.
+
+    Args:
+        log_id: Meal plan id returned by `view_historical_diet_log`.
     """
     language = get_language_from_config(config)
     user_id = config.get("configurable", {}).get("user_id")
     if not user_id:
         return "Authentication required to view menu details."
 
-    clean_menu_id = str(menu_id or "").strip()
+    clean_menu_id = str(log_id or "").strip()
     if not clean_menu_id:
-        return f"menu_id is required.\nTarget response language code: {language}"
+        return f"log_id is required.\nTarget response language code: {language}"
 
     async with async_session_maker() as db:
         result = await db.execute(

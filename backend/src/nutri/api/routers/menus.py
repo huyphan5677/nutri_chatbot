@@ -22,7 +22,6 @@ from nutri.core.menus.dto import (
 from nutri.core.menus.models import MealPlan
 from nutri.core.menus.services import (
     apply_menu_updates,
-    build_shopping_list_message,
     find_meal_plan_draft,
     format_quantity_grams,
     get_latest_meal_plan,
@@ -281,22 +280,6 @@ async def save_menu_from_chat(
         )
         for item in grocery_items
     ]
-
-    shopping_message = ChatMessage(
-        session_id=chat_message.session_id,
-        message_type="ai",
-        content=build_shopping_list_message(shopping_list_items),
-        tool_calls=[
-            {
-                "type": "shopping_list",
-                "meal_plan_id": str(meal_plan.id),
-                "items": [item.model_dump() for item in shopping_list_items],
-            }
-        ],
-        token_usage=0,
-        is_read=False,
-    )
-    db.add(shopping_message)
 
     await db.commit()
 

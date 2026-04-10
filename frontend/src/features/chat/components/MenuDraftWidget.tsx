@@ -16,7 +16,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { menuDraftApi } from "../api/menuDraftApi";
 import { MealPlanDraft } from "../types/chat";
@@ -66,13 +66,22 @@ const MEAL_TYPE_LABELS: Record<
 };
 
 function ShimmerLoader() {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSeconds((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-white p-5 shadow-sm">
       <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-primary/5 to-transparent border-t-2 border-primary/50" />
       <div className="flex items-center gap-3 mb-4">
         <Sparkles className="w-5 h-5 text-primary animate-pulse" />
         <span className="text-sm font-semibold text-primary/80">
-          Đang thiết kế món mới...
+          Đang thiết kế món mới... {seconds}s
         </span>
       </div>
       <div className="space-y-3">
@@ -559,12 +568,14 @@ export default function MenuDraftWidget({
   isSaved,
   mealPlanId,
   isSaving,
+  onModify,
 }: {
   draft: MealPlanDraft;
   onSave: (modifiedDraft?: MenuDraftState) => void;
   isSaved: boolean;
   mealPlanId?: string;
   isSaving?: boolean;
+  onModify?: () => void;
 }) {
   const navigate = useNavigate();
 
@@ -590,6 +601,7 @@ export default function MenuDraftWidget({
   };
 
   const handleRemoveMeal = (dayNum: number, mealId: string) => {
+    onModify?.();
     setMenuState((prev) => ({
       ...prev,
       days: prev.days.map((d) =>
@@ -606,6 +618,7 @@ export default function MenuDraftWidget({
     originalMeal: DraftMeal,
     prompt: string,
   ) => {
+    onModify?.();
     setSwapLoading(true);
     setMenuState((prev) => ({
       ...prev,
@@ -681,6 +694,7 @@ export default function MenuDraftWidget({
     mealType: string,
     prompt: string,
   ) => {
+    onModify?.();
     setAddLoading(true);
     const placeholderId = `draft-meal-add-${Date.now()}`;
 

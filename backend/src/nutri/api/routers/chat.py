@@ -6,7 +6,6 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
-from sse_starlette.sse import EventSourceResponse
 from langchain_core.exceptions import OutputParserException
 from nutri.ai.agents.assistant_agent import AssistantAgent
 from nutri.ai.language import detect_user_language, normalize_language
@@ -263,6 +262,7 @@ async def chat_stream_endpoint(
     )
 
     if not is_meaningful_message(request.message):
+
         async def empty_generator():
             yield f"data: {json.dumps({'type': 'init', 'thread_id': thread_id})}\n\n"
             if request_language == "vi":
@@ -279,6 +279,7 @@ async def chat_stream_endpoint(
                 )
             yield f"data: {json.dumps({'type': 'chunk', 'content': content})}\n\n"
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
         return StreamingResponse(empty_generator(), media_type="text/event-stream")
 
     async def bg_agent_task(q: asyncio.Queue, t_id: str, msg: str, uid: str):
@@ -373,7 +374,7 @@ async def chat_stream_endpoint(
                         all_tools.extend(event.get("calls", []))
                         continue
                     elif kind == "tool_end":
-                        if event.get("name") == "create_meal_plan":
+                        if event.get("name") == "build_new_menu_plan":
                             draft = event.get("meal_plan_draft")
                             if isinstance(draft, dict):
                                 current_meal_plan_draft = draft

@@ -110,12 +110,15 @@ class AssistantAgent:
 
     def get_system_message(self, memories_context: str = "") -> SystemMessage:
         language_code = normalize_language(self.language, default="en")
+        now_str = datetime.now(ZoneInfo(self.timezone)).strftime(
+            "%A, %d/%m/%Y %H:%M:%S"
+        )
         prompt = f"""
         # IDENTITY
         You are Corin, a professional, empathetic nutrition assistant.
         You NEVER guess health recommendations. You ALWAYS use your tools to analyze data.
         You MUST respond in the user's language.
-        User timezone: {self.timezone} and now: {datetime.now(ZoneInfo(self.timezone))}.
+        User timezone: {self.timezone} and now: {now_str}.
         Detected user language code: {language_code}.
         If a tool returns English text, rewrite and present it in language code {language_code}.
         If language detection confidence is low, default to English.
@@ -154,14 +157,14 @@ class AssistantAgent:
 
         ## 3, Meal Plans (menu / thực đơn / lên menu / meal)
         - DO NOT CALL `get_user_profile`.
-        - Step 1: Call `create_meal_plan`.
+        - Step 1: Call `build_new_menu_plan`.
             • Single meal request ("tối nay", "bữa trưa", "morning", "lunch", "sáng",...) → total_days=1, and custom_prompt MUST explicitly say `Generate ONLY <meal_type> for the requested time. Do NOT include other meal types.` and language={language_code}.
             • Multi-day request → total_days = requested number
             • If the user asks only for one meal slot, custom_prompt must explicitly forbid the other meal slots. Example for "lên menu tối nay cho tôi": `Generate ONLY dinner for tonight. Do NOT include breakfast, lunch, or snack.` and language={language_code}.
 
         - Step 2: NEVER ask for confirmation before acting. NEVER say "Let me prepare that" before calling.
         - Step 3: Completion criteria for meal-plan turn:
-            a) `create_meal_plan` has been called
+            a) `build_new_menu_plan` has been called
             b) final response includes clear outcome and next action (Review + Save menu + View details)
 
         ## Tool-Chaining Reliability Rule
@@ -171,14 +174,16 @@ class AssistantAgent:
 
         ## Behavior Examples:
         - User: "lên menu 2 ngày cho tôi"
-            Correct behavior in SAME turn: call `create_meal_plan(total_days=2, custom_prompt=..., language={language_code})` -> present result.
+            Correct behavior in SAME turn: call `build_new_menu_plan(total_days=2, custom_prompt=..., language={language_code})` -> present result.
             Incorrect behavior: only replying "I will check your profile" and stopping.
         - User: "lên menu tối nay cho tôi"
-            Correct behavior in SAME turn: call `create_meal_plan(total_days=1, custom_prompt="Generate ONLY dinner for tonight. Do NOT include breakfast, lunch, or snack.", language={language_code})` -> present result.
+            Correct behavior in SAME turn: call `build_new_menu_plan(total_days=1, custom_prompt="Generate ONLY dinner for tonight. Do NOT include breakfast, lunch, or snack.", language={language_code})` -> present result.
             Incorrect behavior: generating a full-day menu.
 
-        ## 4, Get overview menu previous
-        When use tool get_overview_menu_previous => final friendly response MUST menu id for next action (View detail by id)
+        ## 4, View historical diet log
+        - CRITICAL RULE: DO NOT use `view_historical_diet_log` when the user asks to "lên menu", "tạo menu", or create a new menu!!
+        - ONLY use this tool when the user explicitly asks about PAST, OLD, or HISTORY logs (e.g., "what did I eat last week?", "xem nhật ký cũ", "menu cũ").
+        When use tool view_historical_diet_log => final friendly response MUST include log id for next action (View detail by id).
 
         ## 5, Out-of-Domain Questions
         - If the question is outside nutrition/health, first state that you are a nutrition and wellness assistant.
@@ -364,7 +369,7 @@ class AssistantAgent:
                             pass
 
                     meal_plan_draft = None
-                    if event.get("name") == "create_meal_plan":
+                    if event.get("name") == "build_new_menu_plan":
                         meal_plan_draft = _extract_meal_plan_draft(output)
                         logger.debug(
                             "create_meal_plan output parsed | user_id=%s | thread_id=%s | output_type=%s | draft_found=%s",

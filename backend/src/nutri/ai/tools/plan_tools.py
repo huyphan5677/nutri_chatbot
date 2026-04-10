@@ -90,7 +90,7 @@ async def _build_metabolic_context(user_id: str, language: str) -> str:
     return "\n".join(lines)
 
 
-@tool
+@tool("build_new_menu_plan")
 async def create_meal_plan(
     total_days: int,
     custom_prompt: str = "",

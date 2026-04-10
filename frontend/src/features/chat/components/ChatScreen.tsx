@@ -32,10 +32,12 @@ const TOOL_NAMES: Record<string, string> = {
   get_user_profile: "Reading health profile...",
   predict_glucose_spike: "Analyzing glucose spike...",
   calculate_bmr: "Calculating BMR...",
-  create_meal_plan: "Creating meal plan...",
+  build_new_menu_plan: "Creating meal plan...",
   web_search_info: "Web search...",
   get_health_goals: "Getting health goals...",
   memory_retrieval: "Retrieving past preferences...",
+  view_historical_diet_log: "Checking past history...",
+  view_historical_diet_log_detail: "Fetching historical logs...",
 };
 
 function ThoughtProcessViewer({
@@ -164,6 +166,7 @@ export default function ChatScreen() {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [isRenaming, setIsRenaming] = useState(false);
+  const [modifiedDraftMessageIds, setModifiedDraftMessageIds] = useState<Record<string, boolean>>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const threadIdRef = useRef<string | undefined>(undefined);
@@ -508,7 +511,7 @@ export default function ChatScreen() {
             setTimeout(scrollToBottom, 50);
           } else if (
             event.type === "tool_end" &&
-            event.name === "create_meal_plan" &&
+            event.name === "build_new_menu_plan" &&
             event.meal_plan_draft
           ) {
             setMessages((prev) => {
@@ -1214,7 +1217,9 @@ export default function ChatScreen() {
             <div className="space-y-4 sm:space-y-6 max-w-3xl mx-auto w-full pb-4 pt-10 sm:pt-0">
               {messages
                 .filter((m) => m.role !== "tool")
-                .map((msg) => (
+                .map((msg, index, arr) => {
+                  const isThisMsgStreaming = isLoading && index === arr.length - 1;
+                  return (
                   <div
                     key={msg.id}
                     className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
@@ -1250,7 +1255,7 @@ export default function ChatScreen() {
                           ))}
 
                         {/* Render Markdown Content if available */}
-                        {msg.content && (
+                        {msg.content && !modifiedDraftMessageIds[msg.id] && !msg.meal_plan_draft?.saved && (
                           <div
                             className={`prose prose-sm max-w-none break-words ${msg.role === "user" ? "prose-invert" : ""} ${msg.role === "assistant" && msg.meal_plan_draft?.days && msg.meal_plan_draft.days.length > 0 ? "mb-6" : ""}`}
                           >
@@ -1329,7 +1334,8 @@ export default function ChatScreen() {
                         {/* Interactive Menu Widget */}
                         {msg.role === "assistant" &&
                           msg.meal_plan_draft?.days &&
-                          msg.meal_plan_draft.days.length > 0 && (
+                          msg.meal_plan_draft.days.length > 0 &&
+                          !isThisMsgStreaming && (
                             <MenuDraftWidget
                               draft={msg.meal_plan_draft}
                               onSave={(modifiedDraft) =>
@@ -1342,6 +1348,7 @@ export default function ChatScreen() {
                               isSaved={!!msg.meal_plan_draft.saved}
                               mealPlanId={msg.meal_plan_draft.meal_plan_id}
                               isSaving={!!saveMenuLoadingByMessage[msg.id]}
+                              onModify={() => setModifiedDraftMessageIds(prev => ({...prev, [msg.id]: true}))}
                             />
                           )}
                       </div>
@@ -1404,7 +1411,8 @@ export default function ChatScreen() {
                         )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               <div ref={messagesEndRef} className="h-2" />
             </div>
           )}
