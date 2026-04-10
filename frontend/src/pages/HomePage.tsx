@@ -168,7 +168,7 @@ export const HomePage = () => {
             <Button
               variant="ghost"
               onClick={handleLoginClick}
-              className="text-gray-600 hover:text-primary font-medium"
+              className="text-gray-600 hover:text-primary hover:bg-primary/10 transition-all duration-300 rounded-full px-6 font-medium"
             >
               Log in
             </Button>
@@ -221,13 +221,13 @@ export const HomePage = () => {
               <Button
                 variant="ghost"
                 onClick={handleLoginClick}
-                className="w-full justify-center text-lg h-12"
+                className="w-full justify-center text-lg h-12 text-gray-600 hover:text-primary hover:bg-primary/10 rounded-full transition-all duration-300 font-medium"
               >
                 Log in
               </Button>
               <Button
                 onClick={handleStartShopping}
-                className="w-full justify-center text-lg h-12 rounded-full"
+                className="w-full justify-center text-lg h-12 rounded-full shadow-md shadow-primary/20 font-medium"
               >
                 Sign up
               </Button>
