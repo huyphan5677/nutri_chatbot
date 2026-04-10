@@ -214,7 +214,7 @@ async def generate_meal_plan_draft(
         if not user:
             logger.error("Workflow Error: User %s not found.", user_id)
             return {"error": "User not found"}
-        await _emit("-> User profile loaded: ", profile_context[:200] + "...")
+        await _emit("-> User profile loaded: ", profile_context[:180] + "...")
 
         agent = MealPlanAgent()
         previous_days_context = ""
