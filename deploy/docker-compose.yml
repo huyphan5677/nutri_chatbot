@@ -8,7 +8,15 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: ${POSTGRES_DB:-nutri}
     volumes:
-      - postgres_prod_data:/var/lib/postgresql/data
+      - postgres_prod_database:/var/lib/postgresql/data
+    networks:
+      - nutri_prod_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
     restart: always
 
   # GUI for Postgres
@@ -21,6 +29,14 @@ services:
       - "${PGWEB_PORT:-8081}:8081"
     depends_on:
       - postgres
+    networks:
+      - nutri_prod_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     restart: always
 
   # Backend API
@@ -63,6 +79,20 @@ services:
       - postgres
     ports:
       - "${BACKEND_PORT:-8000}:8000"
+    networks:
+      - nutri_prod_network
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/system/health')"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 3096M
     restart: always
 
   # Frontend (Nginx)
@@ -76,7 +106,19 @@ services:
       - VITE_API_URL=${API_URL:-http://backend:8000/api/v1}
     depends_on:
       - backend
+    networks:
+      - nutri_prod_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
     restart: always
 
 volumes:
-  postgres_prod_data:
+  postgres_prod_database:
+
+networks:
+  nutri_prod_network:
+    driver: bridge
