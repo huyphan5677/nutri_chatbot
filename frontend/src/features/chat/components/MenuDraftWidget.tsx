@@ -66,12 +66,12 @@ const MEAL_TYPE_LABELS: Record<
 };
 
 function ShimmerLoader() {
-  const [seconds, setSeconds] = useState(0);
+  const [deciseconds, setDeciseconds] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setSeconds((s) => s + 1);
-    }, 1000);
+      setDeciseconds((s) => s + 1);
+    }, 100);
     return () => clearInterval(timer);
   }, []);
 
@@ -81,7 +81,7 @@ function ShimmerLoader() {
       <div className="flex items-center gap-3 mb-4">
         <Sparkles className="w-5 h-5 text-primary animate-pulse" />
         <span className="text-sm font-semibold text-primary/80">
-          Đang thiết kế món mới... {seconds}s
+          Đang thiết kế món mới... {(deciseconds / 10).toFixed(1)}s
         </span>
       </div>
       <div className="space-y-3">
@@ -569,6 +569,7 @@ export default function MenuDraftWidget({
   mealPlanId,
   isSaving,
   onModify,
+  onSyncDraft,
 }: {
   draft: MealPlanDraft;
   onSave: (modifiedDraft?: MenuDraftState) => void;
@@ -576,12 +577,22 @@ export default function MenuDraftWidget({
   mealPlanId?: string;
   isSaving?: boolean;
   onModify?: () => void;
+  onSyncDraft?: (newState: MenuDraftState) => void;
 }) {
   const navigate = useNavigate();
 
   const [menuState, setMenuState] = useState<MenuDraftState>(() =>
     parseDraftPayload(draft as Record<string, any>),
   );
+
+  useEffect(() => {
+    const isAnyLoading = menuState.days.some((d) =>
+      d.meals.some((m) => m.isLoading),
+    );
+    if (!isAnyLoading && onSyncDraft) {
+      onSyncDraft(menuState);
+    }
+  }, [menuState, onSyncDraft]);
 
   const [activeSwapId, setActiveSwapId] = useState<string | null>(null);
   const [activeAddSlot, setActiveAddSlot] = useState<{
@@ -774,20 +785,20 @@ export default function MenuDraftWidget({
     <div className="w-full my-4 bg-gray-50/50 p-4 sm:p-6 rounded-3xl border border-gray-100 shadow-sm relative font-sans">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl shadow-xl border text-sm font-bold ${
-              toast.type === "success"
-                ? "bg-emerald-500 border-emerald-600 text-white"
-                : "bg-red-500 border-red-600 text-white"
-            }`}
-          >
+        <div className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-[100] animate-in fade-in slide-in-from-bottom-8 duration-400 ease-out">
+          <div className="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 bg-white text-gray-800 text-sm max-w-sm w-full ring-1 ring-black/5">
             {toast.type === "success" ? (
-              <Sparkles className="w-4 h-4" />
+              <div className="flex-shrink-0 w-9 h-9 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              </div>
             ) : (
-              <AlertCircle className="w-4 h-4" />
+              <div className="flex-shrink-0 w-9 h-9 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-rose-600" />
+              </div>
             )}
-            {toast.message}
+            <span className="leading-snug font-medium line-clamp-2">
+              {toast.message}
+            </span>
           </div>
         </div>
       )}

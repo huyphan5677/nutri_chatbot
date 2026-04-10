@@ -51,6 +51,10 @@ export const chatApi = {
     await api.post(`/chat/${sessionId}/read`);
   },
 
+  syncDraftToMessage: async (messageId: string, draftData: any): Promise<void> => {
+    await api.put(`/chat/messages/${messageId}/draft`, draftData);
+  },
+
   sendStreamMessage: async (
     message: string,
     thread_id: string | undefined,

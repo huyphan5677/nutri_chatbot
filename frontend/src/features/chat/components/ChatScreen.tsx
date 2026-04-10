@@ -1373,6 +1373,9 @@ export default function ChatScreen() {
                               mealPlanId={msg.meal_plan_draft.meal_plan_id}
                               isSaving={!!saveMenuLoadingByMessage[msg.id]}
                               onModify={() => setModifiedDraftMessageIds(prev => ({...prev, [msg.id]: true}))}
+                              onSyncDraft={(newState) => {
+                                chatApi.syncDraftToMessage(msg.id, newState).catch(console.error);
+                              }}
                             />
                           )}
                       </div>

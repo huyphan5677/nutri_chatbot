@@ -21,6 +21,7 @@ from nutri.core.chat.dto import (
 )
 from nutri.core.chat.models import ChatMessage, ChatSession
 from nutri.core.chat.services import extract_meal_plan_draft, is_meaningful_message
+from nutri.core.menus.services import find_meal_plan_draft
 from nutri.core.db.session import async_session_maker, get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -216,6 +217,39 @@ async def mark_session_as_read(
     )
     await db.commit()
     return {"status": "success", "message": "Chat session marked as read"}
+
+@router.put("/messages/{message_id}/draft")
+async def sync_message_draft(
+    message_id: str,
+    draft_data: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        msg_uuid = uuid.UUID(message_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid message_id")
+        
+    result = await db.execute(
+        select(ChatMessage)
+        .join(ChatSession, ChatSession.id == ChatMessage.session_id)
+        .where(ChatMessage.id == msg_uuid)
+        .where(ChatSession.user_id == current_user.id)
+    )
+    chat_message = result.scalars().first()
+    if not chat_message:
+        raise HTTPException(status_code=404, detail="Message not found")
+        
+    draft_idx, _ = find_meal_plan_draft(chat_message.tool_calls)
+    if draft_idx is None:
+        raise HTTPException(status_code=400, detail="Message has no meal plan draft")
+        
+    updated = list(chat_message.tool_calls)
+    updated[draft_idx] = {"type": "meal_plan_draft", "data": draft_data}
+    chat_message.tool_calls = updated
+    
+    await db.commit()
+    return {"status": "success"}
 
 
 # --------
