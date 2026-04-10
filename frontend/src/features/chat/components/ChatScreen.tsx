@@ -802,6 +802,7 @@ export default function ChatScreen() {
         ),
       );
 
+      /*
       const shoppingItems = result.shopping_list || [];
       if (shoppingItems.length > 0) {
         const grouped = shoppingItems.reduce(
@@ -834,6 +835,7 @@ export default function ChatScreen() {
         ]);
         setTimeout(scrollToBottom, 10);
       }
+      */
 
       showToast("success", "Saved menu successfully.");
     } catch (error: any) {
@@ -1247,100 +1249,101 @@ export default function ChatScreen() {
                             />
                           ))}
 
-                        {/* Interactive Menu Widget — replaces markdown when draft has days */}
-                        {msg.role === "assistant" &&
-                        msg.meal_plan_draft?.days &&
-                        msg.meal_plan_draft.days.length > 0 ? (
-                          <MenuDraftWidget
-                            draft={msg.meal_plan_draft}
-                            onSave={(modifiedDraft) =>
-                              handleSaveMenu(
-                                msg.id,
-                                msg.meal_plan_draft?.draft_id,
-                                modifiedDraft,
-                              )
-                            }
-                            isSaved={!!msg.meal_plan_draft.saved}
-                            mealPlanId={msg.meal_plan_draft.meal_plan_id}
-                            isSaving={!!saveMenuLoadingByMessage[msg.id]}
-                          />
-                        ) : (
-                          msg.content && (
-                            <div
-                              className={`prose prose-sm max-w-none break-words ${msg.role === "user" ? "prose-invert" : ""}`}
+                        {/* Render Markdown Content if available */}
+                        {msg.content && (
+                          <div
+                            className={`prose prose-sm max-w-none break-words ${msg.role === "user" ? "prose-invert" : ""} ${msg.role === "assistant" && msg.meal_plan_draft?.days && msg.meal_plan_draft.days.length > 0 ? "mb-6" : ""}`}
+                          >
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                h1: ({ node, ...props }) => (
+                                  <h1
+                                    className="text-lg sm:text-xl font-bold mt-4 mb-2"
+                                    {...props}
+                                  />
+                                ),
+                                h2: ({ node, ...props }) => (
+                                  <h2
+                                    className="text-base sm:text-lg font-bold mt-3 mb-2"
+                                    {...props}
+                                  />
+                                ),
+                                h3: ({ node, ...props }) => (
+                                  <h3
+                                    className="text-sm sm:text-base font-bold mt-2 mb-1"
+                                    {...props}
+                                  />
+                                ),
+                                p: ({ node, ...props }) => (
+                                  <p
+                                    className="mb-2 last:mb-0 leading-relaxed"
+                                    {...props}
+                                  />
+                                ),
+                                ul: ({ node, ...props }) => (
+                                  <ul
+                                    className="list-disc pl-4 sm:pl-5 mb-2 space-y-1"
+                                    {...props}
+                                  />
+                                ),
+                                ol: ({ node, ...props }) => (
+                                  <ol
+                                    className="list-decimal pl-4 sm:pl-5 mb-2 space-y-1"
+                                    {...props}
+                                  />
+                                ),
+                                li: ({ node, ...props }) => (
+                                  <li className="" {...props} />
+                                ),
+                                strong: ({ node, ...props }) => (
+                                  <strong
+                                    className="font-semibold"
+                                    {...props}
+                                  />
+                                ),
+                                a: ({ node, ...props }) => (
+                                  <a
+                                    className="text-blue-500 hover:underline break-all"
+                                    {...props}
+                                  />
+                                ),
+                                code: ({ node, inline, ...props }: any) =>
+                                  inline ? (
+                                    <code
+                                      className="bg-black/5 rounded px-1 py-0.5 text-xs sm:text-sm font-mono break-all"
+                                      {...props}
+                                    />
+                                  ) : (
+                                    <pre className="bg-black/5 rounded p-3 overflow-x-auto text-xs sm:text-sm font-mono mt-2 mb-2 w-full max-w-full">
+                                      <code {...props} />
+                                    </pre>
+                                  ),
+                              }}
                             >
-                              <ReactMarkdown
-                                remarkPlugins={[remarkGfm]}
-                                components={{
-                                  h1: ({ node, ...props }) => (
-                                    <h1
-                                      className="text-lg sm:text-xl font-bold mt-4 mb-2"
-                                      {...props}
-                                    />
-                                  ),
-                                  h2: ({ node, ...props }) => (
-                                    <h2
-                                      className="text-base sm:text-lg font-bold mt-3 mb-2"
-                                      {...props}
-                                    />
-                                  ),
-                                  h3: ({ node, ...props }) => (
-                                    <h3
-                                      className="text-sm sm:text-base font-bold mt-2 mb-1"
-                                      {...props}
-                                    />
-                                  ),
-                                  p: ({ node, ...props }) => (
-                                    <p
-                                      className="mb-2 last:mb-0 leading-relaxed"
-                                      {...props}
-                                    />
-                                  ),
-                                  ul: ({ node, ...props }) => (
-                                    <ul
-                                      className="list-disc pl-4 sm:pl-5 mb-2 space-y-1"
-                                      {...props}
-                                    />
-                                  ),
-                                  ol: ({ node, ...props }) => (
-                                    <ol
-                                      className="list-decimal pl-4 sm:pl-5 mb-2 space-y-1"
-                                      {...props}
-                                    />
-                                  ),
-                                  li: ({ node, ...props }) => (
-                                    <li className="" {...props} />
-                                  ),
-                                  strong: ({ node, ...props }) => (
-                                    <strong
-                                      className="font-semibold"
-                                      {...props}
-                                    />
-                                  ),
-                                  a: ({ node, ...props }) => (
-                                    <a
-                                      className="text-blue-500 hover:underline break-all"
-                                      {...props}
-                                    />
-                                  ),
-                                  code: ({ node, inline, ...props }: any) =>
-                                    inline ? (
-                                      <code
-                                        className="bg-black/5 rounded px-1 py-0.5 text-xs sm:text-sm font-mono break-all"
-                                        {...props}
-                                      />
-                                    ) : (
-                                      <pre className="bg-black/5 rounded p-3 overflow-x-auto text-xs sm:text-sm font-mono mt-2 mb-2 w-full max-w-full">
-                                        <code {...props} />
-                                      </pre>
-                                    ),
-                                }}
-                              >
-                                {msg.content}
-                              </ReactMarkdown>
-                            </div>
-                          )
+                              {msg.content}
+                            </ReactMarkdown>
+                          </div>
                         )}
+
+                        {/* Interactive Menu Widget */}
+                        {msg.role === "assistant" &&
+                          msg.meal_plan_draft?.days &&
+                          msg.meal_plan_draft.days.length > 0 && (
+                            <MenuDraftWidget
+                              draft={msg.meal_plan_draft}
+                              onSave={(modifiedDraft) =>
+                                handleSaveMenu(
+                                  msg.id,
+                                  msg.meal_plan_draft?.draft_id,
+                                  modifiedDraft,
+                                )
+                              }
+                              isSaved={!!msg.meal_plan_draft.saved}
+                              mealPlanId={msg.meal_plan_draft.meal_plan_id}
+                              isSaving={!!saveMenuLoadingByMessage[msg.id]}
+                            />
+                          )}
                       </div>
                       {/* Timestamp */}
                       {msg.created_at && (
