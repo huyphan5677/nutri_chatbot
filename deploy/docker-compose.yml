@@ -41,7 +41,7 @@ services:
 
   # Backend API
   backend:
-    image: mocdiep/nutri-backend:11042026_0234
+    image: mocdiep/nutri-backend:13042026_0118
     container_name: nutri_prod_backend
     command:
       [
@@ -97,7 +97,7 @@ services:
 
   # Frontend (Nginx)
   frontend:
-    image: mocdiep/nutri-frontend:11042026_0234
+    image: mocdiep/nutri-frontend:13042026_0118
     container_name: nutri_prod_frontend
     ports:
       - "${FRONTEND_PORT:-80}:80"

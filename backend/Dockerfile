@@ -35,5 +35,5 @@ CMD ["/app/docker-entrypoint.sh"]
 # docker build -t nutri-backend:latest .
 
 # Push image
-# docker tag nutri-backend:latest mocdiep/nutri-backend:11042026_0234
-# docker push mocdiep/nutri-backend:11042026_0234
+# docker tag nutri-backend:latest mocdiep/nutri-backend:13042026_0118
+# docker push mocdiep/nutri-backend:13042026_0118
