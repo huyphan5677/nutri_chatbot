@@ -12,6 +12,7 @@ export interface MealPlanDraft {
   summary_markdown?: string;
   saved?: boolean;
   meal_plan_id?: string;
+  is_modified?: boolean;
   // Full draft payload for interactive menu widget
   days?: Array<{
     day_number: number;
