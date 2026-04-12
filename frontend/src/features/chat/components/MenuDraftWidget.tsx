@@ -592,7 +592,8 @@ export default function MenuDraftWidget({
     if (!isAnyLoading && onSyncDraft) {
       onSyncDraft(menuState);
     }
-  }, [menuState, onSyncDraft]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuState]);
 
   const [activeSwapId, setActiveSwapId] = useState<string | null>(null);
   const [activeAddSlot, setActiveAddSlot] = useState<{
@@ -615,6 +616,7 @@ export default function MenuDraftWidget({
     onModify?.();
     setMenuState((prev) => ({
       ...prev,
+      is_modified: true,
       days: prev.days.map((d) =>
         d.day_number === dayNum
           ? { ...d, meals: d.meals.filter((m) => m.id !== mealId) }
@@ -633,6 +635,7 @@ export default function MenuDraftWidget({
     setSwapLoading(true);
     setMenuState((prev) => ({
       ...prev,
+      is_modified: true,
       days: prev.days.map((d) =>
         d.day_number === dayNum
           ? {
@@ -711,6 +714,7 @@ export default function MenuDraftWidget({
 
     setMenuState((prev) => ({
       ...prev,
+      is_modified: true,
       days: prev.days.map((d) =>
         d.day_number === dayNum
           ? {
@@ -782,7 +786,7 @@ export default function MenuDraftWidget({
   };
 
   return (
-    <div className="w-full my-4 bg-gray-50/50 p-4 sm:p-6 rounded-3xl border border-gray-100 shadow-sm relative font-sans">
+    <div className={`w-full my-4 bg-gray-50/50 p-4 sm:p-6 rounded-3xl border shadow-sm relative font-sans transition-colors duration-500 ${isSaved ? "border-emerald-200/60 bg-emerald-50/10 shadow-emerald-500/5 ring-1 ring-emerald-100/50" : "border-gray-100"}`}>
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-[100] animate-in fade-in slide-in-from-bottom-8 duration-400 ease-out">
@@ -804,14 +808,18 @@ export default function MenuDraftWidget({
       )}
 
       {/* Main Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-gray-200 pb-5 mb-6">
+      <div className={`flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b pb-5 mb-6 ${isSaved ? "border-emerald-100/50" : "border-gray-200"}`}>
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
             ✨ {menuState.name || "Thực đơn đề xuất"}
+            {isSaved && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100 shadow-sm whitespace-nowrap ml-2">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Đã lưu
+              </span>
+            )}
           </h1>
           <p className="text-sm text-gray-500 mt-1.5 font-medium">
-            Kế hoạch cho bữa ăn của bạn. Bạn có thể tự do thay đổi, thêm hoặc
-            xóa món trước khi lưu.
+            {isSaved ? "Thực đơn này đã được lưu vào hệ thống. Bạn có thể xem danh sách đi chợ ngay bên dưới." : "Kế hoạch cho bữa ăn của bạn. Bạn có thể tự do thay đổi, thêm hoặc xóa món trước khi lưu."}
           </p>
         </div>
 
@@ -820,9 +828,9 @@ export default function MenuDraftWidget({
           {isSaved ? (
             <button
               onClick={() => navigate("/grocery")}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm font-bold px-6 py-3 rounded-2xl bg-gray-900 text-white hover:bg-gray-800 transition-all shadow-md hover:shadow-lg"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm font-bold px-6 py-3 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg border border-emerald-500"
             >
-              <ShoppingCart className="w-4 h-4" /> Đi chợ ngay
+              <ShoppingCart className="w-4 h-4" /> ĐI CHỢ NGAY
             </button>
           ) : (
             <button

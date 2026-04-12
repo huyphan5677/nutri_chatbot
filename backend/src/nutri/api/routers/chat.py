@@ -240,13 +240,21 @@ async def sync_message_draft(
     if not chat_message:
         raise HTTPException(status_code=404, detail="Message not found")
         
-    draft_idx, _ = find_meal_plan_draft(chat_message.tool_calls)
+    draft_idx, current_draft = find_meal_plan_draft(chat_message.tool_calls)
     if draft_idx is None:
         raise HTTPException(status_code=400, detail="Message has no meal plan draft")
+        
+    if current_draft and current_draft.get("saved"):
+        draft_data["saved"] = True
+        if "meal_plan_id" in current_draft:
+            draft_data["meal_plan_id"] = current_draft["meal_plan_id"]
         
     updated = list(chat_message.tool_calls)
     updated[draft_idx] = {"type": "meal_plan_draft", "data": draft_data}
     chat_message.tool_calls = updated
+    
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(chat_message, "tool_calls")
     
     await db.commit()
     return {"status": "success"}

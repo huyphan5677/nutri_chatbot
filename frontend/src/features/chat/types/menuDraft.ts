@@ -35,6 +35,7 @@ export interface MenuDraftState {
   end_date: string;
   days: DraftDay[];
   saved: boolean;
+  is_modified?: boolean;
 }
 
 export function parseDraftPayload(raw: Record<string, any>): MenuDraftState {
@@ -76,6 +77,7 @@ export function parseDraftPayload(raw: Record<string, any>): MenuDraftState {
     end_date: raw.end_date || "",
     days,
     saved: raw.saved || false,
+    is_modified: raw.is_modified || false,
   };
 }
 

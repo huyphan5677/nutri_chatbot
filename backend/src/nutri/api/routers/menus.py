@@ -264,6 +264,9 @@ async def save_menu_from_chat(
     updated_tool_calls[draft_idx] = {"type": "meal_plan_draft", "data": updated_draft}
     chat_message.tool_calls = updated_tool_calls
 
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(chat_message, "tool_calls")
+
     grocery_items_result = await db.execute(
         select(GroceryItem)
         .options(selectinload(GroceryItem.ingredient))

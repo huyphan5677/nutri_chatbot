@@ -1344,7 +1344,7 @@ export default function ChatScreen() {
                           ))}
 
                         {/* Render Markdown Content if available */}
-                        {msg.content && !modifiedDraftMessageIds[msg.id] && !msg.meal_plan_draft?.saved && (
+                        {msg.content && !modifiedDraftMessageIds[msg.id] && !msg.meal_plan_draft?.is_modified && (
                           <div
                             className={`prose prose-sm max-w-none break-words ${msg.role === "user" ? "prose-invert" : ""} ${msg.role === "assistant" && msg.meal_plan_draft?.days && msg.meal_plan_draft.days.length > 0 ? "mb-6" : ""}`}
                           >
