@@ -288,9 +288,7 @@ class AssistantAgent:
         yield {
             "type": "tool_end",
             "name": "memory_retrieval",
-            "result_snippet": memories_str
-            if memories_str
-            else "No relevant past preferences found.",
+            "result_snippet": memories_str if memories_str else " ",
         }
 
         app_with_prompt = await self._get_app(thread_id, memories_str)
