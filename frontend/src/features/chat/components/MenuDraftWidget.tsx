@@ -30,7 +30,9 @@ import {
   parseDraftPayload,
 } from "../types/menuDraft";
 
-function ShimmerLoader({ copy }: { copy: typeof menuDraftMessages.en }) {
+export type MenuDraftCopy = typeof menuDraftMessages[keyof typeof menuDraftMessages];
+
+function ShimmerLoader({ copy }: { copy: MenuDraftCopy }) {
   const [deciseconds, setDeciseconds] = useState(0);
 
   useEffect(() => {
@@ -68,12 +70,14 @@ function AIPromptPanel({
   onSubmit,
   onCancel,
   isLoading,
+  copy,
 }: {
   title: string;
   placeholder: string;
   onSubmit: (text: string) => void;
   onCancel: () => void;
   isLoading: boolean;
+  copy: MenuDraftCopy;
 }) {
   const [text, setText] = useState("");
 
@@ -151,7 +155,7 @@ function MealDetailPanel({
   copy,
 }: {
   meal: DraftMeal;
-  copy: typeof menuDraftMessages.en;
+  copy: MenuDraftCopy;
 }) {
   return (
     <div className="px-4 pb-4 sm:px-5 sm:pb-5 pt-2 border-t border-gray-100 bg-gray-50/50 animate-in fade-in slide-in-from-top-2">
@@ -237,7 +241,7 @@ function MealCard({
   onRemove: () => void;
   isSwapping: boolean;
   isSaved: boolean;
-  copy: typeof menuDraftMessages.en;
+  copy: MenuDraftCopy;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -412,7 +416,7 @@ function DaySection({
   onCloseAdd: () => void;
   swapLoading: boolean;
   addLoading: boolean;
-  copy: typeof menuDraftMessages.en;
+  copy: MenuDraftCopy;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -504,6 +508,7 @@ function DaySection({
                             }
                             onCancel={onCloseSwap}
                             isLoading={swapLoading}
+                            copy={copy}
                           />
                         </div>
                       )}
@@ -523,6 +528,7 @@ function DaySection({
                           }
                           onCancel={onCloseAdd}
                           isLoading={addLoading}
+                          copy={copy}
                         />
                       ) : (
                         <button
