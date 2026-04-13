@@ -106,14 +106,20 @@ async def create_meal_plan(
     user_id = config.get("configurable", {}).get("user_id")
     from langchain_core.callbacks import adispatch_custom_event
 
+    def _t(msg_en: str, msg_vi: str) -> str:
+        return msg_vi if (language or "").lower().startswith("vi") else msg_en
+
     await adispatch_custom_event(
         "meal_plan_progress",
-        {"step": "Reading user profile...", "preview": ""},
+        {"step": _t("Reading user profile...", "Đang đọc hồ sơ người dùng..."), "preview": ""},
         config=config,
     )
 
     if not user_id:
-        return "Authentication required to generate meal plans. Please ask the user to log in."
+        return _t(
+            "Authentication required to generate meal plans. Please ask the user to log in.",
+            "Cần đăng nhập để tạo thực đơn. Vui lòng yêu cầu người dùng đăng nhập.",
+        )
 
     metabolic_context = await _build_metabolic_context(user_id, language)
     effective_prompt = custom_prompt.strip()
@@ -133,14 +139,21 @@ async def create_meal_plan(
     )
     if draft_payload.get("error"):
         return {
-            "summary": "Sorry, I could not generate a menu draft right now.",
+            "summary": _t(
+                "Sorry, I could not generate a menu draft right now.",
+                "Xin lỗi, hiện tôi chưa thể tạo bản nháp thực đơn.",
+            ),
             "meal_plan_draft": None,
         }
 
     summary_prefix = (
-        f"I have generated a {total_days}-day meal plan draft. "
-        "Please show it clearly to the user, in their language, and mention they can press 'Save menu' to persist it.\n"
-        f"Target response language code: {language}\n"
+        _t(
+            f"I have generated a {total_days}-day meal plan draft. "
+            "Please show it clearly to the user, in their language, and mention they can press 'Save menu' to persist it.\n",
+            f"Tôi đã tạo bản nháp thực đơn {total_days} ngày. "
+            "Hãy hiển thị rõ ràng cho người dùng bằng ngôn ngữ của họ và nhắc rằng họ có thể nhấn 'Lưu thực đơn' để lưu lại.\n",
+        )
+        + f"Target response language code: {language}\n"
     )
 
     return {

@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { menuDraftApi } from "../api/menuDraftApi";
+import { menuDraftMessages } from "../menuDraft.messages";
 import { MealPlanDraft } from "../types/chat";
 import {
   buildMenuSummary,
@@ -28,44 +30,7 @@ import {
   parseDraftPayload,
 } from "../types/menuDraft";
 
-const QUICK_SUGGESTIONS = [
-  {
-    label: "🎲 Ngẫu nhiên",
-    prompt: "Một món ngẫu nhiên nhưng vẫn cân bằng dinh dưỡng",
-  },
-  { label: "🍲 Món Canh", prompt: "Một món canh thanh mát, ít dầu mỡ" },
-  { label: "🥗 Món Chay", prompt: "Một món chay giàu protein thực vật" },
-  { label: "🐟 Món Cá", prompt: "Một món cá healthy, tốt cho sức khỏe" },
-  { label: "🥩 Ít Kcal", prompt: "Một món thay thế có lượng calo thấp hơn" },
-];
-
-const MEAL_TYPE_LABELS: Record<
-  string,
-  { label: string; icon: string; color: string }
-> = {
-  breakfast: {
-    label: "Bữa Sáng",
-    icon: "🌅",
-    color: "text-amber-600 bg-amber-50 border-amber-200",
-  },
-  lunch: {
-    label: "Bữa Trưa",
-    icon: "🌤️",
-    color: "text-sky-600 bg-sky-50 border-sky-200",
-  },
-  dinner: {
-    label: "Bữa Tối",
-    icon: "🌙",
-    color: "text-indigo-600 bg-indigo-50 border-indigo-200",
-  },
-  snack: {
-    label: "Bữa Phụ",
-    icon: "🍎",
-    color: "text-rose-600 bg-rose-50 border-rose-200",
-  },
-};
-
-function ShimmerLoader() {
+function ShimmerLoader({ copy }: { copy: typeof menuDraftMessages.en }) {
   const [deciseconds, setDeciseconds] = useState(0);
 
   useEffect(() => {
@@ -81,7 +46,7 @@ function ShimmerLoader() {
       <div className="flex items-center gap-3 mb-4">
         <Sparkles className="w-5 h-5 text-primary animate-pulse" />
         <span className="text-sm font-semibold text-primary/80">
-          Đang thiết kế món mới... {(deciseconds / 10).toFixed(1)}s
+          {copy.shimmer((deciseconds / 10).toFixed(1))}
         </span>
       </div>
       <div className="space-y-3">
@@ -99,11 +64,13 @@ function ShimmerLoader() {
 
 function AIPromptPanel({
   title,
+  placeholder,
   onSubmit,
   onCancel,
   isLoading,
 }: {
   title: string;
+  placeholder: string;
   onSubmit: (text: string) => void;
   onCancel: () => void;
   isLoading: boolean;
@@ -143,7 +110,7 @@ function AIPromptPanel({
               handleSubmit();
             }
           }}
-          placeholder="Yêu cầu cụ thể (VD: Đổi thành món ít tinh bột hơn)..."
+          placeholder={placeholder}
           disabled={isLoading}
           className="w-full text-sm py-3 pl-4 pr-12 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 disabled:opacity-60 transition-all shadow-sm placeholder:text-gray-400"
         />
@@ -161,7 +128,7 @@ function AIPromptPanel({
       </div>
 
       <div className="flex flex-wrap gap-2 mt-3">
-        {QUICK_SUGGESTIONS.map((s) => (
+        {copy.quickSuggestions.map((s) => (
           <button
             key={s.label}
             onClick={() => {
@@ -179,14 +146,21 @@ function AIPromptPanel({
   );
 }
 
-function MealDetailPanel({ meal }: { meal: DraftMeal }) {
+function MealDetailPanel({
+  meal,
+  copy,
+}: {
+  meal: DraftMeal;
+  copy: typeof menuDraftMessages.en;
+}) {
   return (
     <div className="px-4 pb-4 sm:px-5 sm:pb-5 pt-2 border-t border-gray-100 bg-gray-50/50 animate-in fade-in slide-in-from-top-2">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
         {/* Ingredients */}
         <div>
           <h4 className="flex items-center gap-1.5 text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
-            <ShoppingCart className="w-4 h-4 text-primary" /> Nguyên liệu
+            <ShoppingCart className="w-4 h-4 text-primary" />{" "}
+            {copy.ingredientsTitle}
           </h4>
           <ul className="space-y-2">
             {(meal.ingredients || []).map((ing, idx) => (
@@ -204,7 +178,8 @@ function MealDetailPanel({ meal }: { meal: DraftMeal }) {
         {/* Instructions */}
         <div>
           <h4 className="flex items-center gap-1.5 text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
-            <ChefHat className="w-4 h-4 text-primary" /> Hướng dẫn
+            <ChefHat className="w-4 h-4 text-primary" />{" "}
+            {copy.instructionsTitle}
           </h4>
           {meal.instructions && meal.instructions.length > 0 ? (
             <ol className="space-y-3">
@@ -222,7 +197,7 @@ function MealDetailPanel({ meal }: { meal: DraftMeal }) {
             </ol>
           ) : (
             <p className="text-sm text-gray-500 italic">
-              Chưa có hướng dẫn chi tiết.
+              {copy.noInstructions}
             </p>
           )}
         </div>
@@ -231,7 +206,7 @@ function MealDetailPanel({ meal }: { meal: DraftMeal }) {
       {meal.adjustment_tips && meal.adjustment_tips.length > 0 && (
         <div className="mt-5 p-3 sm:p-4 rounded-xl bg-amber-50/50 border border-amber-100">
           <h4 className="flex items-center gap-1.5 text-xs font-bold text-amber-700 uppercase tracking-wider mb-2">
-            <Info className="w-4 h-4" /> Mẹo điều chỉnh
+            <Info className="w-4 h-4" /> {copy.tipsTitle}
           </h4>
           <ul className="space-y-1.5">
             {meal.adjustment_tips.map((tip, idx) => (
@@ -255,24 +230,24 @@ function MealCard({
   onRemove,
   isSwapping,
   isSaved,
+  copy,
 }: {
   meal: DraftMeal;
   onSwap: () => void;
   onRemove: () => void;
   isSwapping: boolean;
   isSaved: boolean;
+  copy: typeof menuDraftMessages.en;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (meal.isLoading) {
-    return <ShimmerLoader />;
+    return <ShimmerLoader copy={copy} />;
   }
 
-  const typeInfo = MEAL_TYPE_LABELS[meal.meal_type] || {
-    label: "Bữa ăn",
-    icon: "🍽️",
-    color: "text-gray-600 bg-gray-50 border-gray-200",
-  };
+  const typeInfo =
+    copy.mealTypes[meal.meal_type as keyof typeof copy.mealTypes] ||
+    copy.mealTypes.default;
   const totalTime =
     (meal.prep_time_minutes || 0) + (meal.cook_time_minutes || 0);
 
@@ -291,7 +266,7 @@ function MealCard({
             </span>
             {totalTime > 0 && (
               <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
-                <Clock className="w-3 h-3" /> {totalTime} phút
+                <Clock className="w-3 h-3" /> {totalTime} {copy.minutes}
               </span>
             )}
             {meal.dietary_tags &&
@@ -310,14 +285,14 @@ function MealCard({
               <button
                 onClick={onSwap}
                 disabled={isSwapping}
-                title="Đổi món"
+                title={copy.swapTooltip}
                 className="p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors tooltip group relative"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
               <button
                 onClick={onRemove}
-                title="Xóa món"
+                title={copy.removeTooltip}
                 className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors tooltip group relative"
               >
                 <Trash2 className="w-4 h-4" />
@@ -337,7 +312,7 @@ function MealCard({
         >
           {meal.why ||
             meal.description ||
-            "Một lựa chọn tuyệt vời cho thực đơn của bạn."}
+            copy.defaultDescription}
         </p>
 
         {/* Macros */}
@@ -345,7 +320,8 @@ function MealCard({
           <div className="flex items-center gap-3 sm:gap-6">
             <div className="flex flex-col">
               <span className="flex items-center gap-1 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                <Flame className="w-3 h-3 text-orange-400" /> Kcal
+                <Flame className="w-3 h-3 text-orange-400" />{" "}
+                {copy.macros.calories}
               </span>
               <span className="text-[15px] font-bold text-gray-800">
                 {meal.calories}
@@ -354,7 +330,7 @@ function MealCard({
             <div className="h-7 w-[1px] bg-gray-100"></div>
             <div className="flex flex-col">
               <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                Protein
+                {copy.macros.protein}
               </span>
               <span className="text-[15px] font-bold text-blue-600">
                 {meal.protein_grams}g
@@ -363,7 +339,7 @@ function MealCard({
             <div className="h-7 w-[1px] bg-gray-100"></div>
             <div className="flex flex-col">
               <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                Carbs
+                {copy.macros.carbs}
               </span>
               <span className="text-[15px] font-bold text-amber-600">
                 {meal.carbs_grams}g
@@ -372,7 +348,7 @@ function MealCard({
             <div className="h-7 w-[1px] bg-gray-100"></div>
             <div className="flex flex-col">
               <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                Fat
+                {copy.macros.fat}
               </span>
               <span className="text-[15px] font-bold text-emerald-600">
                 {meal.fat_grams}g
@@ -386,18 +362,18 @@ function MealCard({
           >
             {isExpanded ? (
               <>
-                Thu gọn <ChevronUp className="w-3 h-3" />
+                {copy.collapse} <ChevronUp className="w-3 h-3" />
               </>
             ) : (
               <>
-                Chi tiết <ChevronDown className="w-3 h-3" />
+                {copy.expand} <ChevronDown className="w-3 h-3" />
               </>
             )}
           </button>
         </div>
       </div>
 
-      {isExpanded && <MealDetailPanel meal={meal} />}
+      {isExpanded && <MealDetailPanel meal={meal} copy={copy} />}
     </div>
   );
 }
@@ -416,6 +392,7 @@ function DaySection({
   onCloseAdd,
   swapLoading,
   addLoading,
+  copy,
 }: {
   day: DraftDay;
   isSaved: boolean;
@@ -435,6 +412,7 @@ function DaySection({
   onCloseAdd: () => void;
   swapLoading: boolean;
   addLoading: boolean;
+  copy: typeof menuDraftMessages.en;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -468,10 +446,10 @@ function DaySection({
           </div>
           <div className="text-left">
             <h2 className="text-[17px] font-bold text-gray-800 tracking-tight leading-tight group-hover:text-primary transition-colors">
-              {day.day_header || `Ngày ${day.day_number}`}
+              {day.day_header || copy.dayHeader(day.day_number)}
             </h2>
             <p className="text-[13px] text-gray-400 font-medium mt-0.5">
-              {day.eat_date || "Kế hoạch linh hoạt"}
+              {day.eat_date || copy.dayDateFallback}
             </p>
           </div>
         </div>
@@ -494,7 +472,9 @@ function DaySection({
         <div className="pl-5 sm:pl-12 space-y-8 relative before:absolute before:left-[19px] sm:before:left-[47px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-100">
           {sortedTypes.map((mealType) => {
             const meals = mealsByType[mealType];
-            const info = MEAL_TYPE_LABELS[mealType] || { label: mealType };
+            const info =
+              copy.mealTypes[mealType as keyof typeof copy.mealTypes] ||
+              copy.mealTypes.default;
 
             return (
               <div key={mealType} className="relative">
@@ -510,13 +490,15 @@ function DaySection({
                         onRemove={() => onRemoveMeal(day.day_number, meal.id)}
                         isSwapping={activeSwapId === meal.id && swapLoading}
                         isSaved={isSaved}
+                        copy={copy}
                       />
 
                       {/* Swap Input */}
                       {activeSwapId === meal.id && (
                         <div className="mt-2 ml-4">
                           <AIPromptPanel
-                            title={`Đổi món: "${meal.name}"`}
+                            title={copy.promptTitleSwap(meal.name)}
+                            placeholder={copy.promptPlaceholder}
                             onSubmit={(prompt) =>
                               onSwapMeal(day.day_number, meal.id, meal, prompt)
                             }
@@ -534,7 +516,8 @@ function DaySection({
                       {activeAddSlot?.day === day.day_number &&
                       activeAddSlot?.meal_type === mealType ? (
                         <AIPromptPanel
-                          title={`Thêm món vào ${info.label}`}
+                          title={copy.promptTitleAdd(info.label)}
+                          placeholder={copy.promptPlaceholder}
                           onSubmit={(prompt) =>
                             onAddMeal(day.day_number, mealType, prompt)
                           }
@@ -547,7 +530,7 @@ function DaySection({
                           className="group flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-primary px-4 py-2 rounded-xl border border-dashed border-gray-300 hover:border-primary/50 hover:bg-primary/5 transition-all w-full justify-center sm:justify-start"
                         >
                           <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                          Thêm món khác vào {info.label}
+                          {copy.addAnother(info.label)}
                         </button>
                       )}
                     </div>
@@ -580,6 +563,8 @@ export default function MenuDraftWidget({
   onSyncDraft?: (newState: MenuDraftState) => void;
 }) {
   const navigate = useNavigate();
+  const { locale } = useLocale();
+  const copy = menuDraftMessages[locale];
 
   const [menuState, setMenuState] = useState<MenuDraftState>(() =>
     parseDraftPayload(draft as Record<string, any>),
@@ -675,7 +660,7 @@ export default function MenuDraftWidget({
           ),
         }));
         setActiveSwapId(null);
-        showToast("success", `Đã tạo thành công "${response.meal.name}" ✨`);
+        showToast("success", copy.toast.swapSuccess(response.meal.name));
       } else {
         throw new Error(response.error);
       }
@@ -696,7 +681,7 @@ export default function MenuDraftWidget({
       showToast(
         "error",
         err.message ||
-          "Thiết kế món thất bại, hệ thống đang quá tải. Thử lại nhé!",
+          copy.toast.swapFailed,
       );
     } finally {
       setSwapLoading(false);
@@ -723,7 +708,7 @@ export default function MenuDraftWidget({
                 ...d.meals,
                 {
                   id: placeholderId,
-                  name: "Đang thiết kế...",
+                  name: copy.loadingMealName,
                   meal_type: mealType,
                   calories: 0,
                   protein_grams: 0,
@@ -766,7 +751,7 @@ export default function MenuDraftWidget({
           ),
         }));
         setActiveAddSlot(null);
-        showToast("success", `Đã thêm món "${response.meal.name}" ✨`);
+        showToast("success", copy.toast.addSuccess(response.meal.name));
       } else {
         throw new Error(response.error);
       }
@@ -779,7 +764,7 @@ export default function MenuDraftWidget({
             : d,
         ),
       }));
-      showToast("error", err.message || "Lỗi kết nối. Vui lòng thử lại sau.");
+      showToast("error", err.message || copy.toast.addFailed);
     } finally {
       setAddLoading(false);
     }
@@ -811,15 +796,15 @@ export default function MenuDraftWidget({
       <div className={`flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b pb-5 mb-6 ${isSaved ? "border-emerald-100/50" : "border-gray-200"}`}>
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
-            ✨ {menuState.name || "Thực đơn đề xuất"}
+            ✨ {menuState.name || copy.headerTitleFallback}
             {isSaved && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100 shadow-sm whitespace-nowrap ml-2">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Đã lưu
+                <CheckCircle2 className="w-3.5 h-3.5" /> {copy.savedBadge}
               </span>
             )}
           </h1>
           <p className="text-sm text-gray-500 mt-1.5 font-medium">
-            {isSaved ? "Thực đơn này đã được lưu vào hệ thống. Bạn có thể xem danh sách đi chợ ngay bên dưới." : "Kế hoạch cho bữa ăn của bạn. Bạn có thể tự do thay đổi, thêm hoặc xóa món trước khi lưu."}
+            {isSaved ? copy.savedDescription : copy.draftDescription}
           </p>
         </div>
 
@@ -830,7 +815,7 @@ export default function MenuDraftWidget({
               onClick={() => navigate("/grocery")}
               className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm font-bold px-6 py-3 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg border border-emerald-500"
             >
-              <ShoppingCart className="w-4 h-4" /> ĐI CHỢ NGAY
+              <ShoppingCart className="w-4 h-4" /> {copy.goGrocery}
             </button>
           ) : (
             <button
@@ -843,7 +828,7 @@ export default function MenuDraftWidget({
               ) : (
                 <CheckCircle2 className="w-5 h-5" />
               )}
-              {isSaving ? "Đang lưu..." : "LƯU THỰC ĐƠN"}
+              {isSaving ? copy.saving : copy.saveMenu}
             </button>
           )}
         </div>
@@ -873,6 +858,7 @@ export default function MenuDraftWidget({
             onCloseAdd={() => setActiveAddSlot(null)}
             swapLoading={swapLoading}
             addLoading={addLoading}
+            copy={copy}
           />
         ))}
       </div>
@@ -890,7 +876,7 @@ export default function MenuDraftWidget({
             ) : (
               <CheckCircle2 className="w-5 h-5" />
             )}
-            {isSaving ? "Đang lưu..." : "LƯU LẠI THỰC ĐƠN NÀY"}
+            {isSaving ? copy.saving : copy.saveMenuLong}
           </button>
         </div>
       )}

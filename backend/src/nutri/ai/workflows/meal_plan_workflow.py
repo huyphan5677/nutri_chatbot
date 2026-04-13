@@ -209,12 +209,18 @@ async def generate_meal_plan_draft(
                 config=config,
             )
 
+    def _t(msg_en: str, msg_vi: str) -> str:
+        return msg_vi if (language or "").lower().startswith("vi") else msg_en
+
     async with async_session_maker() as db:
         user, profile_context = await _load_user_profile_context(db, user_id)
         if not user:
             logger.error("Workflow Error: User %s not found.", user_id)
             return {"error": "User not found"}
-        await _emit("-> User profile loaded: ", profile_context[:180] + "...")
+        await _emit(
+            _t("-> User profile loaded: ", "-> Đã tải hồ sơ người dùng: "),
+            profile_context[:180] + "...",
+        )
 
         agent = MealPlanAgent()
         previous_days_context = ""
@@ -227,13 +233,16 @@ async def generate_meal_plan_draft(
         skeleton_by_day = {}
 
         try:
-            await _emit("Get menu previous...")
+            await _emit(_t("Get menu previous...", "Đang lấy thực đơn gần đây..."))
             recent_menu_context = await agent.get_recent_menu_context(
                 config, num_of_pre_day=2
             )
-            await _emit("-> Recent menu: ", recent_menu_context[:150] + "...")
+            await _emit(
+                _t("-> Recent menu: ", "-> Thực đơn gần đây: "),
+                recent_menu_context[:150] + "...",
+            )
 
-            await _emit("Generating menu skeleton...")
+            await _emit(_t("Generating menu skeleton...", "Đang tạo khung thực đơn..."))
             skeleton_multi = await agent.agenerate_multi_day_skeleton(
                 user_profile_context=profile_context,
                 total_days=total_days,
@@ -247,14 +256,19 @@ async def generate_meal_plan_draft(
             for idx, d in enumerate(skeleton_multi.days):
                 skeleton_by_day[idx] = d
                 day_meals = ", ".join([m.name for m in d.meals])
-                preview_lines.append(f"Day {idx + 1}: {day_meals}")
+                preview_lines.append(
+                    _t(f"Day {idx + 1}: {day_meals}", f"Ngày {idx + 1}: {day_meals}")
+                )
 
             logger.info("Multi-Day Skeleton ready | %d days", len(skeleton_multi.days))
-            await _emit("-> Menu skeleton ready: ", "\n".join(preview_lines) + "...")
+            await _emit(
+                _t("-> Menu skeleton ready: ", "-> Khung thực đơn đã sẵn sàng: "),
+                "\n".join(preview_lines) + "...",
+            )
 
             # Step 2: Global Parallel Enrichment
             logger.info("Analyzing meal details...")
-            await _emit("Analyzing meal details...")
+            await _emit(_t("Analyzing meal details...", "Đang phân tích chi tiết món ăn..."))
             semaphore = asyncio.Semaphore(MAX_ENRICH_CONCURRENCY)
 
             async def _enrich_w_day(d_idx: int, m_skeleton: SkeletonMeal, delay: float):
@@ -271,8 +285,14 @@ async def generate_meal_plan_draft(
                         language=language,
                     )
                     await _emit(
-                        f"Day {d_idx + 1}: {res.meal_type.capitalize()}",
-                        f"> {res.name}\n> Calories: {res.calories} kcal\n> Protein: {res.protein_grams}g | Carbs: {res.carbs_grams}g...",
+                        _t(
+                            f"Day {d_idx + 1}: {res.meal_type.capitalize()}",
+                            f"Ngày {d_idx + 1}: {res.meal_type.capitalize()}",
+                        ),
+                        _t(
+                            f"> {res.name}\n> Calories: {res.calories} kcal\n> Protein: {res.protein_grams}g | Carbs: {res.carbs_grams}g...",
+                            f"> {res.name}\n> Calo: {res.calories} kcal\n> Đạm: {res.protein_grams}g | Tinh bột: {res.carbs_grams}g...",
+                        ),
                     )
                     return d_idx, res
 
