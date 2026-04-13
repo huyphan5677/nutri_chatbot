@@ -22,12 +22,17 @@ class UserLogin(BaseModel):
     password: str
 
 
+class LanguagePreferenceUpdate(BaseModel):
+    preferred_language: str
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     email: EmailStr
     full_name: str
     status: str
+    preferred_language: str = "en"
     diet_mode: Optional[str] = None
     budget_level: Optional[str] = None
 
@@ -38,5 +43,6 @@ class UserDTO(BaseModel):
     email: EmailStr
     full_name: str
     status: str
+    preferred_language: str = "en"
     diet_mode: Optional[str] = None
     budget_level: Optional[str] = None

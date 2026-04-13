@@ -1,4 +1,6 @@
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import React from "react";
+import { onboardingMessages } from "../onboarding.messages";
 
 interface UserPrefsData {
   diet_mode: string;
@@ -10,36 +12,24 @@ interface QuizStep1Props {
   onChange: (data: UserPrefsData) => void;
 }
 
-const DIETS = [
-  { id: "balanced", label: "Balanced", icon: "⚖️" },
-  { id: "vegetarian", label: "Vegetarian", icon: "🥬" },
-  { id: "vegan", label: "Vegan", icon: "🌱" },
-  { id: "keto", label: "Keto", icon: "🥑" },
-  { id: "pescetarian", label: "Pescetarian", icon: "🐟" },
-  { id: "paleo", label: "Paleo", icon: "🦴" },
-];
-
-const BUDGETS = [
-  { id: "low", label: "Budget-friendly", desc: "Keep costs low", icon: "💰" },
-  { id: "medium", label: "Moderate", desc: "Good value balance", icon: "⚖️" },
-  { id: "high", label: "Premium", desc: "Quality first", icon: "✨" },
-];
-
 export const QuizStep1: React.FC<QuizStep1Props> = ({ data, onChange }) => {
+  const { locale } = useLocale();
+  const text = onboardingMessages[locale].step1;
+
   return (
     <div className="flex flex-col gap-8">
-      <h2 className="text-2xl font-bold text-center">Your Preferences</h2>
+      <h2 className="text-2xl font-bold text-center">{text.title}</h2>
       <p className="text-gray-400 text-center text-sm -mt-5">
-        Choose your diet and budget (all optional)
+        {text.description}
       </p>
 
       {/* Diet Mode */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-3">
-          Preferred Diet
+          {text.preferredDiet}
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {DIETS.map((diet) => (
+          {text.diets.map((diet) => (
             <button
               key={diet.id}
               onClick={() =>

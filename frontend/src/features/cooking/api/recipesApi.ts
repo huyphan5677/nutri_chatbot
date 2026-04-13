@@ -1,3 +1,5 @@
+import { getStoredLocale } from "@/shared/i18n/locale";
+
 export interface Recipe {
   id: string;
   name: string;
@@ -28,8 +30,13 @@ const getAuthHeaders = (): HeadersInit => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
+  const locale = getStoredLocale();
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  }
+  if (locale) {
+    headers["Accept-Language"] = locale;
   }
   return headers;
 };

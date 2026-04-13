@@ -1,22 +1,16 @@
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import React from "react";
+import { onboardingMessages } from "../onboarding.messages";
 
 interface QuizStep3Props {
   data: string[];
   onChange: (appliances: string[]) => void;
 }
 
-const APPLIANCES = [
-  { id: "oven", label: "Oven", icon: "🔥" },
-  { id: "microwave", label: "Microwave", icon: "📡" },
-  { id: "blender", label: "Blender", icon: "🌪️" },
-  { id: "stove", label: "Stove", icon: "🍳" },
-  { id: "air_fryer", label: "Air Fryer", icon: "🌀" },
-  { id: "rice_cooker", label: "Rice Cooker", icon: "🍚" },
-  { id: "pressure_cooker", label: "Pressure Cooker", icon: "♨️" },
-  { id: "toaster", label: "Toaster", icon: "🍞" },
-];
-
 export const QuizStep3: React.FC<QuizStep3Props> = ({ data, onChange }) => {
+  const { locale } = useLocale();
+  const text = onboardingMessages[locale].step3;
+
   const toggle = (id: string) => {
     if (data.includes(id)) {
       onChange(data.filter((item) => item !== id));
@@ -27,12 +21,12 @@ export const QuizStep3: React.FC<QuizStep3Props> = ({ data, onChange }) => {
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-2xl font-bold text-center">Kitchen Equipment</h2>
+      <h2 className="text-2xl font-bold text-center">{text.title}</h2>
       <p className="text-gray-500 text-center text-sm -mt-3">
-        Select what you have in your kitchen
+        {text.description}
       </p>
       <div className="grid grid-cols-2 gap-3">
-        {APPLIANCES.map((app) => (
+        {text.appliances.map((app) => (
           <button
             key={app.id}
             onClick={() => toggle(app.id)}

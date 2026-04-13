@@ -1,5 +1,13 @@
 import { Button } from "@/components/ui/Button";
+import { authModalCopy } from "@/features/auth/components/authModal.messages";
 import { getApiUrl } from "@/shared/api/client";
+import {
+  getInitialLocale,
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from "@/shared/i18n/locale";
+import { useLocale } from "@/shared/i18n/LocaleContext";
+import { useGoogleLogin } from "@react-oauth/google";
 import { AlertCircle } from "lucide-react";
 import React, { useState } from "react";
 
@@ -8,6 +16,8 @@ interface AuthModalProps {
   onClose: () => void;
   onLoginSuccess: (token: string) => void;
   initialMode?: "login" | "signup";
+  locale?: SupportedLocale;
+  onLocaleChange?: (locale: SupportedLocale) => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -15,6 +25,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   onLoginSuccess,
   initialMode = "login",
+  locale,
+  onLocaleChange,
 }) => {
   const [isLogin, setIsLogin] = useState(initialMode === "login");
   const [email, setEmail] = useState("");
@@ -22,6 +34,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState("");
+  const { locale: contextLocale, setLocale: setContextLocale } = useLocale();
+  const [internalLocale, setInternalLocale] = useState<SupportedLocale>(getInitialLocale);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -31,6 +45,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   }, [isOpen, initialMode]);
 
   if (!isOpen) return null;
+
+  const currentLocale = locale ?? contextLocale ?? internalLocale;
+  const setLocale = (nextLocale: SupportedLocale) => {
+    setAuthError("");
+    if (onLocaleChange) {
+      onLocaleChange(nextLocale);
+      return;
+    }
+    void setContextLocale(nextLocale);
+    setInternalLocale(nextLocale);
+  };
+  const text = authModalCopy[currentLocale];
 
   const handleLoginSuccess = (token: string) => {
     // Save to LocalStorage
@@ -47,14 +73,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       msg.includes("password") ||
       msg.includes("credential")
     ) {
-      return "Email or password is incorrect. Please try again or sign up.";
+      return text.incorrectCredentials;
     }
-    return message || "Login failed. Please try again.";
+    return message || text.loginFailed;
+  };
+
+  const validateForm = () => {
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (!isLogin && !trimmedName) {
+      return text.fullNameRequired;
+    }
+
+    if (!trimmedEmail) {
+      return text.emailRequired;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(trimmedEmail)) {
+      return text.emailInvalid;
+    }
+
+    if (!password) {
+      return text.passwordRequired;
+    }
+
+    return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
+    const validationError = validateForm();
+    if (validationError) {
+      setAuthError(validationError);
+      return;
+    }
+
     setLoading(true);
     try {
       const endpoint = isLogin
@@ -64,6 +120,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       let body;
       let headers: Record<string, string> = {
         "Content-Type": "application/json",
+        "Accept-Language": currentLocale,
       };
 
       if (isLogin) {
@@ -72,20 +129,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         formData.append("username", email);
         formData.append("password", password);
         body = formData;
-        headers = {}; // Let browser set Content-Type for FormData
+        headers = { "Accept-Language": currentLocale };
       } else {
-        body = JSON.stringify({ email, password, full_name: name || "User" });
+        body = JSON.stringify({
+          email: email.trim(),
+          password,
+          full_name: name.trim() || text.defaultName,
+        });
       }
 
       const res = await fetch(endpoint, {
         method: "POST",
         headers: headers,
-        body: body,
+        body:
+          body instanceof FormData
+            ? (() => {
+                body.set("username", email.trim());
+                return body;
+              })()
+            : body,
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.detail || "Auth failed");
+        throw new Error(err.detail || text.authFailed);
       }
 
       const data = await res.json();
@@ -106,13 +173,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       const res = await fetch(`${getApiUrl()}/auth/google`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Accept-Language": currentLocale,
+        },
         body: JSON.stringify({ token: accessToken }),
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.detail || "Google Auth Failed");
+        throw new Error(err.detail || text.googleAuthFailed);
       }
 
       const data = await res.json();
@@ -135,22 +205,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          aria-label={text.close}
         >
-          ✕
+          X
         </button>
+
+        <div className="mb-5 flex items-center justify-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
+            {text.languageLabel}
+          </span>
+          <div className="inline-flex rounded-full border border-gray-200 bg-gray-50 p-1">
+            {SUPPORTED_LOCALES.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setLocale(option)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  currentLocale === option
+                    ? "bg-white text-primary shadow-sm"
+                    : "text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                {option.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            {isLogin ? "Welcome" : "Join Nutri"}
+            {isLogin ? text.welcome : text.joinNutri}
           </h2>
           <p className="text-gray-500">
-            {isLogin
-              ? "Login to access your personalized menu"
-              : "Create an account to save your preferences"}
+            {isLogin ? text.loginSubtitle : text.signupSubtitle}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} noValidate className="space-y-3">
           {authError && (
             <div
               role="alert"
@@ -164,7 +255,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {!isLogin && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
+                {text.fullName}
               </label>
               <input
                 type="text"
@@ -175,14 +266,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   if (authError) setAuthError("");
                 }}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                placeholder="John Doe"
+                placeholder={text.fullNamePlaceholder}
               />
             </div>
           )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+              {text.email}
             </label>
             <input
               type="email"
@@ -193,13 +284,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 if (authError) setAuthError("");
               }}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-              placeholder="hello@example.com"
+              placeholder={text.emailPlaceholder}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
+              {text.password}
             </label>
             <input
               type="password"
@@ -210,7 +301,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 if (authError) setAuthError("");
               }}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-              placeholder="••••••••"
+              placeholder="********"
             />
           </div>
 
@@ -219,7 +310,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             disabled={loading}
             className="w-full h-11 sm:h-12 text-lg rounded-xl mt-5 shadow-lg shadow-primary/20"
           >
-            {loading ? "Processing..." : isLogin ? "Log In" : "Sign Up"}
+            {loading ? text.processing : isLogin ? text.login : text.signup}
           </Button>
         </form>
 
@@ -228,22 +319,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <span className="w-full border-t border-gray-200" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-gray-500">
-              Or continue with
-            </span>
+            <span className="bg-white px-2 text-gray-500">{text.divider}</span>
           </div>
         </div>
 
         <GoogleLoginButton
           onSuccess={handleGoogleSuccess}
-          onError={() =>
-            setAuthError("Đăng nhập Google thất bại. Vui lòng thử lại.")
-          }
+          onError={() => setAuthError(text.googleError)}
+          label={text.continueWithGoogle}
         />
 
         <div className="mt-5 text-center">
           <p className="text-gray-600">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            {isLogin ? `${text.noAccount} ` : `${text.hasAccount} `}
             <button
               onClick={() => {
                 setIsLogin(!isLogin);
@@ -251,7 +339,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               }}
               className="text-primary font-semibold hover:underline"
             >
-              {isLogin ? "Sign up" : "Log in"}
+              {isLogin ? text.switchToSignup : text.switchToLogin}
             </button>
           </p>
         </div>
@@ -260,15 +348,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   );
 };
 
-// Separate component to use hook (must be inside GoogleOAuthProvider)
-import { useGoogleLogin } from "@react-oauth/google";
-
 const GoogleLoginButton = ({
   onSuccess,
   onError,
+  label,
 }: {
   onSuccess: (token: string) => void;
   onError: () => void;
+  label: string;
 }) => {
   const login = useGoogleLogin({
     onSuccess: (tokenResponse) => onSuccess(tokenResponse.access_token),
@@ -300,7 +387,7 @@ const GoogleLoginButton = ({
           fill="#EA4335"
         />
       </svg>
-      Continue with Google
+      {label}
     </Button>
   );
 };

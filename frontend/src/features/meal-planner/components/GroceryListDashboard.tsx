@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -18,9 +19,16 @@ import {
   GroceryMenuGroupDTO,
   ShoppingOrderResponse,
 } from "../api/groceryApi";
+import {
+  GROCERY_CATEGORY_OPTIONS,
+  getGroceryCategoryLabel,
+  groceryMessages,
+} from "../grocery.messages";
 import ShoppingModal from "./ShoppingModal";
 
 export default function GroceryListDashboard() {
+  const { locale } = useLocale();
+  const copy = groceryMessages[locale];
   const [menuGroups, setMenuGroups] = useState<GroceryMenuGroupDTO[]>([]);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(
     {},
@@ -274,10 +282,10 @@ export default function GroceryListDashboard() {
       <div className="mb-6 md:mb-8 border-b pb-4 md:pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold font-serif text-gray-900">
-            Shopping List
+            {copy.page.title}
           </h1>
           <p className="text-sm md:text-base text-gray-500 mt-1">
-            Grouped by your saved menus
+            {copy.page.subtitle}
           </p>
         </div>
       </div>
@@ -286,10 +294,10 @@ export default function GroceryListDashboard() {
         <div className="h-full flex flex-col items-center justify-center text-center p-6 py-20">
           <ShoppingCart className="h-16 w-16 text-gray-300 mb-4" />
           <h2 className="text-xl font-semibold text-gray-700">
-            Your shopping list is empty
+            {copy.page.emptyTitle}
           </h2>
           <p className="text-gray-500 mt-2">
-            Generate a meal plan to automatically build your shopping list.
+            {copy.page.emptyDescription}
           </p>
         </div>
       ) : (
@@ -353,22 +361,24 @@ export default function GroceryListDashboard() {
                           }`}
                           title={
                             orderStatus?.status === "processing"
-                              ? "Going shopping..."
-                              : "Go Shopping"
+                              ? copy.actions.goingShopping
+                              : copy.actions.goShopping
                           }
                         >
                           {orderStatus?.status === "processing" ? (
                             <>
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />{" "}
-                              Going shopping...
+                              {copy.actions.goingShopping}
                             </>
                           ) : orderStatus?.status === "completed" ? (
                             <>
-                              <CheckCircle2 className="h-3.5 w-3.5" /> View Cart
+                              <CheckCircle2 className="h-3.5 w-3.5" />{" "}
+                              {copy.actions.viewCart}
                             </>
                           ) : (
                             <>
-                              <Store className="h-3.5 w-3.5" /> Go Shopping
+                              <Store className="h-3.5 w-3.5" />{" "}
+                              {copy.actions.goShopping}
                             </>
                           )}
                         </button>
@@ -376,7 +386,7 @@ export default function GroceryListDashboard() {
                           type="button"
                           onClick={(e) => handleDeleteGroup(e, group)}
                           className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50/60 px-3 py-1.5 sm:px-2.5 sm:py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 transition-colors shrink-0"
-                          title="Delete this shopping list"
+                          title={copy.actions.deleteShoppingList}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -409,7 +419,7 @@ export default function GroceryListDashboard() {
                         >
                           <div className="bg-primary/5 px-5 py-2 border-b border-gray-100 flex justify-between items-center">
                             <h3 className="font-semibold text-gray-900 uppercase tracking-wider text-xs">
-                              {category}
+                              {getGroceryCategoryLabel(category, locale)}
                             </h3>
                             <span className="text-[11px] font-medium text-primary bg-white px-2 py-0.5 rounded-full shadow-sm">
                               {catItems.filter((i) => i.is_purchased).length} /{" "}
@@ -449,14 +459,14 @@ export default function GroceryListDashboard() {
                                   <button
                                     onClick={(e) => handleOpenEdit(e, item)}
                                     className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
-                                    title="Edit item"
+                                    title={copy.actions.editItem}
                                   >
                                     <Pencil className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={(e) => handleDelete(e, item.id)}
                                     className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                                    title="Remove item"
+                                    title={copy.actions.removeItem}
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </button>
@@ -486,9 +496,11 @@ export default function GroceryListDashboard() {
               <Pencil className="w-5 h-5 text-blue-500" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Edit Item</h2>
+              <h2 className="text-lg font-bold text-gray-900">
+                {copy.editModal.title}
+              </h2>
               <p className="text-sm text-gray-500">
-                Update shopping list details
+                {copy.editModal.description}
               </p>
             </div>
           </div>
@@ -496,7 +508,7 @@ export default function GroceryListDashboard() {
           <form onSubmit={handleEditSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Item Name *
+                {copy.editModal.itemName}
               </label>
               <input
                 type="text"
@@ -510,25 +522,23 @@ export default function GroceryListDashboard() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                  {copy.editModal.category}
                 </label>
                 <select
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                 >
-                  <option value="Produce">Produce</option>
-                  <option value="Dairy">Dairy</option>
-                  <option value="Meat">Meat</option>
-                  <option value="Pantry">Pantry</option>
-                  <option value="Frozen">Frozen</option>
-                  <option value="Bakery">Bakery</option>
-                  <option value="Other">Other</option>
+                  {GROCERY_CATEGORY_OPTIONS.map((category) => (
+                    <option key={category} value={category}>
+                      {getGroceryCategoryLabel(category, locale)}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quantity
+                  {copy.editModal.quantity}
                 </label>
                 <input
                   type="text"
@@ -545,7 +555,7 @@ export default function GroceryListDashboard() {
                 onClick={() => setIsEditModalOpen(false)}
                 className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors text-sm"
               >
-                Cancel
+                {copy.actions.cancel}
               </button>
               <button
                 type="submit"
@@ -555,7 +565,7 @@ export default function GroceryListDashboard() {
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  "Save Changes"
+                  copy.actions.saveChanges
                 )}
               </button>
             </div>
@@ -576,15 +586,16 @@ export default function GroceryListDashboard() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">
-                Delete Shopping List
+                {copy.deleteModal.title}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                This will permanently remove all items in
-                <span className="font-semibold text-gray-900">
-                  {" "}
-                  {deleteTargetGroup?.meal_plan_name}
-                </span>
-                .
+                {deleteTargetGroup ? (
+                  <span className="font-semibold text-gray-900">
+                    {copy.deleteModal.description(
+                      deleteTargetGroup.meal_plan_name,
+                    )}
+                  </span>
+                ) : null}
               </p>
             </div>
           </div>
@@ -597,7 +608,7 @@ export default function GroceryListDashboard() {
               disabled={isDeleteGroupSubmitting}
               onClick={() => setDeleteTargetGroup(null)}
             >
-              Cancel
+              {copy.actions.cancel}
             </Button>
             <Button
               type="button"
@@ -608,7 +619,7 @@ export default function GroceryListDashboard() {
               {isDeleteGroupSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                "Delete all"
+                copy.actions.deleteAll
               )}
             </Button>
           </div>

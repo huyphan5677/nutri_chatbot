@@ -1,5 +1,6 @@
 import { Modal } from "@/components/ui/Modal";
 import { menuApi } from "@/features/meal-planner/api/menuApi";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import {
   AlertCircle,
   Calculator,
@@ -25,29 +26,27 @@ import ReactMarkdown from "react-markdown";
 import { useLocation, useNavigate } from "react-router-dom";
 import remarkGfm from "remark-gfm";
 import { chatApi } from "../api/chatApi";
+import { chatMessages } from "../chat.messages";
 import { ChatMessage, ChatSession, ToolState } from "../types/chat";
 import MenuDraftWidget from "./MenuDraftWidget";
 
-const TOOL_NAMES: Record<string, string> = {
-  get_user_profile: "Reading health profile...",
-  predict_glucose_spike: "Analyzing glucose spike...",
-  calculate_bmr: "Calculating BMR...",
-  build_new_menu_plan: "Creating meal plan...",
-  web_search_info: "Web search...",
-  get_health_goals: "Getting health goals...",
-  memory_retrieval: "Retrieving past preferences...",
-  view_historical_diet_log: "Checking past history...",
-  view_historical_diet_log_detail: "Fetching historical logs...",
-};
+type SessionGroupKey = "today" | "yesterday" | "previous7Days" | "older";
 
 function ThoughtProcessViewer({
   tools,
   startedAt,
   isDone,
+  copy,
 }: {
   tools?: ToolState[];
   startedAt?: number;
   isDone: boolean | number;
+  copy: {
+    process: (seconds: string) => string;
+    streaming: (seconds: string) => string;
+    runningTool: (toolName: string) => string;
+    toolNames: Record<string, string>;
+  };
 }) {
   const [elapsed, setElapsed] = useState(0);
   const [isOpen, setIsOpen] = useState(isDone === false);
@@ -87,8 +86,8 @@ function ThoughtProcessViewer({
         )}
         <span className={isActuallyDone ? "text-gray-400" : "text-primary/70"}>
           {isActuallyDone
-            ? `Thinking Process (${displayTime}s)`
-            : `Thinking... ${displayTime}s`}
+            ? copy.process(displayTime)
+            : copy.streaming(displayTime)}
         </span>
       </button>
 
@@ -109,7 +108,8 @@ function ThoughtProcessViewer({
                       : "text-gray-800 font-medium"
                   }
                 >
-                  {TOOL_NAMES[t.name] || `Running ${t.name.replace(/_/g, " ")}`}
+                  {copy.toolNames[t.name] ||
+                    copy.runningTool(t.name.replace(/_/g, " "))}
                 </span>
               </div>
               {t.progress_logs && t.progress_logs.length > 0 && (
@@ -232,6 +232,9 @@ function SmoothMarkdown({ content, isStreaming }: { content: string, isStreaming
 }
 
 export default function ChatScreen() {
+  const { locale } = useLocale();
+  const text = chatMessages[locale];
+
   const location = useLocation();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -650,8 +653,8 @@ export default function ChatScreen() {
                 next[i] = {
                   ...next[i],
                   content: existing
-                    ? `${next[i].content}\n\n[System] ${event.content}`
-                    : `[System] ${event.content}`,
+                    ? `${next[i].content}\n\n[${text.message.systemTag}] ${event.content}`
+                    : `[${text.message.systemTag}] ${event.content}`,
                 };
                 break;
               }
@@ -728,7 +731,7 @@ export default function ChatScreen() {
     }
   }, [location.state?.sessionId, navigate, threadId]);
 
-  // Helper to group sessions by date (Today, Yesterday, Previous 7 Days, Older)
+  // Helper to group sessions by date
   const groupSessions = (sessions: ChatSession[]) => {
     // First, sort sessions by updated_at descending
     const sortedSessions = [...sessions].sort(
@@ -746,11 +749,11 @@ export default function ChatScreen() {
     const lastWeek = new Date(today);
     lastWeek.setDate(lastWeek.getDate() - 7);
 
-    const groups: Record<string, ChatSession[]> = {
-      Today: [],
-      Yesterday: [],
-      "Previous 7 Days": [],
-      Older: [],
+    const groups: Record<SessionGroupKey, ChatSession[]> = {
+      today: [],
+      yesterday: [],
+      previous7Days: [],
+      older: [],
     };
 
     sortedSessions.forEach((session) => {
@@ -760,13 +763,13 @@ export default function ChatScreen() {
         : new Date(session.created_at);
 
       if (sessionDate >= today) {
-        groups["Today"].push(session);
+        groups.today.push(session);
       } else if (sessionDate >= yesterday) {
-        groups["Yesterday"].push(session);
+        groups.yesterday.push(session);
       } else if (sessionDate >= lastWeek) {
-        groups["Previous 7 Days"].push(session);
+        groups.previous7Days.push(session);
       } else {
-        groups["Older"].push(session);
+        groups.older.push(session);
       }
     });
 
@@ -789,7 +792,7 @@ export default function ChatScreen() {
 
     if (!isLikelyUuid(resolvedMessageId)) {
       if (!threadId) {
-        showToast("error", "Tin nhắn chưa đồng bộ xong. Vui lòng thử lại.");
+        showToast("error", text.toast.notSynced);
         return;
       }
 
@@ -839,7 +842,7 @@ export default function ChatScreen() {
         }
 
         if (!persisted) {
-          showToast("error", "Tin nhắn chưa đồng bộ xong. Vui lòng thử lại.");
+          showToast("error", text.toast.notSynced);
           return;
         }
 
@@ -861,7 +864,7 @@ export default function ChatScreen() {
           ),
         );
       } catch {
-        showToast("error", "Không thể đồng bộ tin nhắn. Vui lòng thử lại.");
+        showToast("error", text.toast.cannotSync);
         return;
       }
     }
@@ -929,11 +932,11 @@ export default function ChatScreen() {
       }
       */
 
-      showToast("success", "Saved menu successfully.");
+      showToast("success", text.toast.saveSuccess);
     } catch (error: any) {
       const message =
         error?.response?.data?.detail ||
-        "Failed to save menu. Please try again.";
+        text.toast.saveFailed;
       showToast("error", message);
     } finally {
       setSaveMenuLoadingByMessage((prev) => ({
@@ -969,12 +972,12 @@ export default function ChatScreen() {
         >
           <div className="p-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-bold text-gray-900 font-serif text-lg">
-              Chat History
+              {text.sidebar.title}
             </h2>
             <button
               onClick={() => setIsSidebarOpen(false)}
               className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"
-              title="Close sidebar"
+              title={text.sidebar.closeSidebar}
             >
               <PanelLeftClose className="w-5 h-5" />
             </button>
@@ -988,7 +991,7 @@ export default function ChatScreen() {
               }}
               className="w-full bg-white border border-gray-200 hover:border-primary hover:text-primary text-gray-700 rounded-full px-4 py-2.5 flex items-center justify-center gap-2 text-sm font-medium transition-colors shadow-sm mb-4"
             >
-              <Plus className="w-4 h-4" /> New Chat
+              <Plus className="w-4 h-4" /> {text.sidebar.newChat}
             </button>
           </div>
 
@@ -1004,7 +1007,7 @@ export default function ChatScreen() {
                   return (
                     <div key={groupName} className="mb-4 text-left">
                       <div className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">
-                        {groupName}
+                        {text.sidebar.groups[groupName as SessionGroupKey]}
                       </div>
                       {groupSessions.map((session) => (
                         <div
@@ -1070,7 +1073,7 @@ export default function ChatScreen() {
                                   setEditingSessionId(session.id);
                                 }}
                                 className="p-1.5 rounded-md text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
-                                title="Rename chat"
+                                title={text.sidebar.renameChat}
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
@@ -1081,7 +1084,7 @@ export default function ChatScreen() {
                                 setSessionToDelete(session.id);
                               }}
                               className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                              title="Delete chat"
+                              title={text.sidebar.deleteChat}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1105,7 +1108,7 @@ export default function ChatScreen() {
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="p-2 bg-white/90 backdrop-blur border border-gray-100 shadow-sm rounded-lg text-gray-600 hover:text-primary transition-all hover:shadow-md"
-              title="Open sidebar"
+              title={text.sidebar.openSidebar}
             >
               <PanelLeftOpen className="w-5 h-5" />
             </button>
@@ -1126,21 +1129,18 @@ export default function ChatScreen() {
                       <section className="rounded-2xl border border-white/70 bg-white/80 backdrop-blur-sm p-5 sm:p-6 text-left">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-200/70 bg-rose-50 text-rose-500 text-[11px] font-bold uppercase tracking-[0.14em]">
                           <Sparkles className="h-3.5 w-3.5" />
-                          Corin Assistant
+                          {text.empty.badge}
                         </div>
 
                         <h2 className="mt-4 text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
-                          Plan meals faster,
+                          {text.empty.headingMain}
                           <span className="text-primary">
-                            {" "}
-                            without menu guesswork.
+                            {" "}{text.empty.headingAccent}
                           </span>
                         </h2>
 
                         <p className="mt-3 text-sm sm:text-base text-gray-600 max-w-xl">
-                          Pick a quick action below to start instantly, or type
-                          your own request. Corin can plan meals, estimate BMR,
-                          and track your nutrition goals.
+                          {text.empty.description}
                         </p>
 
                         <div className="mt-5 flex flex-wrap gap-2.5">
@@ -1148,43 +1148,43 @@ export default function ChatScreen() {
                             type="button"
                             onClick={() =>
                               handleQuickPrompt(
-                                "Create a 7-day family meal plan based on my current health profile and goals",
+                                text.empty.prompts.weeklyPlan,
                               )
                             }
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm"
                           >
-                            Build Weekly Plan
+                            {text.empty.primaryCta}
                             <ChevronRight className="h-4 w-4" />
                           </button>
                           <button
                             type="button"
                             onClick={() =>
                               handleQuickPrompt(
-                                "Review my current health profile and suggest what to improve this week",
+                                text.empty.prompts.reviewProfile,
                               )
                             }
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 text-sm font-semibold hover:border-primary/40 hover:text-primary transition-colors"
                           >
-                            Review My Profile
+                            {text.empty.secondaryCta}
                           </button>
                         </div>
 
                         <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
                           <div className="rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2 text-rose-700">
-                            Smart meal suggestions
+                            {text.empty.chips.meal}
                           </div>
                           <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2 text-blue-700">
-                            BMR and glucose insights
+                            {text.empty.chips.bmr}
                           </div>
                           <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2 text-emerald-700">
-                            Profile-aware planning
+                            {text.empty.chips.profile}
                           </div>
                         </div>
                       </section>
 
                       <section className="rounded-2xl border border-gray-100 bg-white/85 backdrop-blur-sm p-4 sm:p-5 text-left">
                         <h3 className="text-sm font-bold text-gray-900 uppercase tracking-[0.12em] mb-3">
-                          Quick Actions
+                          {text.empty.quickActionsTitle}
                         </h3>
 
                         <div className="space-y-3">
@@ -1192,7 +1192,7 @@ export default function ChatScreen() {
                             <div className="flex items-center gap-2 text-primary mb-2">
                               <Utensils className="h-4 w-4" />
                               <p className="text-sm font-semibold text-gray-900">
-                                Meal Suggestions & Planning
+                                {text.empty.cards.mealTitle}
                               </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -1200,23 +1200,23 @@ export default function ChatScreen() {
                                 type="button"
                                 onClick={() =>
                                   handleQuickPrompt(
-                                    "Suggest a 500 kcal dinner for someone trying to lose weight",
+                                    text.empty.prompts.suggestMeal,
                                   )
                                 }
                                 className="text-xs px-2.5 py-1.5 rounded-full bg-white text-rose-700 border border-rose-200 hover:bg-rose-100"
                               >
-                                Suggest a meal
+                                {text.empty.cards.mealSuggest}
                               </button>
                               <button
                                 type="button"
                                 onClick={() =>
                                   handleQuickPrompt(
-                                    "Create a 2-day muscle-building meal plan that's easy to prepare",
+                                    text.empty.prompts.twoDayPlan,
                                   )
                                 }
                                 className="text-xs px-2.5 py-1.5 rounded-full bg-white text-rose-700 border border-rose-200 hover:bg-rose-100"
                               >
-                                2-day Meal Plan
+                                {text.empty.cards.meal2Day}
                               </button>
                             </div>
                           </div>
@@ -1225,7 +1225,7 @@ export default function ChatScreen() {
                             <div className="flex items-center gap-2 text-blue-600 mb-2">
                               <Calculator className="h-4 w-4" />
                               <p className="text-sm font-semibold text-gray-900">
-                                BMR & Blood Sugar
+                                {text.empty.cards.bmrTitle}
                               </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -1233,23 +1233,23 @@ export default function ChatScreen() {
                                 type="button"
                                 onClick={() =>
                                   handleQuickPrompt(
-                                    "Calculate BMR based on standard formulas",
+                                    text.empty.prompts.calculateBmr,
                                   )
                                 }
                                 className="text-xs px-2.5 py-1.5 rounded-full bg-white text-blue-700 border border-blue-200 hover:bg-blue-100"
                               >
-                                Calculate BMR
+                                {text.empty.cards.bmrCalc}
                               </button>
                               <button
                                 type="button"
                                 onClick={() =>
                                   handleQuickPrompt(
-                                    "Predict the impact of a bowl of pho on blood sugar levels",
+                                    text.empty.prompts.predictImpact,
                                   )
                                 }
                                 className="text-xs px-2.5 py-1.5 rounded-full bg-white text-blue-700 border border-blue-200 hover:bg-blue-100"
                               >
-                                Predict Impact
+                                {text.empty.cards.bmrPredict}
                               </button>
                             </div>
                           </div>
@@ -1259,19 +1259,19 @@ export default function ChatScreen() {
                               <div className="flex items-center gap-2 text-emerald-600 mb-2">
                                 <UserRoundCog className="h-4 w-4" />
                                 <p className="text-sm font-semibold text-gray-900">
-                                  Profile
+                                  {text.empty.cards.profileTitle}
                                 </p>
                               </div>
                               <button
                                 type="button"
                                 onClick={() =>
                                   handleQuickPrompt(
-                                    "View my current health profile and goals",
+                                    text.empty.prompts.viewProfile,
                                   )
                                 }
                                 className="text-xs px-2.5 py-1.5 rounded-full bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
                               >
-                                View Profile
+                                {text.empty.cards.profileView}
                               </button>
                             </div>
 
@@ -1279,19 +1279,19 @@ export default function ChatScreen() {
                               <div className="flex items-center gap-2 text-amber-600 mb-2">
                                 <Search className="h-4 w-4" />
                                 <p className="text-sm font-semibold text-gray-900">
-                                  Quick Search
+                                  {text.empty.cards.searchTitle}
                                 </p>
                               </div>
                               <button
                                 type="button"
                                 onClick={() =>
                                   handleQuickPrompt(
-                                    "What is the current price of gold today?",
+                                    text.empty.prompts.goldPrice,
                                   )
                                 }
                                 className="text-xs px-2.5 py-1.5 rounded-full bg-white text-amber-700 border border-amber-200 hover:bg-amber-100"
                               >
-                                Current Gold Price
+                                {text.empty.cards.searchGold}
                               </button>
                             </div>
                           </div>
@@ -1332,6 +1332,7 @@ export default function ChatScreen() {
                               tools={msg.tools}
                               startedAt={msg.started_at}
                               isDone={msg.thinking_time || false}
+                              copy={text.thinking}
                             />
                           ) : (
                             <ThoughtProcessViewer
@@ -1340,6 +1341,7 @@ export default function ChatScreen() {
                               isDone={
                                 msg.thinking_time || Date.now() - msg.started_at
                               }
+                              copy={text.thinking}
                             />
                           ))}
 
@@ -1382,7 +1384,7 @@ export default function ChatScreen() {
                       {/* Timestamp */}
                       {msg.created_at && (
                         <span className="text-[11px] text-gray-400 mt-1 px-1">
-                          {new Date(msg.created_at).toLocaleString("vi-VN", {
+                          {new Date(msg.created_at).toLocaleString(text.dateLocale, {
                             day: "2-digit",
                             month: "2-digit",
                             year: "numeric",
@@ -1401,7 +1403,7 @@ export default function ChatScreen() {
                               <div className="flex flex-wrap items-center gap-2">
                                 <div className="inline-flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1">
                                   <CheckCircle2 className="w-3.5 h-3.5" />
-                                  Saved Menu.
+                                  {text.message.savedMenu}
                                 </div>
                                 <button
                                   type="button"
@@ -1409,7 +1411,7 @@ export default function ChatScreen() {
                                   className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
                                 >
                                   <ShoppingCart className="w-3.5 h-3.5" />
-                                  Go to Shopping...
+                                  {text.message.goToShopping}
                                 </button>
                               </div>
                             ) : (
@@ -1431,7 +1433,7 @@ export default function ChatScreen() {
                                 {saveMenuLoadingByMessage[msg.id] ? (
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                 ) : null}
-                                Save Menu
+                                {text.message.saveMenu}
                               </button>
                             )}
                           </div>
@@ -1463,7 +1465,7 @@ export default function ChatScreen() {
                   }
                 }
               }}
-              placeholder="Ask Corin anything..."
+              placeholder={text.message.askPlaceholder}
               rows={1}
               className="w-full pl-4 sm:pl-5 pr-12 sm:pr-14 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-[24px] focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm text-sm sm:text-base resize-none overflow-y-auto invisible-scrollbar"
               style={{ minHeight: "44px", maxHeight: "150px" }}
@@ -1505,11 +1507,10 @@ export default function ChatScreen() {
             <AlertCircle className="w-6 h-6 text-red-600" />
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">
-            Delete Chat Session
+            {text.modal.deleteTitle}
           </h3>
           <p className="text-sm text-gray-500 mb-6">
-            Are you sure you want to delete this conversation? This action
-            cannot be undone and you will lose all messages in this thread.
+            {text.modal.deleteDescription}
           </p>
           <div className="flex w-full gap-3">
             <button
@@ -1517,7 +1518,7 @@ export default function ChatScreen() {
               disabled={isDeleting}
               className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors disabled:opacity-50"
             >
-              Cancel
+              {text.modal.cancel}
             </button>
             <button
               onClick={async () => {
@@ -1540,7 +1541,7 @@ export default function ChatScreen() {
               {isDeleting ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                "Delete"
+                text.modal.delete
               )}
             </button>
           </div>

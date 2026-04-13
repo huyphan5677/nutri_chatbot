@@ -1,3 +1,4 @@
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { Loader2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import {
@@ -7,6 +8,7 @@ import {
   getCollections,
   removeRecipeFromCollection,
 } from "../api/recipesApi";
+import { cookingMessages, getCollectionDisplayName } from "../cooking.messages";
 
 interface SaveToCollectionMenuProps {
   recipeId: string;
@@ -19,6 +21,8 @@ export const SaveToCollectionMenu = ({
   onClose,
   onCreateNew,
 }: SaveToCollectionMenuProps) => {
+  const { locale } = useLocale();
+  const messages = cookingMessages[locale];
   const [collections, setCollections] = useState<Collection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [savedCollectionIds, setSavedCollectionIds] = useState<Set<string>>(
@@ -81,7 +85,9 @@ export const SaveToCollectionMenu = ({
   return (
     <div className="absolute bottom-12 right-0 w-64 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 z-50">
       <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-        <h3 className="font-bold text-gray-900 text-sm">Save recipe to...</h3>
+        <h3 className="font-bold text-gray-900 text-sm">
+          {messages.detailModal.saveRecipeTo}
+        </h3>
       </div>
       {isLoading ? (
         <div className="p-6 flex justify-center">
@@ -121,7 +127,7 @@ export const SaveToCollectionMenu = ({
                   )}
                 </div>
                 <span className="text-sm font-medium text-gray-700 select-none">
-                  {col.name}
+                  {getCollectionDisplayName(col.name, locale)}
                 </span>
               </label>
             );
@@ -136,7 +142,7 @@ export const SaveToCollectionMenu = ({
           }}
           className="w-full p-2 text-sm font-bold text-[#FF5C5C] hover:bg-red-50 rounded-xl transition-colors flex items-center justify-center gap-2"
         >
-          <span>+ Create new collection</span>
+          <span>+ {messages.collectionMenu.createNewCollection}</span>
         </button>
       </div>
     </div>

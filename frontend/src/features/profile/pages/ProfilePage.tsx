@@ -1,4 +1,6 @@
 import { getApiUrl } from "@/shared/api/client";
+import { profileMessages } from "@/features/profile/profile.messages";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { ArrowRight, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import HouseholdSetupPage from "../components/HouseholdSetupPage";
@@ -19,9 +21,19 @@ interface Collection {
 }
 
 export const ProfilePage = () => {
+  const { locale } = useLocale();
+  const text = profileMessages[locale].page;
   const [collections, setCollections] = useState<Collection[]>([]);
-  const [userName, setUserName] = useState("My Account");
+  const [userName, setUserName] = useState(text.accountTitle);
   const [activeTab, setActiveTab] = useState(0);
+
+  useEffect(() => {
+    setUserName((current) =>
+      current === "My Account" || current === "Tài khoản của tôi"
+        ? text.accountTitle
+        : current,
+    );
+  }, [text.accountTitle]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,10 +81,10 @@ export const ProfilePage = () => {
               <div>
                 <div className="flex justify-between items-center mb-4 md:mb-6">
                   <h2 className="text-lg md:text-xl font-bold text-gray-900">
-                    Collections
+                    {text.collections}
                   </h2>
                   <button className="text-xs md:text-sm font-medium text-gray-500 hover:text-primary flex items-center gap-1">
-                    See all <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
+                    {text.seeAll} <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
@@ -88,14 +100,14 @@ export const ProfilePage = () => {
                         {col.name}
                       </h3>
                       <span className="text-[10px] md:text-xs text-gray-500 z-10">
-                        {col.recipe_count} recipe
+                        {text.recipeCount(col.recipe_count)}
                       </span>
                     </div>
                   ))}
                   <div className="border border-dashed border-red-200 bg-red-50/30 rounded-2xl md:rounded-3xl p-4 md:p-6 flex flex-col items-center justify-center hover:bg-red-50 transition-colors cursor-pointer aspect-square text-red-500">
                     <Plus className="w-6 h-6 md:w-8 md:h-8 mb-2" />
                     <span className="font-medium text-xs md:text-sm text-center">
-                      Create a collection
+                      {text.createCollection}
                     </span>
                   </div>
                 </div>
@@ -105,17 +117,17 @@ export const ProfilePage = () => {
               <div>
                 <div className="flex justify-between items-center mb-4 md:mb-6">
                   <h2 className="text-lg md:text-xl font-bold text-gray-900">
-                    My Recipes
+                    {text.myRecipes}
                   </h2>
                   <button className="text-xs md:text-sm font-medium text-gray-500 hover:text-primary flex items-center gap-1">
-                    See all <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
+                    {text.seeAll} <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                   <div className="border border-dashed border-red-200 bg-red-50/30 rounded-2xl md:rounded-[2rem] p-4 md:p-6 flex flex-col items-center justify-center hover:bg-red-50 transition-colors cursor-pointer aspect-square text-red-500">
                     <Plus className="w-6 h-6 md:w-8 md:h-8 mb-2 md:mb-4" />
                     <span className="font-bold text-xs md:text-sm">
-                      Add recipe
+                      {text.addRecipe}
                     </span>
                   </div>
                 </div>

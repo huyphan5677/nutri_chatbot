@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/Button";
+import { dashboardMessages } from "@/features/dashboard/dashboard.messages";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { Minus, Plus, Sparkles } from "lucide-react";
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +12,8 @@ interface DashboardHeaderProps {
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   userName,
 }) => {
+  const { locale } = useLocale();
+  const text = dashboardMessages[locale].header;
   const [mealCount, setMealCount] = useState(2);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -21,7 +25,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   const handleStart = () => {
     navigate("/chat", {
-      state: { initialPrompt: `Create a ${mealCount}-day meal plan for me` },
+      state: { initialPrompt: text.planPrompt(mealCount) },
     });
   };
 
@@ -38,9 +42,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const getGreeting = () => {
     const hour = new Date().getHours();
 
-    if (hour < 12) return "🌅 Good morning";
-    if (hour < 18) return "☀️ Good afternoon";
-    return "🌙 Good evening";
+    if (hour < 12) return text.greetingMorning;
+    if (hour < 18) return text.greetingAfternoon;
+    return text.greetingEvening;
   };
 
   return (
@@ -82,7 +86,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </h1>
 
         <p className="text-gray-700 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-medium leading-relaxed drop-shadow-sm">
-          How many delicious meals would you like to plan for this week?
+          {text.prompt}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -113,7 +117,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             onClick={handleStart}
             className="h-16 px-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-xl font-bold shadow-xl shadow-orange-500/25 transition-all hover:shadow-orange-500/40 hover:-translate-y-1 flex items-center gap-3 border border-orange-400/20"
           >
-            Let's plan!
+            {text.cta}
             <Sparkles className="w-5 h-5 text-orange-100 animate-pulse" />
           </Button>
         </div>

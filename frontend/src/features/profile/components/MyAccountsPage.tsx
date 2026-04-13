@@ -1,14 +1,19 @@
+import { profileMessages } from "@/features/profile/profile.messages";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { KeyRound, LogOut, Shield, Smartphone } from "lucide-react";
 
 export default function MyAccountsPage() {
+  const { locale } = useLocale();
+  const text = profileMessages[locale].myAccounts;
+
   return (
     <div className="flex flex-col gap-8 md:gap-12 max-w-3xl">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
-          My Accounts
+          {text.title}
         </h2>
         <p className="text-gray-500 text-sm md:text-base mb-8">
-          Manage your login methods and connected services.
+          {text.subtitle}
         </p>
 
         <div className="space-y-6">
@@ -19,9 +24,9 @@ export default function MyAccountsPage() {
                 <Shield className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900">Linked Accounts</h3>
+                <h3 className="font-bold text-gray-900">{text.linkedTitle}</h3>
                 <p className="text-sm text-gray-500">
-                  Sign in using other providers
+                  {text.linkedDescription}
                 </p>
               </div>
             </div>
@@ -34,11 +39,11 @@ export default function MyAccountsPage() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Google</p>
-                    <p className="text-xs text-gray-500">Connected</p>
+                    <p className="text-xs text-gray-500">{text.connected}</p>
                   </div>
                 </div>
                 <button className="text-sm font-medium text-gray-500 hover:text-red-500 transition-colors">
-                  Unlink
+                  {text.unlink}
                 </button>
               </div>
 
@@ -49,11 +54,11 @@ export default function MyAccountsPage() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Apple</p>
-                    <p className="text-xs text-gray-500">Not connected</p>
+                    <p className="text-xs text-gray-500">{text.notConnected}</p>
                   </div>
                 </div>
                 <button className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
-                  Link
+                  {text.link}
                 </button>
               </div>
             </div>
@@ -66,9 +71,9 @@ export default function MyAccountsPage() {
                 <KeyRound className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900">Password</h3>
+                <h3 className="font-bold text-gray-900">{text.passwordTitle}</h3>
                 <p className="text-sm text-gray-500">
-                  Update your account security
+                  {text.passwordDescription}
                 </p>
               </div>
             </div>
@@ -76,13 +81,13 @@ export default function MyAccountsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">Change Password</p>
+                  <p className="font-medium text-gray-900">{text.changePassword}</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    Last updated 3 months ago
+                    {text.lastUpdated}
                   </p>
                 </div>
                 <button className="px-4 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 font-medium rounded-lg transition-colors text-sm">
-                  Update
+                  {text.update}
                 </button>
               </div>
             </div>
@@ -90,20 +95,20 @@ export default function MyAccountsPage() {
 
           {/* Danger Zone */}
           <div className="bg-white border border-red-100 rounded-2xl p-6 shadow-sm">
-            <h3 className="font-bold text-red-600 mb-2">Danger Zone</h3>
+            <h3 className="font-bold text-red-600 mb-2">{text.dangerZoneTitle}</h3>
             <p className="text-sm text-gray-500 mb-6">
-              Irreversible destructive actions for your account.
+              {text.dangerZoneDescription}
             </p>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">Delete Account</p>
+                <p className="font-medium text-gray-900">{text.deleteAccount}</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Permanently remove all data
+                  {text.deleteAccountDescription}
                 </p>
               </div>
               <button className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors text-sm flex items-center gap-2">
                 <LogOut className="w-4 h-4" />
-                Delete
+                {text.delete}
               </button>
             </div>
           </div>

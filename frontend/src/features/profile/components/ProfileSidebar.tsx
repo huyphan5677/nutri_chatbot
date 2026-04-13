@@ -8,6 +8,8 @@ import {
   ShoppingBag,
   User,
 } from "lucide-react";
+import { profileMessages } from "@/features/profile/profile.messages";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import React, { useEffect, useRef } from "react";
 
 interface ProfileSidebarProps {
@@ -21,19 +23,21 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   onTabChange,
   userName,
 }) => {
+  const { locale } = useLocale();
+  const text = profileMessages[locale].sidebar;
   const menuItems = [
-    { icon: User, label: "My Profile" },
-    { icon: Home, label: "Family & Kitchen Setup" },
-    { icon: CreditCard, label: "My Accounts" },
-    { icon: ShoppingBag, label: "Shopping Lists History" },
-    { icon: Gift, label: "Rewards" },
-    { icon: ShieldCheck, label: "Privacy Settings" },
-    { icon: AppWindow, label: "Display Settings" },
-    { icon: Mail, label: "Contact Preferences" },
+    { icon: User, label: text.myProfile },
+    { icon: Home, label: text.familyKitchen },
+    { icon: CreditCard, label: text.myAccounts },
+    { icon: ShoppingBag, label: text.shoppingHistory },
+    { icon: Gift, label: text.rewards },
+    { icon: ShieldCheck, label: text.privacy },
+    { icon: AppWindow, label: text.display },
+    { icon: Mail, label: text.contact },
   ];
 
   const displayInitial = userName ? userName[0].toLowerCase() : "n";
-  const displayName = userName || "User Name";
+  const displayName = userName || text.userFallback;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Scroll active tab into view on mobile
@@ -66,10 +70,10 @@ export const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           </h3>
           <div className="flex gap-2 mt-1 md:mt-2 text-xs text-gray-500 justify-start md:justify-center">
             <span className="bg-gray-100 px-2 py-0.5 md:py-1 rounded-full border border-gray-200">
-              0 follower
+              {text.followers}
             </span>
             <span className="bg-gray-100 px-2 py-0.5 md:py-1 rounded-full border border-gray-200">
-              0 following
+              {text.following}
             </span>
           </div>
         </div>

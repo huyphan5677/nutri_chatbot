@@ -1,7 +1,11 @@
+import { profileMessages } from "@/features/profile/profile.messages";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { Eye, Loader2, Lock, Save } from "lucide-react";
 import { useState } from "react";
 
 export default function PrivacySettingsPage() {
+  const { locale } = useLocale();
+  const text = profileMessages[locale].privacy;
   const [preferences, setPreferences] = useState({
     publicProfile: true,
     showCookingStats: true,
@@ -20,11 +24,10 @@ export default function PrivacySettingsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
-            Privacy & Security
+            {text.title}
           </h2>
           <p className="text-gray-500 text-sm md:text-base">
-            Control what information is visible to others and manage account
-            security.
+            {text.subtitle}
           </p>
         </div>
         <button
@@ -37,7 +40,7 @@ export default function PrivacySettingsPage() {
           ) : (
             <Save className="w-4 h-4" />
           )}
-          Save Changes
+          {text.saveChanges}
         </button>
       </div>
 
@@ -49,9 +52,11 @@ export default function PrivacySettingsPage() {
               <Eye className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Profile Visibility</h3>
+              <h3 className="font-bold text-gray-900">
+                {text.profileVisibilityTitle}
+              </h3>
               <p className="text-sm text-gray-500">
-                Manage who can see your Nutri profile
+                {text.profileVisibilityDescription}
               </p>
             </div>
           </div>
@@ -60,11 +65,10 @@ export default function PrivacySettingsPage() {
             <label className="flex items-start justify-between cursor-pointer group">
               <div className="pr-4">
                 <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
-                  Public Profile
+                  {text.publicProfileTitle}
                 </span>
                 <span className="block text-sm text-gray-500 mt-1">
-                  Allow other Nutri users to find your profile and view your
-                  public recipe collections.
+                  {text.publicProfileDescription}
                 </span>
               </div>
               <div className="relative inline-flex items-center cursor-pointer mt-1 shrink-0">
@@ -86,10 +90,10 @@ export default function PrivacySettingsPage() {
             <label className="flex items-start justify-between cursor-pointer group">
               <div className="pr-4">
                 <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
-                  Show Cooking Stats
+                  {text.cookingStatsTitle}
                 </span>
                 <span className="block text-sm text-gray-500 mt-1">
-                  Display your completed meals and streaks on your profile.
+                  {text.cookingStatsDescription}
                 </span>
               </div>
               <div className="relative inline-flex items-center cursor-pointer mt-1 shrink-0">
@@ -111,11 +115,10 @@ export default function PrivacySettingsPage() {
             <label className="flex items-start justify-between cursor-pointer group">
               <div className="pr-4">
                 <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
-                  Anonymous Usage Data Tracking
+                  {text.usageDataTitle}
                 </span>
                 <span className="block text-sm text-gray-500 mt-1">
-                  Help improve Nutri by sharing anonymous usage statistics and
-                  crash reports.
+                  {text.usageDataDescription}
                 </span>
               </div>
               <div className="relative inline-flex items-center cursor-pointer mt-1 shrink-0">
@@ -143,9 +146,11 @@ export default function PrivacySettingsPage() {
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Account Security</h3>
+              <h3 className="font-bold text-gray-900">
+                {text.accountSecurityTitle}
+              </h3>
               <p className="text-sm text-gray-500">
-                Protect your personal data
+                {text.accountSecurityDescription}
               </p>
             </div>
           </div>
@@ -153,11 +158,10 @@ export default function PrivacySettingsPage() {
           <label className="flex items-start justify-between cursor-pointer group">
             <div className="pr-4">
               <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
-                Two-Factor Authentication (2FA)
+                {text.twoFactorTitle}
               </span>
               <span className="block text-sm text-gray-500 mt-1">
-                Require an extra security code during login to protect your
-                account from unauthorized access.
+                {text.twoFactorDescription}
               </span>
             </div>
             <div className="relative inline-flex items-center cursor-pointer mt-1 shrink-0">

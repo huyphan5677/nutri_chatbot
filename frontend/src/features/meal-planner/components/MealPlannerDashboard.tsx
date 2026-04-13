@@ -1,4 +1,5 @@
 import { Modal } from "@/components/ui/Modal";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import {
   AlertTriangle,
   Calendar,
@@ -20,8 +21,17 @@ import {
   MealPlanSummary,
   menuApi,
 } from "../api/menuApi";
+import {
+  getMacroLabel,
+  getMealPlannerStatusLabel,
+  getMealTypeLabel,
+  MEAL_STATUS_OPTIONS,
+  mealPlannerMessages,
+} from "../mealPlanner.messages";
 
 export default function MealPlannerDashboard() {
+  const { locale } = useLocale();
+  const copy = mealPlannerMessages[locale];
   const [mealPlan, setMealPlan] = useState<MealPlanResponse | null>(null);
   const [menuPlans, setMenuPlans] = useState<MealPlanSummary[]>([]);
   const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
@@ -46,9 +56,7 @@ export default function MealPlannerDashboard() {
         setMenuPlans(plans);
 
         if (plans.length === 0) {
-          setError(
-            "No active meal plan found. Chat with Corin to generate one!",
-          );
+          setError(copy.page.noMealPlan);
           return;
         }
 
@@ -72,18 +80,16 @@ export default function MealPlannerDashboard() {
         setEditTotalMeals(Math.max(1, data.meals.length));
       } catch (err: any) {
         if (err.response?.status === 404) {
-          setError(
-            "No active meal plan found. Chat with Corin to generate one!",
-          );
+          setError(copy.page.noMealPlan);
         } else {
-          setError("Failed to load meal plan.");
+          setError(copy.page.loadFailed);
         }
       } finally {
         setIsLoading(false);
       }
     };
     fetchMenu();
-  }, []);
+  }, [copy.page.loadFailed, copy.page.noMealPlan]);
 
   if (isLoading) {
     return (
@@ -167,7 +173,7 @@ export default function MealPlannerDashboard() {
       );
       setIsEditing(false);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Failed to update menu.");
+      setError(err?.response?.data?.detail || copy.page.updateFailed);
     } finally {
       setIsSaving(false);
     }
@@ -194,7 +200,7 @@ export default function MealPlannerDashboard() {
         setMealPlan(null);
         setSelectedMenuId(null);
         setIsDeleteConfirmOpen(false);
-        setError("No active meal plan found. Chat with Corin to generate one!");
+        setError(copy.page.noMealPlan);
       } else {
         const nextId = plans[0].id;
         setSelectedMenuId(nextId);
@@ -217,7 +223,7 @@ export default function MealPlannerDashboard() {
         setIsDeleteConfirmOpen(false);
       }
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Failed to delete menu.");
+      setError(err?.response?.data?.detail || copy.page.deleteFailed);
     } finally {
       setIsDeleting(false);
     }
@@ -247,7 +253,7 @@ export default function MealPlannerDashboard() {
       setIsEditing(false);
       setError("");
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Failed to load selected menu.");
+      setError(err?.response?.data?.detail || copy.page.loadSelectedFailed);
     } finally {
       setIsLoading(false);
     }
@@ -268,28 +274,12 @@ export default function MealPlannerDashboard() {
   const totalDays = dates.length;
   const mealTypes = Array.from(new Set(mealPlan.meals.map((m) => m.meal_type)));
 
-  const statusOptions = ["draft", "active", "completed", "archived"];
+  const statusOptions: readonly string[] = MEAL_STATUS_OPTIONS;
   const normalizedStatus = (editStatus || "").trim().toLowerCase();
   const showCustomStatusInput =
     isEditing &&
     normalizedStatus.length > 0 &&
     !statusOptions.includes(normalizedStatus);
-
-  const formatMealTypeLabel = (mealType: string) => {
-    const normalized = mealType.toLowerCase();
-    if (normalized === "breakfast") return "breakfast";
-    if (normalized === "lunch") return "lunch";
-    if (normalized === "dinner") return "dinner";
-    if (normalized.includes("snack")) return "snack";
-    return mealType;
-  };
-
-  const macroLabelMap: Record<string, string> = {
-    protein: "Protein",
-    carbs: "Carbs",
-    fat: "Fat",
-    fiber: "Fiber",
-  };
 
   const instructionSteps = selectedMeal?.recipe.instructions
     ? selectedMeal.recipe.instructions
@@ -308,7 +298,7 @@ export default function MealPlannerDashboard() {
               onClick={() => handleSelectMenu(plan.id)}
               className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${selectedMenuId === plan.id ? "bg-primary text-white border-primary" : "bg-white text-gray-700 border-gray-300 hover:border-primary/50"}`}
             >
-              {plan.name || "Unnamed menu"} ({plan.start_date})
+              {plan.name || copy.page.unnamedMenu} ({plan.start_date})
             </button>
           ))}
         </div>
@@ -322,7 +312,7 @@ export default function MealPlannerDashboard() {
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 className="text-3xl font-bold text-gray-900 capitalize border rounded-lg px-3 py-1 w-full sm:w-auto"
-                placeholder="Menu name"
+                placeholder={copy.page.menuNamePlaceholder}
               />
             ) : (
               <h1 className="text-3xl font-bold text-gray-900 capitalize">
@@ -330,7 +320,7 @@ export default function MealPlannerDashboard() {
               </h1>
             )}
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
-              {menuPlans.length} menus
+              {copy.page.menuCount(menuPlans.length)}
             </span>
           </div>
 
@@ -342,14 +332,14 @@ export default function MealPlannerDashboard() {
                   disabled={isSaving}
                   className="px-3 py-2 text-sm rounded-lg bg-primary text-white disabled:opacity-60"
                 >
-                  {isSaving ? "Saving..." : "Save"}
+                  {isSaving ? copy.page.saving : copy.page.save}
                 </button>
                 <button
                   onClick={handleCancelEdit}
                   disabled={isSaving}
                   className="px-3 py-2 text-sm rounded-lg border border-gray-300"
                 >
-                  Cancel
+                  {copy.page.cancel}
                 </button>
               </>
             ) : (
@@ -358,7 +348,7 @@ export default function MealPlannerDashboard() {
                   onClick={handleStartEdit}
                   className="px-3 py-2 text-sm rounded-lg border border-gray-300 inline-flex items-center gap-1"
                 >
-                  <Pencil className="h-4 w-4" /> Edit
+                  <Pencil className="h-4 w-4" /> {copy.page.edit}
                 </button>
                 <button
                   onClick={handleDeleteCurrent}
@@ -366,7 +356,7 @@ export default function MealPlannerDashboard() {
                   className="px-3 py-2 text-sm rounded-lg border border-red-300 text-red-600 inline-flex items-center gap-1 disabled:opacity-60"
                 >
                   <Trash2 className="h-4 w-4" />
-                  {isDeleting ? "Deleting..." : "Delete"}
+                  {isDeleting ? copy.page.deleting : copy.page.delete}
                 </button>
               </>
             )}
@@ -375,19 +365,19 @@ export default function MealPlannerDashboard() {
 
         <div className="mt-2 flex items-center text-sm text-gray-500 gap-4 flex-wrap">
           <span className="flex items-center gap-1">
-            <Calendar className="h-4 w-4" /> {mealPlan.start_date} to{" "}
-            {mealPlan.end_date}
+            <Calendar className="h-4 w-4" />{" "}
+            {copy.page.dateRange(mealPlan.start_date, mealPlan.end_date)}
           </span>
           {isEditing ? (
             <input
               value={editStatus}
               onChange={(e) => setEditStatus(e.target.value)}
               className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-primary/30 text-primary"
-              placeholder="Status"
+              placeholder={copy.page.status}
             />
           ) : (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-              {mealPlan.status}
+              {getMealPlannerStatusLabel(mealPlan.status, locale)}
             </span>
           )}
         </div>
@@ -395,25 +385,25 @@ export default function MealPlannerDashboard() {
         {isEditing && (
           <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-900 mb-4">
-              Edit menu details
+              {copy.page.editMenuDetails}
             </h3>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold tracking-wide text-gray-500 uppercase mb-1.5">
-                  Menu Name
+                  {copy.page.menuNameLabel}
                 </label>
                 <input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                  placeholder="Enter menu name"
+                  placeholder={copy.page.menuNameInputPlaceholder}
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold tracking-wide text-gray-500 uppercase mb-1.5">
-                  Status
+                  {copy.page.status}
                 </label>
                 <select
                   value={
@@ -432,16 +422,18 @@ export default function MealPlannerDashboard() {
                 >
                   {statusOptions.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {getMealPlannerStatusLabel(option, locale)}
                     </option>
                   ))}
-                  <option value="custom">custom</option>
+                  <option value="custom">
+                    {getMealPlannerStatusLabel("custom", locale)}
+                  </option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold tracking-wide text-gray-500 uppercase mb-1.5">
-                  Start date
+                  {copy.page.startDate}
                 </label>
                 <input
                   type="date"
@@ -461,7 +453,7 @@ export default function MealPlannerDashboard() {
 
               <div>
                 <label className="block text-xs font-semibold tracking-wide text-gray-500 uppercase mb-1.5">
-                  End date
+                  {copy.page.endDate}
                 </label>
                 <input
                   type="date"
@@ -487,20 +479,20 @@ export default function MealPlannerDashboard() {
               {showCustomStatusInput && (
                 <div className="lg:col-span-2">
                   <label className="block text-xs font-semibold tracking-wide text-gray-500 uppercase mb-1.5">
-                    Custom Status
+                    {copy.page.customStatus}
                   </label>
                   <input
                     value={editStatus}
                     onChange={(e) => setEditStatus(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                    placeholder="Type custom status"
+                    placeholder={copy.page.customStatusPlaceholder}
                   />
                 </div>
               )}
 
               <div>
                 <label className="block text-xs font-semibold tracking-wide text-gray-500 uppercase mb-1.5">
-                  Total days
+                  {copy.page.totalDays}
                 </label>
                 <input
                   type="number"
@@ -521,7 +513,7 @@ export default function MealPlannerDashboard() {
 
               <div>
                 <label className="block text-xs font-semibold tracking-wide text-gray-500 uppercase mb-1.5">
-                  Total meals
+                  {copy.page.totalMeals}
                 </label>
                 <input
                   type="number"
@@ -538,7 +530,7 @@ export default function MealPlannerDashboard() {
             <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                  Start date
+                  {copy.page.startDate}
                 </div>
                 <div className="text-sm font-semibold text-gray-900 mt-0.5">
                   {editStartDate}
@@ -546,7 +538,7 @@ export default function MealPlannerDashboard() {
               </div>
               <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                  End date
+                  {copy.page.endDate}
                 </div>
                 <div className="text-sm font-semibold text-gray-900 mt-0.5">
                   {editEndDate}
@@ -554,7 +546,7 @@ export default function MealPlannerDashboard() {
               </div>
               <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                  Total days
+                  {copy.page.totalDays}
                 </div>
                 <div className="text-sm font-semibold text-gray-900 mt-0.5">
                   {editTotalDays}
@@ -562,7 +554,7 @@ export default function MealPlannerDashboard() {
               </div>
               <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                  Total meals
+                  {copy.page.totalMeals}
                 </div>
                 <div className="text-sm font-semibold text-gray-900 mt-0.5">
                   {editTotalMeals}
@@ -573,7 +565,7 @@ export default function MealPlannerDashboard() {
             {mealTypes.length > 0 && (
               <div className="mt-4">
                 <div className="text-[11px] uppercase tracking-wide text-gray-500 mb-2">
-                  Meal types in this menu
+                  {copy.page.mealTypesInMenu}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {mealTypes.map((type) => (
@@ -581,7 +573,7 @@ export default function MealPlannerDashboard() {
                       key={type}
                       className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border border-primary/20 bg-primary/5 text-primary"
                     >
-                      {formatMealTypeLabel(type)}
+                      {getMealTypeLabel(type, locale)}
                     </span>
                   ))}
                 </div>
@@ -595,11 +587,14 @@ export default function MealPlannerDashboard() {
         {dates.map((date) => (
           <div key={date}>
             <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">
-              {new Date(date).toLocaleDateString("en-US", {
+              {new Date(date).toLocaleDateString(
+                locale === "vi" ? "vi-VN" : "en-US",
+                {
                 weekday: "long",
                 month: "short",
                 day: "numeric",
-              })}
+              },
+              )}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {groupedMeals[date].map((meal) => (
@@ -612,7 +607,7 @@ export default function MealPlannerDashboard() {
                   <div className="p-5 sm:p-6">
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div className="text-[11px] font-bold tracking-[0.12em] text-primary uppercase bg-primary/10 px-2.5 py-1 rounded-full">
-                        {formatMealTypeLabel(meal.meal_type)}
+                        {getMealTypeLabel(meal.meal_type, locale)}
                       </div>
                       <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-primary transition-colors" />
                     </div>
@@ -639,7 +634,7 @@ export default function MealPlannerDashboard() {
                       )}
                     </div>
                     <div className="mt-5 text-xs text-primary/90 font-semibold">
-                      View detail recipe
+                      {copy.page.viewDetailRecipe}
                     </div>
                   </div>
                 </button>
@@ -661,11 +656,10 @@ export default function MealPlannerDashboard() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">
-                Delete Current Menu
+                {copy.page.deleteCurrentMenu}
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                This action cannot be undone. All meals in this menu will be
-                removed.
+                {copy.page.deleteCurrentDescription}
               </p>
             </div>
           </div>
@@ -677,7 +671,7 @@ export default function MealPlannerDashboard() {
               onClick={() => setIsDeleteConfirmOpen(false)}
               className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors text-sm disabled:opacity-60"
             >
-              Cancel
+              {copy.page.cancel}
             </button>
             <button
               type="button"
@@ -688,7 +682,7 @@ export default function MealPlannerDashboard() {
               {isDeleting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                "Delete"
+                copy.page.delete
               )}
             </button>
           </div>
@@ -706,7 +700,7 @@ export default function MealPlannerDashboard() {
               <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                 <div>
                   <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-white text-primary border border-primary/20 mb-3">
-                    {formatMealTypeLabel(selectedMeal.meal_type)}
+                    {getMealTypeLabel(selectedMeal.meal_type, locale)}
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight max-w-2xl">
                     {selectedMeal.recipe.name}
@@ -723,33 +717,39 @@ export default function MealPlannerDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 <div className="rounded-xl border border-white/70 bg-white/70 px-4 py-3">
                   <div className="text-[11px] uppercase tracking-wider text-gray-500 mb-1">
-                    Prep Time
+                    {copy.detailModal.prepTime}
                   </div>
                   <div className="font-semibold text-gray-900 flex items-center gap-2">
                     <Clock className="h-4 w-4 text-primary" />
                     {selectedMeal.recipe.prep_time_minutes
-                      ? `${selectedMeal.recipe.prep_time_minutes} minutes`
-                      : "N/A"}
+                      ? copy.detailModal.minutes(
+                          selectedMeal.recipe.prep_time_minutes,
+                        )
+                      : copy.detailModal.notAvailable}
                   </div>
                 </div>
                 <div className="rounded-xl border border-white/70 bg-white/70 px-4 py-3">
                   <div className="text-[11px] uppercase tracking-wider text-gray-500 mb-1">
-                    Cook Time
+                    {copy.detailModal.cookTime}
                   </div>
                   <div className="font-semibold text-gray-900 flex items-center gap-2">
                     <ChefHat className="h-4 w-4 text-primary" />
                     {selectedMeal.recipe.cook_time_minutes
-                      ? `${selectedMeal.recipe.cook_time_minutes} minutes`
-                      : "N/A"}
+                      ? copy.detailModal.minutes(
+                          selectedMeal.recipe.cook_time_minutes,
+                        )
+                      : copy.detailModal.notAvailable}
                   </div>
                 </div>
                 <div className="rounded-xl border border-white/70 bg-white/70 px-4 py-3">
                   <div className="text-[11px] uppercase tracking-wider text-gray-500 mb-1">
-                    Serving
+                    {copy.detailModal.serving}
                   </div>
                   <div className="font-semibold text-gray-900 flex items-center gap-2">
                     <Soup className="h-4 w-4 text-primary" />
-                    {selectedMeal.recipe.ingredients?.length || 0} ingredients
+                    {copy.page.ingredientsCount(
+                      selectedMeal.recipe.ingredients?.length || 0,
+                    )}
                   </div>
                 </div>
               </div>
@@ -759,7 +759,7 @@ export default function MealPlannerDashboard() {
               {selectedMeal.recipe.description && (
                 <section>
                   <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2">
-                    Description
+                    {copy.detailModal.description}
                   </h4>
                   <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
                     {selectedMeal.recipe.description}
@@ -771,7 +771,7 @@ export default function MealPlannerDashboard() {
               Object.keys(selectedMeal.recipe.macros).length > 0 ? (
                 <section>
                   <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2">
-                    Macros
+                    {copy.detailModal.macros}
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {Object.entries(selectedMeal.recipe.macros).map(
@@ -781,7 +781,7 @@ export default function MealPlannerDashboard() {
                           className="rounded-xl bg-white border border-gray-100 px-3 py-3"
                         >
                           <div className="text-[11px] uppercase tracking-wide text-gray-500">
-                            {macroLabelMap[key] || key}
+                            {getMacroLabel(key, locale)}
                           </div>
                           <div className="text-base font-semibold text-gray-900 mt-0.5">
                             {value}
@@ -796,7 +796,7 @@ export default function MealPlannerDashboard() {
               {(selectedMeal.recipe.dietary_tags || []).length > 0 && (
                 <section>
                   <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2">
-                    Dietary Tags
+                    {copy.detailModal.dietaryTags}
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {(selectedMeal.recipe.dietary_tags || []).map((tag) => (
@@ -814,7 +814,7 @@ export default function MealPlannerDashboard() {
 
               <section>
                 <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2">
-                  Ingredients
+                  {copy.detailModal.ingredients}
                 </h4>
                 {selectedMeal.recipe.ingredients &&
                 selectedMeal.recipe.ingredients.length > 0 ? (
@@ -840,14 +840,14 @@ export default function MealPlannerDashboard() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500">
-                    No ingredient data available.
+                    {copy.detailModal.noIngredientData}
                   </p>
                 )}
               </section>
 
               <section>
                 <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2">
-                  Instructions
+                  {copy.detailModal.instructions}
                 </h4>
                 {instructionSteps.length > 0 ? (
                   <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 space-y-2">
@@ -870,7 +870,7 @@ export default function MealPlannerDashboard() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500">
-                    No cooking instructions available.
+                    {copy.detailModal.noCookingInstructions}
                   </p>
                 )}
               </section>

@@ -1,0 +1,48 @@
+export const footerCopy = {
+  en: {
+    brandDescription:
+      "The smart kitchen assistant that plans your meals, balances your nutrition, and fills your grocery cart automatically.",
+    product: "Product",
+    howItWorks: "How it works",
+    features: "Features",
+    pricing: "Pricing",
+    dietarySupported: "Dietary Supported",
+    company: "Company",
+    aboutUs: "About Us",
+    careers: "Careers",
+    blog: "Blog",
+    press: "Press",
+    newsletterTitle: "Stay in the loop",
+    newsletterDescription:
+      "Get weekly nutrition tips and new recipes sent to your inbox.",
+    emailPlaceholder: "Enter your email",
+    subscribe: "Subscribe",
+    copyright: "© 2026 Nutri Inc. All rights reserved.",
+    privacyPolicy: "Privacy Policy",
+    termsOfService: "Terms of Service",
+    cookieSettings: "Cookie Settings",
+  },
+  vi: {
+    brandDescription:
+      "Trợ lý nhà bếp thông minh giúp bạn lên kế hoạch bữa ăn, cân bằng dinh dưỡng và tự động điền giỏ hàng mua sắm.",
+    product: "Sản phẩm",
+    howItWorks: "Cách hoạt động",
+    features: "Tính năng",
+    pricing: "Bảng giá",
+    dietarySupported: "Chế độ ăn hỗ trợ",
+    company: "Công ty",
+    aboutUs: "Về chúng tôi",
+    careers: "Tuyển dụng",
+    blog: "Blog",
+    press: "Báo chí",
+    newsletterTitle: "Cập nhật mới nhất",
+    newsletterDescription:
+      "Nhận mẹo dinh dưỡng hàng tuần và công thức mới gửi tới email của bạn.",
+    emailPlaceholder: "Nhập email của bạn",
+    subscribe: "Đăng ký",
+    copyright: "© 2026 Nutri Inc. Bảo lưu mọi quyền.",
+    privacyPolicy: "Chính sách bảo mật",
+    termsOfService: "Điều khoản dịch vụ",
+    cookieSettings: "Cài đặt cookie",
+  },
+} as const;

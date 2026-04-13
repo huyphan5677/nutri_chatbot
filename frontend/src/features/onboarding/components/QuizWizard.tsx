@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/Button";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { Loader2 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import { onboardingMessages } from "../onboarding.messages";
 import { QuizStep1 } from "./QuizStep1";
 import { FamilyMemberData, QuizStep2 } from "./QuizStep2";
 import { QuizStep3 } from "./QuizStep3";
@@ -34,8 +36,6 @@ interface QuizWizardProps {
   isSubmitting?: boolean;
   initialData?: OnboardingInitialData;
 }
-
-const STEP_TITLES = ["Your Preferences", "Family Members", "Kitchen Equipment"];
 
 type RequiredMemberField =
   | "name"
@@ -102,6 +102,12 @@ export const QuizWizard: React.FC<QuizWizardProps> = ({
   isSubmitting,
   initialData,
 }) => {
+  const { locale } = useLocale();
+  const pageText = onboardingMessages[locale].page;
+  const step1Text = onboardingMessages[locale].step1;
+  const step2Text = onboardingMessages[locale].step2;
+  const step3Text = onboardingMessages[locale].step3;
+  const stepTitles = [step1Text.title, step2Text.title, step3Text.title];
   const [step, setStep] = useState(1);
   const contentRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState(() => ({
@@ -167,9 +173,7 @@ export const QuizWizard: React.FC<QuizWizardProps> = ({
       const errors = validateRequiredMember();
       if (Object.keys(errors).length > 0) {
         setRequiredFieldErrors(errors);
-        setStepError(
-          "Please fill in all required fields (Name, Relationship, Gender, Age, Current Weight, Height, Activity Level) for the first member.",
-        );
+        setStepError(pageText.requiredFirstMemberError);
         return;
       }
       setStepError("");
@@ -217,21 +221,19 @@ export const QuizWizard: React.FC<QuizWizardProps> = ({
       {/* Header / Progress */}
       <div className="mb-6 flex-none">
         <h2 className="text-2xl font-bold text-center mb-1 font-serif text-gray-900">
-          Let's get to know you
+          {pageText.wizardTitle}
         </h2>
         <p className="text-center text-gray-400 text-sm mb-6">
-          {STEP_TITLES[step - 1]}
+          {stepTitles[step - 1]}
         </p>
         <div className="flex justify-between text-sm font-medium mb-2 text-gray-500">
-          <span>
-            Step {step} of {totalSteps}
-          </span>
+          <span>{pageText.stepCounter(step, totalSteps)}</span>
           {step > 1 && (
             <button
               onClick={handleBack}
               className="text-primary hover:underline"
             >
-              Back
+              {pageText.back}
             </button>
           )}
         </div>
@@ -289,12 +291,12 @@ export const QuizWizard: React.FC<QuizWizardProps> = ({
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" /> Saving...
+              <Loader2 className="w-5 h-5 animate-spin" /> {pageText.saving}
             </>
           ) : step === totalSteps ? (
-            "Save Changes"
+            pageText.saveChanges
           ) : (
-            "Continue"
+            pageText.continue
           )}
         </Button>
       </div>

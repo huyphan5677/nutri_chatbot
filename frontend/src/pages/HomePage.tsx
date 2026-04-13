@@ -12,54 +12,14 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import {
+  SUPPORTED_LOCALES,
+} from "@/shared/i18n/locale";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { Button } from "../components/ui/Button";
 import { Footer } from "../components/ui/Footer";
 import { AuthModal } from "../features/auth";
-
-const reviews = [
-  {
-    quote:
-      "Nutri completely changed my weekdays. I used to order takeout 3 times a week from pure exhaustion. Now everything is pre-planned and ready.",
-    name: "Sarah Jenkins",
-    role: "Working Mom, NY",
-    avatar: "https://i.pravatar.cc/150?u=1",
-  },
-  {
-    quote:
-      "As someone trying to hit specific protein macros, the automated nutrition tracking combined with the grocery lists is basically magic. Highly recommend!",
-    name: "Mark Thompson",
-    role: "Fitness Coach, CA",
-    avatar: "https://i.pravatar.cc/150?u=2",
-  },
-  {
-    quote:
-      "The 'fridge awareness' feature alone paid for the app in a month. We no longer throw away wilted spinach because the app finds a recipe for it.",
-    name: "Emily & Dave",
-    role: "Homeowners, TX",
-    avatar: "https://i.pravatar.cc/150?u=3",
-  },
-  {
-    quote:
-      "We went from spending 2 hours planning weekend menus to literally clicking one button. The AI understands our picky toddler perfectly.",
-    name: "Maria Garcia",
-    role: "Teacher, FL",
-    avatar: "https://i.pravatar.cc/150?u=4",
-  },
-  {
-    quote:
-      "I've tried 5 different meal planners. None of them actually connect directly to my local local supermarkets to auto-fill my cart. Absolute game changer.",
-    name: "Kevin Tran",
-    role: "Software Engineer, WA",
-    avatar: "https://i.pravatar.cc/150?u=5",
-  },
-  {
-    quote:
-      "Healthy eating finally feels effortless. The recipes are genuinely restaurant quality but take less than 30 minutes to prep.",
-    name: "Jessica L.",
-    role: "Designer, OR",
-    avatar: "https://i.pravatar.cc/150?u=6",
-  },
-];
+import { homeCopy } from "./homePage.messages";
 
 const PressLogos = () => (
   <>
@@ -85,12 +45,48 @@ const PressLogos = () => (
   </>
 );
 
+const LanguageToggle = ({
+  locale,
+  onChange,
+  className = "",
+}: {
+  locale: "vi" | "en";
+  onChange: (locale: "vi" | "en") => void;
+  className?: string;
+}) => (
+  <div
+    className={`inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white/90 p-1 shadow-sm ${className}`}
+  >
+    {SUPPORTED_LOCALES.map((option) => (
+      <button
+        key={option}
+        type="button"
+        onClick={() => onChange(option)}
+        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+          locale === option
+            ? "bg-primary text-white"
+            : "text-gray-500 hover:text-gray-800"
+        }`}
+        aria-pressed={locale === option}
+      >
+        {option.toUpperCase()}
+      </button>
+    ))}
+  </div>
+);
+
 export const HomePage = () => {
   // State for Modals & Nav
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [authRedirect, setAuthRedirect] = useState<string>("/dashboard");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { locale, setLocale } = useLocale();
+  const copy = homeCopy[locale];
+  const reviews = copy.testimonials.reviews;
+  const handleLocaleChange = (nextLocale: "vi" | "en") => {
+    void setLocale(nextLocale);
+  };
 
   // Animation triggers on scroll
   useEffect(() => {
@@ -110,7 +106,7 @@ export const HomePage = () => {
     elements.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
-  }, []);
+  }, [locale]);
 
   // Handlers
   const handleStartShopping = () => {
@@ -148,35 +144,36 @@ export const HomePage = () => {
               href="#how-it-works"
               className="relative py-1 transition-colors hover:text-primary after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-right after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 hover:after:origin-bottom-left hover:after:scale-x-100"
             >
-              How it works
+              {copy.nav.howItWorks}
             </a>
             <a
               href="#features"
               className="relative py-1 transition-colors hover:text-primary after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-right after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 hover:after:origin-bottom-left hover:after:scale-x-100"
             >
-              Features
+              {copy.nav.features}
             </a>
             <a
               href="#testimonials"
               className="relative py-1 transition-colors hover:text-primary after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-right after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 hover:after:origin-bottom-left hover:after:scale-x-100"
             >
-              Reviews
+              {copy.nav.reviews}
             </a>
           </div>
 
-          <div className="hidden md:flex gap-3">
+          <div className="hidden md:flex items-center gap-3">
+            <LanguageToggle locale={locale} onChange={handleLocaleChange} />
             <Button
               variant="ghost"
               onClick={handleLoginClick}
               className="text-gray-600 hover:text-primary hover:bg-primary/10 transition-all duration-300 rounded-full px-6 font-medium"
             >
-              Log in
+              {copy.nav.login}
             </Button>
             <Button
               onClick={handleStartShopping}
               className="rounded-full px-6 shadow-md shadow-primary/20 font-medium"
             >
-              Sign up
+              {copy.nav.signup}
             </Button>
           </div>
 
@@ -196,26 +193,32 @@ export const HomePage = () => {
         {/* Mobile Nav */}
         {isMenuOpen && (
           <div className="md:hidden bg-white border-b border-gray-100 p-6 flex flex-col gap-4 animate-fade-in absolute w-full left-0 top-20 shadow-xl">
+            <div className="flex items-center justify-between rounded-xl bg-gray-50/70 px-4 py-3">
+              <span className="text-sm font-semibold text-gray-500">
+                {copy.nav.languageLabel}
+              </span>
+              <LanguageToggle locale={locale} onChange={handleLocaleChange} />
+            </div>
             <a
               href="#how-it-works"
               onClick={() => setIsMenuOpen(false)}
               className="block px-4 py-3 text-lg font-medium text-gray-700 bg-gray-50/50 rounded-xl hover:bg-primary/10 hover:text-primary hover:translate-x-1 transition-all duration-300"
             >
-              How it works
+              {copy.nav.howItWorks}
             </a>
             <a
               href="#features"
               onClick={() => setIsMenuOpen(false)}
               className="block px-4 py-3 text-lg font-medium text-gray-700 bg-gray-50/50 rounded-xl hover:bg-primary/10 hover:text-primary hover:translate-x-1 transition-all duration-300"
             >
-              Features
+              {copy.nav.features}
             </a>
             <a
               href="#testimonials"
               onClick={() => setIsMenuOpen(false)}
               className="block px-4 py-3 text-lg font-medium text-gray-700 bg-gray-50/50 rounded-xl hover:bg-primary/10 hover:text-primary hover:translate-x-1 transition-all duration-300"
             >
-              Reviews
+              {copy.nav.reviews}
             </a>
             <div className="flex flex-col gap-3 mt-4">
               <Button
@@ -223,13 +226,13 @@ export const HomePage = () => {
                 onClick={handleLoginClick}
                 className="w-full justify-center text-lg h-12 text-gray-600 hover:text-primary hover:bg-primary/10 rounded-full transition-all duration-300 font-medium"
               >
-                Log in
+                {copy.nav.login}
               </Button>
               <Button
                 onClick={handleStartShopping}
                 className="w-full justify-center text-lg h-12 rounded-full shadow-md shadow-primary/20 font-medium"
               >
-                Sign up
+                {copy.nav.signup}
               </Button>
             </div>
           </div>
@@ -244,12 +247,12 @@ export const HomePage = () => {
             <div className="text-center lg:text-left z-10 animate-fade-up">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent font-semibold mb-6 border border-accent/20 text-sm">
                 <Star className="w-4 h-4 fill-current" />
-                <span>Meal Planning App</span>
+                <span>{copy.hero.badge}</span>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight font-display text-gray-900 mb-6 leading-tight">
-                Your groceries, <br className="hidden md:block" />
+                {copy.hero.titlePrefix} <br className="hidden md:block" />
                 <span className="text-primary relative mt-2">
-                  done in 1 minute.
+                  {copy.hero.titleHighlight}
                   <svg
                     className="absolute w-full h-3 -bottom-1 left-0 text-primary/20 -z-10"
                     viewBox="0 0 100 10"
@@ -263,9 +266,7 @@ export const HomePage = () => {
                 </span>
               </h1>
               <p className="text-xl text-gray-600 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
-                We create personalized menus tailored to your tastes and
-                automatically fill your cart with exactly what you need. Eat
-                better, save time, waste less.
+                {copy.hero.description}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -273,7 +274,7 @@ export const HomePage = () => {
                   onClick={handleStartShopping}
                   className="h-14 px-8 text-lg rounded-full shadow-xl shadow-primary/30 hover:scale-105 transition-transform duration-300 flex items-center gap-2 font-semibold"
                 >
-                  Start Shopping <ArrowRight className="w-5 h-5" />
+                  {copy.hero.startShopping} <ArrowRight className="w-5 h-5" />
                 </Button>
                 <Button
                   variant="secondary"
@@ -284,18 +285,18 @@ export const HomePage = () => {
                       ?.scrollIntoView({ behavior: "smooth" })
                   }
                 >
-                  See How It Works
+                  {copy.hero.seeHowItWorks}
                 </Button>
               </div>
 
               <div className="mt-8 flex items-center justify-center lg:justify-start gap-4 text-sm text-gray-500 font-medium">
                 <span className="flex items-center gap-1">
-                  <CheckCircle className="w-4 h-4 text-green-500" /> No credit
-                  card required
+                  <CheckCircle className="w-4 h-4 text-green-500" />{" "}
+                  {copy.hero.noCard}
                 </span>
                 <span className="flex items-center gap-1">
-                  <CheckCircle className="w-4 h-4 text-green-500" /> Sign up for
-                  free
+                  <CheckCircle className="w-4 h-4 text-green-500" />{" "}
+                  {copy.hero.freeSignup}
                 </span>
               </div>
             </div>
@@ -308,7 +309,7 @@ export const HomePage = () => {
               <div className="relative aspect-square md:aspect-[4/3] rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white transform rotate-1 hover:rotate-0 transition-transform duration-700 bg-gray-100">
                 <img
                   src="/hero-food.png"
-                  alt="Fresh healthy ingredients and meals"
+                  alt={copy.hero.imageAlt}
                   className="object-cover w-full h-full"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -324,10 +325,10 @@ export const HomePage = () => {
                   </div>
                   <div className="pr-2">
                     <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">
-                      Cart Filled
+                      {copy.hero.cartLabel}
                     </div>
                     <div className="text-gray-900 font-bold text-sm">
-                      24 Items Added
+                      {copy.hero.cartValue}
                     </div>
                   </div>
                 </div>
@@ -342,10 +343,10 @@ export const HomePage = () => {
                   </div>
                   <div className="pr-2">
                     <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">
-                      Generated
+                      {copy.hero.generatedLabel}
                     </div>
                     <div className="text-gray-900 font-bold text-sm">
-                      Smart Weekly Menu
+                      {copy.hero.generatedValue}
                     </div>
                   </div>
                 </div>
@@ -362,7 +363,7 @@ export const HomePage = () => {
         <section className="border-y border-gray-100 bg-white py-10 overflow-hidden">
           <div className="max-w-[100vw] mx-auto relative z-10">
             <p className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-6 px-6">
-              Trusted by 10,000+ healthy families
+              {copy.socialProof}
             </p>
             <div
               className="flex overflow-hidden relative w-full"
@@ -389,85 +390,50 @@ export const HomePage = () => {
           <div className="absolute top-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
           <div className="max-w-7xl mx-auto px-6 text-center">
             <div className="inline-block mb-4 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold reveal-on-scroll opacity-0">
-              Simple Process
+              {copy.howItWorks.badge}
             </div>
             <h2
               className="text-3xl md:text-5xl font-bold font-display text-gray-900 mb-6 reveal-on-scroll opacity-0"
               style={{ animationDelay: "100ms" }}
             >
-              How Nutri Works
+              {copy.howItWorks.title}
             </h2>
             <p
               className="text-xl text-gray-500 max-w-2xl mx-auto mb-20 reveal-on-scroll opacity-0"
               style={{ animationDelay: "200ms" }}
             >
-              A seamless experience from meal discovery to groceries arriving at
-              your door.
+              {copy.howItWorks.description}
             </p>
 
             <div className="grid md:grid-cols-3 gap-12 relative max-w-5xl mx-auto">
               {/* Connecting Line (Desktop only) */}
               <div className="hidden md:block absolute top-12 left-[16.66%] right-[16.66%] h-0.5 bg-gradient-to-r from-primary/10 via-primary/40 to-primary/10 -z-0"></div>
 
-              {/* Step 1 */}
-              <div
-                className="flex flex-col items-center group relative z-10 reveal-on-scroll opacity-0"
-                style={{ animationDelay: "300ms" }}
-              >
-                <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center text-primary mb-8 group-hover:-translate-y-2 transition-transform duration-300 relative border border-gray-100">
-                  <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm shadow-md">
-                    1
-                  </div>
-                  <Utensils className="w-10 h-10" />
-                </div>
-                <h3 className="text-xl font-bold font-display text-gray-900 mb-3 group-hover:text-primary transition-colors">
-                  Tell us what you like
-                </h3>
-                <p className="text-gray-500 leading-relaxed text-center px-4">
-                  Take a quick 60-second quiz about your dietary goals,
-                  allergies, and family size.
-                </p>
-              </div>
+              {copy.howItWorks.steps.map((step, index) => {
+                const StepIcon =
+                  index === 0 ? Utensils : index === 1 ? ChefHat : ShoppingCart;
 
-              {/* Step 2 */}
-              <div
-                className="flex flex-col items-center group relative z-10 reveal-on-scroll opacity-0"
-                style={{ animationDelay: "400ms" }}
-              >
-                <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center text-primary mb-8 group-hover:-translate-y-2 transition-transform duration-300 relative border border-gray-100">
-                  <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm shadow-md">
-                    2
+                return (
+                  <div
+                    key={`how-it-works-step-${index}`}
+                    className="flex flex-col items-center group relative z-10 reveal-on-scroll opacity-0"
+                    style={{ animationDelay: `${300 + index * 100}ms` }}
+                  >
+                    <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center text-primary mb-8 group-hover:-translate-y-2 transition-transform duration-300 relative border border-gray-100">
+                      <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm shadow-md">
+                        {index + 1}
+                      </div>
+                      <StepIcon className="w-10 h-10" />
+                    </div>
+                    <h3 className="text-xl font-bold font-display text-gray-900 mb-3 group-hover:text-primary transition-colors">
+                      {step.title}
+                    </h3>
+                    <p className="text-gray-500 leading-relaxed text-center px-4">
+                      {step.description}
+                    </p>
                   </div>
-                  <ChefHat className="w-10 h-10" />
-                </div>
-                <h3 className="text-xl font-bold font-display text-gray-900 mb-3 group-hover:text-primary transition-colors">
-                  Get your smart menu
-                </h3>
-                <p className="text-gray-500 leading-relaxed text-center px-4">
-                  Our core AI instantly creates a balanced, delicious weekly
-                  meal plan optimized for variety.
-                </p>
-              </div>
-
-              {/* Step 3 */}
-              <div
-                className="flex flex-col items-center group relative z-10 reveal-on-scroll opacity-0"
-                style={{ animationDelay: "500ms" }}
-              >
-                <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center text-primary mb-8 group-hover:-translate-y-2 transition-transform duration-300 relative border border-gray-100">
-                  <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm shadow-md">
-                    3
-                  </div>
-                  <ShoppingCart className="w-10 h-10" />
-                </div>
-                <h3 className="text-xl font-bold font-display text-gray-900 mb-3 group-hover:text-primary transition-colors">
-                  1-Click Groceries
-                </h3>
-                <p className="text-gray-500 leading-relaxed text-center px-4">
-                  We match ingredients to your local store. Review your cart and
-                  check out instantly.
-                </p>
-              </div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -478,69 +444,59 @@ export const HomePage = () => {
             <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6 reveal-on-scroll opacity-0">
               <div className="max-w-2xl">
                 <div className="inline-block mb-4 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-semibold">
-                  Everything you need
+                  {copy.features.badge}
                 </div>
                 <h2 className="text-3xl md:text-5xl font-bold font-display text-gray-900 leading-tight">
-                  Smarter eating, <br />
-                  powered by technology
+                  {copy.features.titleLine1} <br />
+                  {copy.features.titleLine2}
                 </h2>
               </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
-              {/* Feature 1 */}
-              <div
-                className="bg-warm-50 rounded-[2rem] p-8 border border-warm-100 hover:shadow-xl hover:border-warm-200 transition-all duration-300 reveal-on-scroll opacity-0"
-                style={{ animationDelay: "100ms" }}
-              >
-                <div className="w-14 h-14 bg-white text-primary rounded-xl flex items-center justify-center shadow-sm mb-8">
-                  <Zap className="w-7 h-7" />
-                </div>
-                <h3 className="text-2xl font-bold font-display text-gray-900 mb-4">
-                  AI Recipe Matching
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  We don't just give you random recipes. Our algorithm learns
-                  your palate and suggests meals you're guaranteed to love,
-                  while keeping macros balanced.
-                </p>
-              </div>
+              {copy.features.cards.map((card, index) => {
+                const palettes = [
+                  {
+                    container:
+                      "bg-warm-50 border-warm-100 hover:border-warm-200",
+                    iconColor: "text-primary",
+                    Icon: Zap,
+                  },
+                  {
+                    container:
+                      "bg-slate-50 border-slate-100 hover:border-slate-200",
+                    iconColor: "text-blue-500",
+                    Icon: ShoppingCart,
+                  },
+                  {
+                    container:
+                      "bg-orange-50 border-orange-100 hover:border-orange-200",
+                    iconColor: "text-accent",
+                    Icon: Heart,
+                  },
+                ] as const;
+                const palette = palettes[index];
 
-              {/* Feature 2 */}
-              <div
-                className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100 hover:shadow-xl hover:border-slate-200 transition-all duration-300 reveal-on-scroll opacity-0"
-                style={{ animationDelay: "200ms" }}
-              >
-                <div className="w-14 h-14 bg-white text-blue-500 rounded-xl flex items-center justify-center shadow-sm mb-8">
-                  <ShoppingCart className="w-7 h-7" />
-                </div>
-                <h3 className="text-2xl font-bold font-display text-gray-900 mb-4">
-                  Pantry Awareness
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Tell Nutri what's already in your fridge. We'll prioritize
-                  recipes using those ingredients to reduce food waste and save
-                  you money.
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div
-                className="bg-orange-50 rounded-[2rem] p-8 border border-orange-100 hover:shadow-xl hover:border-orange-200 transition-all duration-300 reveal-on-scroll opacity-0"
-                style={{ animationDelay: "300ms" }}
-              >
-                <div className="w-14 h-14 bg-white text-accent rounded-xl flex items-center justify-center shadow-sm mb-8">
-                  <Heart className="w-7 h-7" />
-                </div>
-                <h3 className="text-2xl font-bold font-display text-gray-900 mb-4">
-                  Nutrition Tracking
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Every meal plan comes with detailed macronutrient and calorie
-                  breakdowns, making it effortless to hit your fitness and
-                  health goals.
-                </p>
-              </div>
+                return (
+                  <div
+                    key={`feature-card-${index}`}
+                    className={`${palette.container} rounded-[2rem] p-8 border hover:shadow-xl transition-all duration-300 reveal-on-scroll opacity-0`}
+                    style={{ animationDelay: `${100 + index * 100}ms` }}
+                  >
+                    <div
+                      className={`w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm mb-8 ${palette.iconColor}`}
+                    >
+                      <palette.Icon className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-2xl font-bold font-display text-gray-900 mb-4">
+                      {card.title}
+                    </h3>
+                    <p className="text-gray-600 leading-relaxed">
+                      {card.description}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -552,7 +508,7 @@ export const HomePage = () => {
               <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-accent/20 rounded-[2.5rem] transform -rotate-3 scale-105"></div>
               <img
                 src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=1000&auto=format&fit=crop"
-                alt="Family cooking together"
+                alt={copy.benefits.imageAlt}
                 className="relative rounded-[2.5rem] object-cover aspect-[4/5] md:aspect-square w-full shadow-2xl border border-white/10"
               />
             </div>
@@ -562,58 +518,39 @@ export const HomePage = () => {
               style={{ animationDelay: "200ms" }}
             >
               <div className="inline-block mb-4 px-3 py-1 rounded-full bg-white/10 text-white/80 text-sm font-semibold border border-white/10">
-                Why Choose Nutri
+                {copy.benefits.badge}
               </div>
               <h2 className="text-3xl md:text-5xl font-bold font-display mb-8 leading-tight">
-                Spend less time planning, more time{" "}
-                <span className="text-primary">living</span>.
+                {copy.benefits.titlePrefix}{" "}
+                <span className="text-primary">{copy.benefits.titleHighlight}</span>.
               </h2>
 
               <div className="space-y-8">
-                <div className="flex gap-4">
-                  <div className="mt-1 bg-primary/20 p-2 rounded-lg text-primary h-fit">
-                    <CheckCircle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold font-display mb-2">
-                      Save 4+ hours a week
-                    </h4>
-                    <p className="text-gray-400 leading-relaxed">
-                      Stop wandering supermarket aisles and scrolling Pinterest
-                      for dinner ideas. It's fully automated.
-                    </p>
-                  </div>
-                </div>
+                {copy.benefits.items.map((item, index) => {
+                  const colorClasses = [
+                    "bg-primary/20 text-primary",
+                    "bg-accent/20 text-accent",
+                    "bg-blue-500/20 text-blue-400",
+                  ] as const;
 
-                <div className="flex gap-4">
-                  <div className="mt-1 bg-accent/20 p-2 rounded-lg text-accent h-fit">
-                    <CheckCircle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold font-display mb-2">
-                      Cut grocery bills by 20%
-                    </h4>
-                    <p className="text-gray-400 leading-relaxed">
-                      We only buy exactly what you need for the week's recipes.
-                      No more impulse buys or rotting produce.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="mt-1 bg-blue-500/20 p-2 rounded-lg text-blue-400 h-fit">
-                    <CheckCircle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold font-display mb-2">
-                      Discover new favorites
-                    </h4>
-                    <p className="text-gray-400 leading-relaxed">
-                      Break out of your cooking rut with new, highly-rated
-                      recipes tailored to your skill level.
-                    </p>
-                  </div>
-                </div>
+                  return (
+                    <div key={`benefit-item-${index}`} className="flex gap-4">
+                      <div
+                        className={`mt-1 p-2 rounded-lg h-fit ${colorClasses[index]}`}
+                      >
+                        <CheckCircle className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold font-display mb-2">
+                          {item.title}
+                        </h4>
+                        <p className="text-gray-400 leading-relaxed">
+                          {item.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -639,10 +576,10 @@ export const HomePage = () => {
           <div className="max-w-[100vw] mx-auto relative z-10">
             <div className="text-center mb-16 reveal-on-scroll opacity-0 px-6">
               <h2 className="text-3xl md:text-5xl font-bold font-display text-gray-900 mb-6">
-                Loved by home chefs
+                {copy.testimonials.title}
               </h2>
               <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-                Don't just take our word for it. Here's what our community says.
+                {copy.testimonials.description}
               </p>
             </div>
 
@@ -709,27 +646,26 @@ export const HomePage = () => {
 
             <div className="relative z-10">
               <h2 className="text-4xl md:text-6xl font-bold font-display mb-6 tracking-tight">
-                Ready to eat better?
+                {copy.cta.title}
               </h2>
               <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-2xl mx-auto font-medium">
-                Join thousands of users who have transformed their weekly
-                grocery routine. First week is on us.
+                {copy.cta.description}
               </p>
               <Button
                 onClick={handleStartShopping}
                 className="bg-white text-primary hover:bg-gray-50 h-14 sm:h-16 w-full sm:w-auto px-4 sm:px-10 text-lg sm:text-xl rounded-full shadow-xl hover:scale-105 transition-transform duration-300 font-bold"
               >
-                Create My Free Account
+                {copy.cta.button}
               </Button>
               <p className="mt-6 text-white/70 text-sm font-medium">
-                No credit card required to start
+                {copy.cta.footnote}
               </p>
             </div>
           </div>
         </section>
       </main>
 
-      <Footer />
+      <Footer locale={locale} />
 
       {/* --- MODALS --- */}
       <AuthModal
@@ -737,6 +673,8 @@ export const HomePage = () => {
         onClose={() => setShowAuth(false)}
         onLoginSuccess={handleAuthSuccess}
         initialMode={authMode}
+        locale={locale}
+        onLocaleChange={handleLocaleChange}
       />
     </div>
   );

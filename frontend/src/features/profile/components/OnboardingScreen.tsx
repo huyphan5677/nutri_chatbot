@@ -1,11 +1,15 @@
 import { Button } from "@/components/ui/Button";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuizWizard } from "../../onboarding/components/QuizWizard";
+import { onboardingMessages } from "../../onboarding/onboarding.messages";
 import { profileApi } from "../api/profileApi";
 
 export default function OnboardingScreen() {
+  const { locale } = useLocale();
+  const text = onboardingMessages[locale].page;
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -27,7 +31,7 @@ export default function OnboardingScreen() {
       } else if (error.message) {
         msg = error.message;
       }
-      alert(`Error saving preferences: ${msg}. Please try again.`);
+      alert(`${text.saveErrorPrefix}: ${msg || text.saveErrorFallback}. ${text.saveErrorSuffix}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -47,17 +51,16 @@ export default function OnboardingScreen() {
             <CheckCircle2 className="w-12 h-12" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2 font-serif">
-            Setup Complete! 🎉
+            {text.setupCompleteTitle}
           </h2>
           <p className="text-gray-500 mb-8">
-            Your diet preferences and family information have been saved. Corin
-            is now ready to help you plan meals!
+            {text.setupCompleteDescription}
           </p>
           <Button
             onClick={handleDone}
             className="w-full h-14 text-lg rounded-2xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
           >
-            OK, let's start! <ArrowRight className="w-5 h-5" />
+            {text.startCta} <ArrowRight className="w-5 h-5" />
           </Button>
         </div>
       </div>

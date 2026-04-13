@@ -1,11 +1,15 @@
 import { Button } from "@/components/ui/Button";
 import { AuthModal } from "@/features/auth";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { useEffect, useState } from "react";
 import { QuizStep1 } from "../components/QuizStep1";
 import { FamilyMemberData, QuizStep2 } from "../components/QuizStep2";
 import { QuizStep3 } from "../components/QuizStep3";
+import { onboardingMessages } from "../onboarding.messages";
 
 export const OnboardingPage = () => {
+  const { locale } = useLocale();
+  const text = onboardingMessages[locale].page;
   const [step, setStep] = useState(1);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,7 +45,7 @@ export const OnboardingPage = () => {
   const handleLoginSuccess = (token: string) => {
     console.log("Logged in with token:", token);
     console.log("Submitting Quiz Data:", formData);
-    alert("Success! Menu would be generated now.");
+    alert(text.successAlert);
     // Redirect to Menu Page or Fetch Data
   };
 
@@ -58,14 +62,14 @@ export const OnboardingPage = () => {
       <div className="mb-8">
         <div className="flex justify-between text-sm font-medium mb-2 text-gray-500">
           <span>
-            Step {step} of {totalSteps}
+            {text.stepCounter(step, totalSteps)}
           </span>
           {step > 1 && (
             <button
               onClick={handleBack}
               className="text-primary hover:underline"
             >
-              Back
+              {text.back}
             </button>
           )}
         </div>
@@ -105,7 +109,7 @@ export const OnboardingPage = () => {
           onClick={handleNext}
           className="w-full h-12 text-lg rounded-2xl shadow-lg shadow-primary/20"
         >
-          {step === totalSteps ? "See my Menu" : "Continue"}
+          {step === totalSteps ? text.seeMenu : text.continue}
         </Button>
       </div>
     </div>

@@ -1,10 +1,12 @@
 import { getApiUrl } from "@/shared/api/client";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Navbar } from "../../components/ui/Navbar";
 import { Footer } from "../../components/ui/Footer";
 
 export default function MainLayout() {
+  const { isLocaleReady } = useLocale();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function MainLayout() {
     checkOnboarding();
   }, [onboardingChecked, location.pathname, navigate]);
 
-  if (isLoading) {
+  if (isLoading || !isLocaleReady) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5C5C]"></div>

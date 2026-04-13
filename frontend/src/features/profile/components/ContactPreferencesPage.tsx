@@ -1,7 +1,11 @@
+import { profileMessages } from "@/features/profile/profile.messages";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { Bell, Loader2, Mail, Save } from "lucide-react";
 import { useState } from "react";
 
 export default function ContactPreferencesPage() {
+  const { locale } = useLocale();
+  const text = profileMessages[locale].contact;
   const [preferences, setPreferences] = useState({
     marketing: false,
     mealPlanReminders: true,
@@ -20,10 +24,10 @@ export default function ContactPreferencesPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
-            Contact Preferences
+            {text.title}
           </h2>
           <p className="text-gray-500 text-sm md:text-base">
-            Control how and when Nutri communicates with you.
+            {text.subtitle}
           </p>
         </div>
         <button
@@ -36,7 +40,7 @@ export default function ContactPreferencesPage() {
           ) : (
             <Save className="w-4 h-4" />
           )}
-          Save Changes
+          {text.saveChanges}
         </button>
       </div>
 
@@ -48,9 +52,11 @@ export default function ContactPreferencesPage() {
               <Mail className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Email Notifications</h3>
+              <h3 className="font-bold text-gray-900">
+                {text.emailNotificationsTitle}
+              </h3>
               <p className="text-sm text-gray-500">
-                Updates sent directly to your inbox
+                {text.emailNotificationsDescription}
               </p>
             </div>
           </div>
@@ -59,11 +65,10 @@ export default function ContactPreferencesPage() {
             <label className="flex items-start justify-between cursor-pointer group">
               <div className="pr-4">
                 <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
-                  Weekly Meal Plan Reminders
+                  {text.mealPlanRemindersTitle}
                 </span>
                 <span className="block text-sm text-gray-500 mt-1">
-                  Get notified when it's time to generate your meal plan for the
-                  upcoming week.
+                  {text.mealPlanRemindersDescription}
                 </span>
               </div>
               <div className="relative inline-flex items-center cursor-pointer mt-1 shrink-0">
@@ -85,11 +90,10 @@ export default function ContactPreferencesPage() {
             <label className="flex items-start justify-between cursor-pointer group">
               <div className="pr-4">
                 <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
-                  Weekly Recipe Digest
+                  {text.weeklyDigestTitle}
                 </span>
                 <span className="block text-sm text-gray-500 mt-1">
-                  A curated list of new and popular recipes tailored to your
-                  tastes.
+                  {text.weeklyDigestDescription}
                 </span>
               </div>
               <div className="relative inline-flex items-center cursor-pointer mt-1 shrink-0">
@@ -111,10 +115,10 @@ export default function ContactPreferencesPage() {
             <label className="flex items-start justify-between cursor-pointer group">
               <div className="pr-4">
                 <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
-                  Marketing and Offers
+                  {text.marketingTitle}
                 </span>
                 <span className="block text-sm text-gray-500 mt-1">
-                  Hear about new features, special promotions, and Nutri news.
+                  {text.marketingDescription}
                 </span>
               </div>
               <div className="relative inline-flex items-center cursor-pointer mt-1 shrink-0">
@@ -142,9 +146,11 @@ export default function ContactPreferencesPage() {
               <Bell className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Push Notifications</h3>
+              <h3 className="font-bold text-gray-900">
+                {text.pushNotificationsTitle}
+              </h3>
               <p className="text-sm text-gray-500">
-                Alerts sent directly to your device
+                {text.pushNotificationsDescription}
               </p>
             </div>
           </div>
@@ -152,11 +158,10 @@ export default function ContactPreferencesPage() {
           <label className="flex items-start justify-between cursor-pointer group">
             <div className="pr-4">
               <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
-                Enable Push Notifications
+                {text.enablePushTitle}
               </span>
               <span className="block text-sm text-gray-500 mt-1">
-                Receive instant alerts for expiring pantry items or active
-                kitchen timers.
+                {text.enablePushDescription}
               </span>
             </div>
             <div className="relative inline-flex items-center cursor-pointer mt-1 shrink-0">

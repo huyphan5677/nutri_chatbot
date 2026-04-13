@@ -1,4 +1,6 @@
 import { getApiUrl } from "@/shared/api/client";
+import { navbarMessages } from "@/components/ui/navbar.messages";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import {
   Archive,
   Bell,
@@ -18,6 +20,8 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
+  const { locale } = useLocale();
+  const text = navbarMessages[locale];
   const navigate = useNavigate();
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -84,11 +88,12 @@ export const Navbar = () => {
               ) {
                 window.dispatchEvent(
                   new CustomEvent("shoppingCompleted", {
-                    detail: {
-                      orderId: notif.order_id,
-                      mealPlanName: notif.meal_plan_name || "Menu",
-                    },
-                  }),
+                      detail: {
+                        orderId: notif.order_id,
+                        mealPlanName:
+                          notif.meal_plan_name || text.notifications.menuFallback,
+                      },
+                    }),
                 );
               }
             }
@@ -211,19 +216,19 @@ export const Navbar = () => {
             onClick={() => navigate("/dashboard")}
             className={getDesktopNavClass("/dashboard")}
           >
-            My groceries
+            {text.nav.groceries}
           </button>
           <button
             onClick={() => navigate("/cooking")}
             className={getDesktopNavClass("/cooking")}
           >
-            What's cooking?
+            {text.nav.cooking}
           </button>
           <button
             onClick={() => navigate("/blog")}
             className={getDesktopNavClass("/blog")}
           >
-            Inspiration
+            {text.nav.inspiration}
           </button>
         </div>
       </div>
@@ -244,7 +249,7 @@ export const Navbar = () => {
             <ShoppingBag
               className={`w-5 h-5 ${location.pathname === "/dashboard" ? "text-[#FF5C5C]" : "text-gray-500"}`}
             />{" "}
-            My groceries
+            {text.nav.groceries}
           </button>
           <button
             onClick={() => {
@@ -256,7 +261,7 @@ export const Navbar = () => {
             <Settings
               className={`w-5 h-5 ${location.pathname === "/cooking" ? "text-[#FF5C5C]" : "text-gray-500"}`}
             />{" "}
-            What's cooking?
+            {text.nav.cooking}
           </button>
           <div className="h-px bg-gray-100 my-2"></div>
 
@@ -275,7 +280,7 @@ export const Navbar = () => {
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#FF5C5C] rounded-full border-2 border-white"></span>
               )}
             </div>
-            Chat Assistant
+            {text.nav.chatAssistant}
           </button>
           <button
             onClick={() => {
@@ -294,7 +299,7 @@ export const Navbar = () => {
                 </span>
               )}
             </div>
-            My Menus
+            {text.nav.menus}
           </button>
 
           <button
@@ -314,7 +319,7 @@ export const Navbar = () => {
                 </span>
               )}
             </div>
-            My Fridge
+            {text.nav.fridge}
           </button>
           <button
             onClick={() => {
@@ -333,15 +338,15 @@ export const Navbar = () => {
                 </span>
               )}
             </div>
-            Shopping List
+            {text.nav.shoppingList}
           </button>
           <div className="relative">
             <button
               onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-              className="w-full p-3 text-left rounded-lg hover:bg-gray-50 flex items-center justify-between text-gray-800 font-medium"
-            >
-              <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-gray-500" /> Notifications
+            className="w-full p-3 text-left rounded-lg hover:bg-gray-50 flex items-center justify-between text-gray-800 font-medium"
+          >
+            <div className="flex items-center gap-3">
+                <Bell className="w-5 h-5 text-gray-500" /> {text.nav.notifications}
               </div>
               {unreadCount + shoppingNotifications.length > 0 && (
                 <span className="bg-[#FF5C5C] text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -382,11 +387,11 @@ export const Navbar = () => {
                       )}
                       <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[#FF5C5C] rounded-full"></span>
                     </div>
-                    <span className="text-xs font-medium text-gray-700 truncate">
+                      <span className="text-xs font-medium text-gray-700 truncate">
                       {notif.status === "completed"
-                        ? "Completed Shopping!"
-                        : "Shopping Failed"}{" "}
-                      - {notif.meal_plan_name || "Menu"}
+                        ? text.notifications.completedShopping
+                        : text.notifications.shoppingFailed}{" "}
+                      - {notif.meal_plan_name || text.notifications.menuFallback}
                     </span>
                   </button>
                 ))}
@@ -422,7 +427,7 @@ export const Navbar = () => {
                   ))
                 ) : shoppingNotifications.length === 0 ? (
                   <div className="text-center text-xs text-gray-500 py-2">
-                    No new notifications
+                    {text.notifications.noNewNotifications}
                   </div>
                 ) : null}
               </div>
@@ -446,7 +451,7 @@ export const Navbar = () => {
         <button
           onClick={() => navigate("/chat")}
           className={`transition-colors relative hidden lg:block ${location.pathname === "/chat" ? "text-[#FF5C5C]" : "text-gray-600 hover:text-[#FF5C5C]"}`}
-          title="Chat Assistant"
+          title={text.nav.chatAssistant}
         >
           <MessageCircle className="w-5 h-5" />
           {unreadCount > 0 && (
@@ -459,7 +464,7 @@ export const Navbar = () => {
         <button
           onClick={() => navigate("/grocery")}
           className={`transition-colors relative hidden lg:block ${location.pathname === "/grocery" ? "text-[#FF5C5C]" : "text-gray-600 hover:text-[#FF5C5C]"}`}
-          title="Shopping List"
+          title={text.nav.shoppingList}
         >
           <ShoppingBag className="w-5 h-5" />
           {groceryCount > 0 && (
@@ -474,7 +479,7 @@ export const Navbar = () => {
         <button
           onClick={() => navigate("/menus")}
           className={`transition-colors relative hidden lg:block ${location.pathname === "/menus" ? "text-[#FF5C5C]" : "text-gray-600 hover:text-[#FF5C5C]"}`}
-          title="My Menu"
+          title={text.nav.menus}
         >
           <UtensilsCrossed className="w-5 h-5" />
           {menuCount > 0 && (
@@ -489,7 +494,7 @@ export const Navbar = () => {
         <button
           onClick={() => navigate("/inventory")}
           className={`transition-colors relative hidden lg:block ${location.pathname === "/inventory" ? "text-[#FF5C5C]" : "text-gray-600 hover:text-[#FF5C5C]"}`}
-          title="My Fridge"
+          title={text.nav.fridge}
         >
           <Archive className="w-5 h-5" />
           {inventoryCount > 0 && (
@@ -505,7 +510,7 @@ export const Navbar = () => {
           <button
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
             className="text-gray-600 hover:text-primary transition-colors relative hidden lg:block"
-            title="Notifications"
+            title={text.nav.notifications}
           >
             <Bell className="w-5 h-5" />
             {unreadCount + shoppingNotifications.length > 0 && (
@@ -519,7 +524,7 @@ export const Navbar = () => {
             <div className="absolute right-0 mt-3 w-72 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] py-2 animate-in fade-in zoom-in-95 duration-200 border border-gray-100 hidden lg:block">
               <div className="px-4 py-2 border-b border-gray-100">
                 <h3 className="font-semibold text-gray-900 text-sm">
-                  Notifications
+                  {text.notifications.title}
                 </h3>
               </div>
               <div className="max-h-80 overflow-y-auto">
@@ -557,11 +562,11 @@ export const Navbar = () => {
                     <div>
                       <p className="text-sm font-medium text-gray-900 line-clamp-1">
                         {notif.status === "completed"
-                          ? "Completed Shopping! 🎉"
-                          : "Shopping Failed 😞"}{" "}
+                          ? text.notifications.completedShopping
+                          : text.notifications.shoppingFailed}{" "}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        {notif.meal_plan_name || "Menu"}
+                        {notif.meal_plan_name || text.notifications.menuFallback}
                       </p>
                     </div>
                   </button>
@@ -595,14 +600,14 @@ export const Navbar = () => {
                           {session.title}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5">
-                          New message from Corin is ready
+                          {text.notifications.newMessageReady}
                         </p>
                       </div>
                     </button>
                   ))
                 ) : shoppingNotifications.length === 0 ? (
                   <div className="px-4 py-6 text-center text-sm text-gray-500">
-                    No new notifications
+                    {text.notifications.noNewNotifications}
                   </div>
                 ) : null}
               </div>
@@ -620,7 +625,7 @@ export const Navbar = () => {
           >
             <User className="w-5 h-5" strokeWidth={1.5} />
             <span className="text-sm hidden sm:inline">
-              {user?.full_name || "admin"}
+              {user?.full_name || text.account.adminFallback}
             </span>
           </button>
 
@@ -633,7 +638,7 @@ export const Navbar = () => {
                 }}
                 className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
-                <Settings className="w-4 h-4 text-gray-400" /> Account Settings
+                <Settings className="w-4 h-4 text-gray-400" /> {text.account.accountSettings}
               </button>
               <button
                 onClick={() => {
@@ -642,14 +647,14 @@ export const Navbar = () => {
                 }}
                 className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
               >
-                <Terminal className="w-4 h-4 text-gray-400" /> System Logs
+                <Terminal className="w-4 h-4 text-gray-400" /> {text.account.systemLogs}
               </button>
               <div className="h-px bg-gray-100 my-1"></div>
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-2.5 text-sm text-[#FF5C5C] hover:bg-red-50 flex items-center gap-3 transition-colors"
               >
-                <LogOut className="w-4 h-4" /> Log out
+                <LogOut className="w-4 h-4" /> {text.account.logout}
               </button>
             </div>
           )}

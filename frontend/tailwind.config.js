@@ -15,8 +15,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["DM Sans", "sans-serif"],
-        display: ["Sora", "sans-serif"],
+        sans: ["DM Sans", "Be Vietnam Pro", "system-ui", "sans-serif"],
+        display: ["Sora", "Be Vietnam Pro", "system-ui", "sans-serif"],
+        serif: ["Noto Serif", "ui-serif", "Georgia", "serif"],
       },
       borderRadius: {
         xl: "1rem",

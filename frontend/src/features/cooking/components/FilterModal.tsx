@@ -1,5 +1,7 @@
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { X } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { cookingMessages } from "../cooking.messages";
 
 interface FilterModalProps {
   isOpen: boolean;
@@ -8,14 +10,6 @@ interface FilterModalProps {
   currentFilters: { type?: string; maxTime?: number };
 }
 
-const TYPES = [
-  "Vegetarian",
-  "Meat",
-  "Poultry",
-  "Seafood",
-  "Breakfast",
-  "Dessert",
-];
 const TIMES = [15, 30, 45, 60, 120];
 
 export const FilterModal: React.FC<FilterModalProps> = ({
@@ -24,12 +18,23 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   onApply,
   currentFilters,
 }) => {
+  const { locale } = useLocale();
+  const messages = cookingMessages[locale].filterModal;
   const [selectedType, setSelectedType] = useState<string | undefined>(
     currentFilters.type,
   );
   const [selectedTime, setSelectedTime] = useState<number | undefined>(
     currentFilters.maxTime,
   );
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    setSelectedType(currentFilters.type);
+    setSelectedTime(currentFilters.maxTime);
+  }, [currentFilters.maxTime, currentFilters.type, isOpen]);
 
   if (!isOpen) return null;
 
@@ -56,29 +61,31 @@ export const FilterModal: React.FC<FilterModalProps> = ({
         </button>
 
         <h2 className="text-2xl font-bold text-gray-900 mb-8 font-serif">
-          Filters
+          {messages.title}
         </h2>
 
         {/* Diet Type */}
         <div className="mb-6">
           <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
-            Type
+            {messages.type}
           </h3>
           <div className="flex flex-wrap gap-2">
-            {TYPES.map((type) => (
+            {messages.typeOptions.map((type) => (
               <button
-                key={type}
+                key={type.value}
                 onClick={() =>
-                  setSelectedType(type === selectedType ? undefined : type)
+                  setSelectedType(
+                    type.value === selectedType ? undefined : type.value,
+                  )
                 }
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border
                                     ${
-                                      selectedType === type
+                                      selectedType === type.value
                                         ? "bg-[#FF5C5C] text-white border-[#FF5C5C]"
                                         : "bg-white text-gray-600 border-gray-200 hover:border-[#FF5C5C] hover:text-[#FF5C5C]"
                                     }`}
               >
-                {type}
+                {type.label}
               </button>
             ))}
           </div>
@@ -87,7 +94,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
         {/* Max Prep Time */}
         <div className="mb-8">
           <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
-            Max Time (Minutes)
+            {messages.maxTime}
           </h3>
           <div className="flex flex-wrap gap-2">
             {TIMES.map((time) => (
@@ -115,13 +122,13 @@ export const FilterModal: React.FC<FilterModalProps> = ({
             onClick={handleReset}
             className="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-full transition-colors"
           >
-            Reset
+            {messages.reset}
           </button>
           <button
             onClick={handleApply}
             className="flex-1 py-3 bg-[#FF5C5C] text-white font-bold rounded-full hover:bg-[#ff4040] shadow-md shadow-red-500/20 transition-all"
           >
-            Apply Filters
+            {messages.apply}
           </button>
         </div>
       </div>

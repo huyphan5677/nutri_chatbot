@@ -1,9 +1,16 @@
 import { Modal } from "@/components/ui/Modal";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { Calendar, Check, Loader2, Package, Pencil, Plus, Trash2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { inventoryApi, InventoryItemDTO } from "../api/inventoryApi";
+import {
+  getInventoryCategoryLabel,
+  inventoryMessages,
+} from "../inventory.messages";
 
 export default function InventoryDashboard() {
+  const { locale } = useLocale();
+  const copy = inventoryMessages[locale];
   const [items, setItems] = useState<InventoryItemDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -175,17 +182,17 @@ export default function InventoryDashboard() {
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 md:mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold font-serif text-gray-900">
-            My Fridge
+            {copy.page.title}
           </h1>
           <p className="text-sm md:text-base text-gray-500 mt-1">
-            Manage your ingredients and track expiration dates.
+            {copy.page.subtitle}
           </p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
           className="bg-[#FF5C5C] text-white px-6 py-3 rounded-full font-bold shadow-md hover:bg-[#ff4040] transition-colors flex items-center justify-center gap-2 w-full md:w-auto"
         >
-          <Plus className="w-5 h-5" /> Add Items
+          <Plus className="w-5 h-5" /> {copy.page.addItems}
         </button>
       </div>
 
@@ -199,11 +206,10 @@ export default function InventoryDashboard() {
             <Package className="w-10 h-10 md:w-12 md:h-12" />
           </div>
           <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
-            Your fridge is empty!
+            {copy.page.emptyTitle}
           </h2>
           <p className="text-sm md:text-base text-gray-500 max-w-sm mb-6 md:mb-8 px-4">
-            Start adding ingredients to keep track of what you have and let
-            Corin suggest meals based on your stock.
+            {copy.page.emptyDescription}
           </p>
         </div>
       ) : (
@@ -246,7 +252,7 @@ export default function InventoryDashboard() {
                   ) : (
                     <>
                       <h3 className="font-semibold text-gray-900 uppercase tracking-wider text-sm truncate">
-                        {cat}
+                        {getInventoryCategoryLabel(cat, locale)}
                       </h3>
                       <button 
                         onClick={() => {
@@ -254,7 +260,7 @@ export default function InventoryDashboard() {
                           setNewCategoryName(cat);
                         }}
                         className="opacity-0 group-hover/header:opacity-100 p-1.5 text-gray-400 hover:text-primary transition-all rounded-lg hover:bg-white/50"
-                        title="Rename category"
+                        title={copy.actions.renameCategory}
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
@@ -263,7 +269,7 @@ export default function InventoryDashboard() {
                 </div>
                 {renamingCategory !== cat && (
                   <span className="text-xs font-medium text-primary bg-white px-2 py-1 rounded-full shadow-sm shrink-0">
-                    {catItems.length} items
+                    {copy.page.itemsCount(catItems.length)}
                   </span>
                 )}
               </div>
@@ -278,10 +284,10 @@ export default function InventoryDashboard() {
                         {item.expiration_date && (
                           <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
                             <Calendar className="w-3.5 h-3.5" />
-                            Expires:{" "}
+                            {copy.page.expiresLabel}{" "}
                             {new Date(
                               item.expiration_date,
-                            ).toLocaleDateString()}
+                            ).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US")}
                           </div>
                         )}
                       </div>
@@ -292,14 +298,14 @@ export default function InventoryDashboard() {
                         <button
                           onClick={() => handleOpenEdit(item)}
                           className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
-                          title="Edit item"
+                          title={copy.actions.editItem}
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
                           className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                          title="Remove item"
+                          title={copy.actions.removeItem}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -325,22 +331,24 @@ export default function InventoryDashboard() {
               <Package className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Add to Fridge</h2>
-              <p className="text-sm text-gray-500">Track a new ingredient</p>
+              <h2 className="text-lg font-bold text-gray-900">
+                {copy.addModal.title}
+              </h2>
+              <p className="text-sm text-gray-500">{copy.addModal.subtitle}</p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Item Name *
+                {copy.form.itemName}
               </label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Almond Milk"
+                placeholder={copy.form.itemNamePlaceholder}
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
               />
             </div>
@@ -348,31 +356,35 @@ export default function InventoryDashboard() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                  {copy.form.category}
                 </label>
                 <input
                   list="category-options"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  placeholder="Select or type..."
+                  placeholder={copy.form.categoryPlaceholder}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                 />
                 <datalist id="category-options">
                   {allCategories.map((cat) => (
-                    <option key={cat} value={cat} />
+                    <option
+                      key={cat}
+                      value={cat}
+                      label={getInventoryCategoryLabel(cat, locale)}
+                    />
                   ))}
                 </datalist>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quantity
+                  {copy.form.quantity}
                 </label>
                 <input
                   type="text"
                   list="quantity-options"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="e.g. 500g, 1 box"
+                  placeholder={copy.form.quantityPlaceholder}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                 />
                 <datalist id="quantity-options">
@@ -385,9 +397,9 @@ export default function InventoryDashboard() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Expiration Date{" "}
+                {copy.form.expirationDate}{" "}
                 <span className="text-gray-400 focus:outline-none font-normal">
-                  (Optional)
+                  {copy.form.optional}
                 </span>
               </label>
               <input
@@ -404,7 +416,7 @@ export default function InventoryDashboard() {
                 onClick={() => setIsModalOpen(false)}
                 className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors text-sm"
               >
-                Cancel
+                {copy.actions.cancel}
               </button>
               <button
                 type="submit"
@@ -414,7 +426,7 @@ export default function InventoryDashboard() {
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  "Add Item"
+                  copy.actions.addItem
                 )}
               </button>
             </div>
@@ -435,16 +447,16 @@ export default function InventoryDashboard() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">
-                Edit Fridge Item
+                {copy.editModal.title}
               </h2>
-              <p className="text-sm text-gray-500">Update ingredient details</p>
+              <p className="text-sm text-gray-500">{copy.editModal.subtitle}</p>
             </div>
           </div>
 
           <form onSubmit={handleEditSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Item Name *
+                {copy.form.itemName}
               </label>
               <input
                 type="text"
@@ -458,31 +470,35 @@ export default function InventoryDashboard() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                  {copy.form.category}
                 </label>
                 <input
                   list="edit-category-options"
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
-                  placeholder="Select or type..."
+                  placeholder={copy.form.categoryPlaceholder}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                 />
                 <datalist id="edit-category-options">
                   {allCategories.map((cat) => (
-                    <option key={cat} value={cat} />
+                    <option
+                      key={cat}
+                      value={cat}
+                      label={getInventoryCategoryLabel(cat, locale)}
+                    />
                   ))}
                 </datalist>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quantity
+                  {copy.form.quantity}
                 </label>
                 <input
                   type="text"
                   list="edit-quantity-options"
                   value={editQuantity}
                   onChange={(e) => setEditQuantity(e.target.value)}
-                  placeholder="e.g. 500g, 1 box"
+                  placeholder={copy.form.quantityPlaceholder}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                 />
                 <datalist id="edit-quantity-options">
@@ -495,9 +511,9 @@ export default function InventoryDashboard() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Expiration Date{" "}
+                {copy.form.expirationDate}{" "}
                 <span className="text-gray-400 focus:outline-none font-normal">
-                  (Optional)
+                  {copy.form.optional}
                 </span>
               </label>
               <input
@@ -514,7 +530,7 @@ export default function InventoryDashboard() {
                 onClick={() => setIsEditModalOpen(false)}
                 className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors text-sm"
               >
-                Cancel
+                {copy.actions.cancel}
               </button>
               <button
                 type="submit"
@@ -524,7 +540,7 @@ export default function InventoryDashboard() {
                 {isSubmitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  "Save Changes"
+                  copy.actions.saveChanges
                 )}
               </button>
             </div>

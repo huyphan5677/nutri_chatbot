@@ -1,7 +1,17 @@
 import { ChefHat, Instagram, Linkedin, Twitter } from "lucide-react";
+import { type SupportedLocale } from "@/shared/i18n/locale";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { Button } from "./Button";
+import { footerCopy } from "./footer.messages";
 
-export function Footer() {
+interface FooterProps {
+  locale?: SupportedLocale;
+}
+
+export function Footer({ locale }: FooterProps) {
+  const { locale: contextLocale } = useLocale();
+  const copy = footerCopy[locale ?? contextLocale];
+
   return (
     <footer className="bg-white border-t border-gray-100 pt-20 pb-10 mt-auto">
       <div className="max-w-7xl mx-auto px-6">
@@ -15,8 +25,7 @@ export function Footer() {
               Nutri.
             </div>
             <p className="text-gray-500 leading-relaxed mb-8 max-w-sm">
-              The smart kitchen assistant that plans your meals, balances your
-              nutrition, and fills your grocery cart automatically.
+              {copy.brandDescription}
             </p>
             <div className="flex gap-4">
               <a
@@ -46,7 +55,7 @@ export function Footer() {
           {/* Links Columns */}
           <div className="col-span-1 lg:col-span-2 space-y-4">
             <h4 className="font-bold text-gray-900 font-display mb-4">
-              Product
+              {copy.product}
             </h4>
             <ul className="space-y-3">
               <li>
@@ -54,7 +63,7 @@ export function Footer() {
                   href="/#how-it-works"
                   className="text-gray-500 hover:text-primary transition-colors"
                 >
-                  How it works
+                  {copy.howItWorks}
                 </a>
               </li>
               <li>
@@ -62,7 +71,7 @@ export function Footer() {
                   href="/#features"
                   className="text-gray-500 hover:text-primary transition-colors"
                 >
-                  Features
+                  {copy.features}
                 </a>
               </li>
               <li>
@@ -70,7 +79,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-500 hover:text-primary transition-colors"
                 >
-                  Pricing
+                  {copy.pricing}
                 </a>
               </li>
               <li>
@@ -78,7 +87,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-500 hover:text-primary transition-colors"
                 >
-                  Dietary Supported
+                  {copy.dietarySupported}
                 </a>
               </li>
             </ul>
@@ -86,7 +95,7 @@ export function Footer() {
 
           <div className="col-span-1 lg:col-span-2 space-y-4">
             <h4 className="font-bold text-gray-900 font-display mb-4">
-              Company
+              {copy.company}
             </h4>
             <ul className="space-y-3">
               <li>
@@ -94,7 +103,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-500 hover:text-primary transition-colors"
                 >
-                  About Us
+                  {copy.aboutUs}
                 </a>
               </li>
               <li>
@@ -102,7 +111,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-500 hover:text-primary transition-colors"
                 >
-                  Careers
+                  {copy.careers}
                 </a>
               </li>
               <li>
@@ -110,7 +119,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-500 hover:text-primary transition-colors"
                 >
-                  Blog
+                  {copy.blog}
                 </a>
               </li>
               <li>
@@ -118,7 +127,7 @@ export function Footer() {
                   href="#"
                   className="text-gray-500 hover:text-primary transition-colors"
                 >
-                  Press
+                  {copy.press}
                 </a>
               </li>
             </ul>
@@ -127,20 +136,20 @@ export function Footer() {
           {/* Newsletter Column */}
           <div className="col-span-2 lg:col-span-4 mt-2 lg:mt-0">
             <h4 className="font-bold text-gray-900 font-display mb-4">
-              Stay in the loop
+              {copy.newsletterTitle}
             </h4>
             <p className="text-gray-500 mb-4">
-              Get weekly nutrition tips and new recipes sent to your inbox.
+              {copy.newsletterDescription}
             </p>
             <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder={copy.emailPlaceholder}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all bg-gray-50"
                 required
               />
               <Button type="submit" className="rounded-xl px-6">
-                Subscribe
+                {copy.subscribe}
               </Button>
             </form>
           </div>
@@ -148,17 +157,17 @@ export function Footer() {
 
         <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
           <div className="text-gray-400 text-sm font-medium">
-            © 2026 Nutri Inc. All rights reserved.
+            {copy.copyright}
           </div>
           <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-3 text-sm text-gray-500 font-medium w-full md:w-auto">
             <a href="#" className="hover:text-primary transition-colors">
-              Privacy Policy
+              {copy.privacyPolicy}
             </a>
             <a href="#" className="hover:text-primary transition-colors">
-              Terms of Service
+              {copy.termsOfService}
             </a>
             <a href="#" className="hover:text-primary transition-colors">
-              Cookie Settings
+              {copy.cookieSettings}
             </a>
           </div>
         </div>

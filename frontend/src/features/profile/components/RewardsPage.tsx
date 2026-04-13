@@ -1,3 +1,5 @@
+import { profileMessages } from "@/features/profile/profile.messages";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import {
   Award,
   CheckCircle2,
@@ -8,26 +10,28 @@ import {
 } from "lucide-react";
 
 export default function RewardsPage() {
+  const { locale } = useLocale();
+  const text = profileMessages[locale].rewards;
   const currentPoints = 1250;
   const nextTierPoints = 2000;
   const progress = (currentPoints / nextTierPoints) * 100;
 
   const achievements = [
     {
-      name: "Pantry Master",
-      description: "Added 50 distinct items to your fridge",
+      name: text.achievements.pantryMaster.name,
+      description: text.achievements.pantryMaster.description,
       points: "+50",
       unlocked: true,
     },
     {
-      name: "Consistent Planner",
-      description: "Generated 4 meal plans within a single month",
+      name: text.achievements.consistentPlanner.name,
+      description: text.achievements.consistentPlanner.description,
       points: "+100",
       unlocked: true,
     },
     {
-      name: "Recipe Creator",
-      description: "Uploaded your first personal recipe",
+      name: text.achievements.recipeCreator.name,
+      description: text.achievements.recipeCreator.description,
       points: "+20",
       unlocked: false,
     },
@@ -37,11 +41,10 @@ export default function RewardsPage() {
     <div className="flex flex-col gap-8 md:gap-12 max-w-4xl">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
-          Nutri Rewards
+          {text.title}
         </h2>
         <p className="text-gray-500 text-sm md:text-base mb-8">
-          Earn points by planning meals, managing your kitchen, and cooking
-          consistently.
+          {text.subtitle}
         </p>
 
         {/* Top Tier Card */}
@@ -55,29 +58,31 @@ export default function RewardsPage() {
               </div>
               <div>
                 <h3 className="text-white/80 font-medium uppercase tracking-wider text-sm mb-1">
-                  Current Tier
+                  {text.currentTier}
                 </h3>
                 <h1 className="text-3xl md:text-4xl font-bold font-serif">
-                  Silver Chef
+                  {text.currentTierName}
                 </h1>
               </div>
             </div>
 
             <div className="text-center md:text-right">
               <h3 className="text-white/80 font-medium uppercase tracking-wider text-sm mb-1">
-                Total Points
+                {text.totalPoints}
               </h3>
               <div className="text-4xl md:text-5xl font-bold font-serif">
                 {currentPoints.toLocaleString()}{" "}
-                <span className="text-xl opacity-80">pts</span>
+                <span className="text-xl opacity-80">{text.pointsUnit}</span>
               </div>
             </div>
           </div>
 
           <div className="mt-8 relative z-10">
             <div className="flex justify-between text-sm font-medium mb-2">
-              <span>{progress.toFixed(0)}% to Gold Chef</span>
-              <span>{nextTierPoints.toLocaleString()} pts</span>
+              <span>{text.progressToGold(Number(progress.toFixed(0)))}</span>
+              <span>
+                {nextTierPoints.toLocaleString()} {text.pointsUnit}
+              </span>
             </div>
             <div className="h-3 bg-black/20 rounded-full overflow-hidden">
               <div
@@ -87,8 +92,7 @@ export default function RewardsPage() {
             </div>
             <p className="text-xs text-white/70 mt-3 flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 fill-current" />
-              Earn {nextTierPoints - currentPoints} more points to unlock
-              premium recipe suggestions!
+              {text.earnMore(nextTierPoints - currentPoints)}
             </p>
           </div>
         </div>
@@ -98,10 +102,10 @@ export default function RewardsPage() {
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
               <Award className="w-5 h-5 text-primary" />
-              Recent Achievements
+              {text.recentAchievements}
             </h3>
             <button className="text-sm font-medium text-gray-500 hover:text-primary transition-colors flex items-center gap-1">
-              View all <ChevronRight className="w-4 h-4" />
+              {text.viewAll} <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
@@ -146,11 +150,10 @@ export default function RewardsPage() {
             <Gift className="w-8 h-8" />
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">
-            Rewards Store Coming Soon!
+            {text.rewardsStoreTitle}
           </h3>
           <p className="text-gray-500 text-sm max-w-sm">
-            Soon you'll be able to exchange your Nutri points for premium app
-            themes, grocery store coupons, and exclusive recipes.
+            {text.rewardsStoreDescription}
           </p>
         </div>
       </div>

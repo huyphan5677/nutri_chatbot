@@ -1,6 +1,11 @@
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { Bookmark, Clock, Flame, Globe, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Recipe } from "../api/recipesApi";
+import {
+  cookingMessages,
+  getRecipeTypeDisplayName,
+} from "../cooking.messages";
 import { CreateCollectionModal } from "./CreateCollectionModal";
 import { SaveToCollectionMenu } from "./SaveToCollectionMenu";
 
@@ -15,6 +20,9 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
   onClose,
   recipe,
 }) => {
+  const { locale } = useLocale();
+  const sharedMessages = cookingMessages[locale].shared;
+  const messages = cookingMessages[locale].detailModal;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -64,7 +72,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-2">
                 <Flame className="w-12 h-12 opacity-50" />
-                <span>No image available</span>
+                <span>{sharedMessages.noImageAvailable}</span>
               </div>
             )}
           </div>
@@ -73,7 +81,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
           <div className="p-8">
             {recipe.type && (
               <span className="inline-block px-3 py-1 bg-red-100 text-[#FF5C5C] text-xs font-bold uppercase tracking-wider rounded-full mb-4">
-                {recipe.type}
+                {getRecipeTypeDisplayName(recipe.type, locale)}
               </span>
             )}
 
@@ -88,7 +96,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
                   className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-sm font-bold text-gray-700"
                 >
                   <Bookmark className="w-4 h-4" />
-                  Save
+                  {messages.save}
                 </button>
 
                 {isMenuOpen && (
@@ -117,10 +125,10 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
                   <Clock className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="text-xs text-gray-500 font-medium uppercase">
-                      Prep Time
+                      {messages.prepTime}
                     </p>
                     <p className="font-bold text-gray-900">
-                      {recipe.prep_time_minutes} min
+                      {recipe.prep_time_minutes} {sharedMessages.minuteUnit}
                     </p>
                   </div>
                 </div>
@@ -130,10 +138,10 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
                   <Flame className="w-5 h-5 text-red-400" />
                   <div>
                     <p className="text-xs text-gray-500 font-medium uppercase">
-                      Cook Time
+                      {messages.cookTime}
                     </p>
                     <p className="font-bold text-gray-900">
-                      {recipe.cook_time_minutes} min
+                      {recipe.cook_time_minutes} {sharedMessages.minuteUnit}
                     </p>
                   </div>
                 </div>
@@ -143,7 +151,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
                   <div className="text-xl">🔥</div>
                   <div>
                     <p className="text-xs text-gray-500 font-medium uppercase">
-                      Calories
+                      {messages.calories}
                     </p>
                     <p className="font-bold text-gray-900">
                       {recipe.total_calories} kcal
@@ -157,7 +165,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
             {recipe.instructions ? (
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  Instructions
+                  {messages.instructions}
                 </h3>
                 <div className="bg-[#FFFBF6] p-6 rounded-3xl border border-orange-100">
                   <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
@@ -167,7 +175,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
               </div>
             ) : (
               <div className="mb-8 p-6 bg-gray-50 rounded-3xl text-center text-gray-500">
-                No detailed instructions provided for this recipe.
+                {messages.noInstructions}
               </div>
             )}
 
@@ -176,7 +184,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
               <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-gray-500 text-sm">
                   <Globe className="w-4 h-4" />
-                  <span>Found via web search</span>
+                  <span>{messages.foundViaWeb}</span>
                 </div>
                 <a
                   href={recipe.source_url}
@@ -184,7 +192,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
                   rel="noreferrer"
                   className="text-[#FF5C5C] font-bold text-sm hover:underline"
                 >
-                  View Original Source →
+                  {messages.viewSource}
                 </a>
               </div>
             )}

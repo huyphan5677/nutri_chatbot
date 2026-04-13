@@ -1,19 +1,23 @@
+import { useLocale } from "@/shared/i18n/LocaleContext";
+import { profileMessages } from "@/features/profile/profile.messages";
 import { Check, Globe, Monitor, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 
 export default function DisplaySettingsPage() {
-  const [language, setLanguage] = useState("English");
-  const [theme, setTheme] = useState("System");
-  const [units, setUnits] = useState("Metric");
+  const { locale, setLocale } = useLocale();
+  const text = profileMessages[locale].display;
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
+  const [units, setUnits] = useState<"metric" | "imperial">("metric");
+  const language = locale === "vi" ? "Tiếng Việt" : "English";
 
   return (
     <div className="flex flex-col gap-8 md:gap-12 max-w-3xl">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
-          Display Settings
+          {text.title}
         </h2>
         <p className="text-gray-500 text-sm md:text-base mb-8">
-          Customize how Nutri looks and feels on your device.
+          {text.description}
         </p>
 
         <div className="space-y-8">
@@ -24,25 +28,28 @@ export default function DisplaySettingsPage() {
                 <Globe className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900">Language</h3>
+                <h3 className="font-bold text-gray-900">{text.languageTitle}</h3>
                 <p className="text-sm text-gray-500">
-                  Choose your preferred language
+                  {text.languageDescription}
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-              {["English", "Tiếng Việt"].map((lang) => (
+              {[
+                { label: "English", value: "en" as const },
+                { label: "Tiếng Việt", value: "vi" as const },
+              ].map(({ label, value }) => (
                 <button
-                  key={lang}
-                  onClick={() => setLanguage(lang)}
+                  key={value}
+                  onClick={() => void setLocale(value)}
                   className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
-                    language === lang
+                    language === label
                       ? "border-primary bg-primary/5 text-primary"
                       : "border-gray-200 hover:border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
                 >
-                  <span className="font-medium">{lang}</span>
-                  {language === lang && <Check className="w-5 h-5" />}
+                  <span className="font-medium">{label}</span>
+                  {language === label && <Check className="w-5 h-5" />}
                 </button>
               ))}
             </div>
@@ -55,29 +62,29 @@ export default function DisplaySettingsPage() {
                 <Sun className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900">App Theme</h3>
+                <h3 className="font-bold text-gray-900">{text.themeTitle}</h3>
                 <p className="text-sm text-gray-500">
-                  Adjust the visual appearance
+                  {text.themeDescription}
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
               {[
-                { name: "Light", icon: Sun },
-                { name: "Dark", icon: Moon },
-                { name: "System", icon: Monitor },
-              ].map(({ name, icon: Icon }) => (
+                { key: "light" as const, label: text.themeLight, icon: Sun },
+                { key: "dark" as const, label: text.themeDark, icon: Moon },
+                { key: "system" as const, label: text.themeSystem, icon: Monitor },
+              ].map(({ key, label, icon: Icon }) => (
                 <button
-                  key={name}
-                  onClick={() => setTheme(name)}
+                  key={key}
+                  onClick={() => setTheme(key)}
                   className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all ${
-                    theme === name
+                    theme === key
                       ? "border-primary bg-primary/5 text-primary"
                       : "border-gray-200 hover:border-gray-300 text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                   }`}
                 >
                   <Icon className="w-6 h-6" />
-                  <span className="font-medium text-sm">{name}</span>
+                  <span className="font-medium text-sm">{label}</span>
                 </button>
               ))}
             </div>
@@ -92,36 +99,40 @@ export default function DisplaySettingsPage() {
                 </div>
               </div>
               <div>
-                <h3 className="font-bold text-gray-900">Measurement Units</h3>
+                <h3 className="font-bold text-gray-900">{text.unitsTitle}</h3>
                 <p className="text-sm text-gray-500">
-                  For recipes and shopping lists
+                  {text.unitsDescription}
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
               {[
-                { name: "Metric", detail: "g, ml, °C" },
-                { name: "Imperial", detail: "oz, cups, °F" },
-              ].map(({ name, detail }) => (
+                { key: "metric" as const, label: text.metric, detail: text.metricDetail },
+                {
+                  key: "imperial" as const,
+                  label: text.imperial,
+                  detail: text.imperialDetail,
+                },
+              ].map(({ key, label, detail }) => (
                 <button
-                  key={name}
-                  onClick={() => setUnits(name)}
+                  key={key}
+                  onClick={() => setUnits(key)}
                   className={`flex flex-col items-start p-4 rounded-xl border transition-all ${
-                    units === name
+                    units === key
                       ? "border-primary bg-primary/5 text-primary"
                       : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex w-full justify-between items-center mb-1">
                     <span
-                      className={`font-medium ${units === name ? "text-primary" : "text-gray-900"}`}
+                      className={`font-medium ${units === key ? "text-primary" : "text-gray-900"}`}
                     >
-                      {name}
+                      {label}
                     </span>
-                    {units === name && <Check className="w-5 h-5" />}
+                    {units === key && <Check className="w-5 h-5" />}
                   </div>
                   <span
-                    className={`text-sm ${units === name ? "text-primary/70" : "text-gray-500"}`}
+                    className={`text-sm ${units === key ? "text-primary/70" : "text-gray-500"}`}
                   >
                     {detail}
                   </span>

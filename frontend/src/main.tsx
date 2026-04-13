@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./app/router";
 import "./index.css";
+import { LocaleProvider } from "./shared/i18n/LocaleContext";
 
 const getGoogleClientId = () => {
   if (typeof window !== "undefined" && (window as any).ENV?.VITE_GOOGLE_CLIENT_ID) {
@@ -17,7 +18,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <GoogleOAuthProvider
       clientId={getGoogleClientId()}
     >
-      <RouterProvider router={router} />
+      <LocaleProvider>
+        <RouterProvider router={router} />
+      </LocaleProvider>
     </GoogleOAuthProvider>
   </React.StrictMode>,
 );

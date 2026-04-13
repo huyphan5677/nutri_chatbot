@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/Button";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import { Loader2, Plus, X } from "lucide-react";
 import React, { useState } from "react";
 import { Collection, createCollection } from "../api/recipesApi";
+import { cookingMessages } from "../cooking.messages";
 
 interface CreateCollectionModalProps {
   isOpen: boolean;
@@ -14,6 +16,8 @@ export const CreateCollectionModal = ({
   onClose,
   onCreated,
 }: CreateCollectionModalProps) => {
+  const { locale } = useLocale();
+  const messages = cookingMessages[locale].createCollection;
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -50,21 +54,21 @@ export const CreateCollectionModal = ({
             <Plus className="w-5 h-5" />
           </div>
           <h2 className="text-xl font-bold font-serif text-gray-900">
-            New Collection
+            {messages.title}
           </h2>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Collection Name
+              {messages.nameLabel}
             </label>
             <input
               type="text"
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Summer BBQs, Weekly Prep"
+              placeholder={messages.placeholder}
               className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all text-gray-900"
             />
           </div>
@@ -77,7 +81,7 @@ export const CreateCollectionModal = ({
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin mx-auto" />
             ) : (
-              "Create Collection"
+              messages.submit
             )}
           </Button>
         </form>

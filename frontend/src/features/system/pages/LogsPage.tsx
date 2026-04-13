@@ -1,8 +1,12 @@
 import { Bot, Pause, Play, RefreshCw, Server, Terminal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "@/shared/i18n/LocaleContext";
+import { systemMessages } from "../system.messages";
 import { fetchLogs } from "../api/systemApi";
 
 export const LogsPage = () => {
+  const { locale } = useLocale();
+  const text = systemMessages[locale].logs;
   const [logType, setLogType] = useState<"app" | "ai">("app");
   const [lineCount, setLineCount] = useState<number>(100);
   const [logs, setLogs] = useState<string[]>([]);
@@ -18,7 +22,14 @@ export const LogsPage = () => {
       const data = await fetchLogs(logType, lineCount);
       setLogs(data);
     } catch (err: any) {
-      setError(err.message || "Failed to fetch logs");
+      const message = err?.message;
+      if (message === "LOGS_AUTH_REQUIRED") {
+        setError(text.authRequired);
+      } else if (message === "LOGS_FETCH_FAILED") {
+        setError(text.fetchFailed);
+      } else {
+        setError(message || text.fetchFailed);
+      }
     } finally {
       if (showLoadingState) setIsLoading(false);
     }
@@ -55,10 +66,10 @@ export const LogsPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <Terminal className="w-8 h-8 text-[#FF5C5C]" />
-              System Logs
+              {text.title}
             </h1>
             <p className="text-gray-500 mt-1">
-              Real-time troubleshooting and monitoring
+              {text.subtitle}
             </p>
           </div>
 
@@ -73,7 +84,7 @@ export const LogsPage = () => {
                     : "text-gray-500 hover:text-gray-900"
                 }`}
               >
-                <Server className="w-4 h-4 shrink-0" /> App
+                <Server className="w-4 h-4 shrink-0" /> {text.appTab}
               </button>
               <button
                 onClick={() => setLogType("ai")}
@@ -83,7 +94,7 @@ export const LogsPage = () => {
                     : "text-gray-500 hover:text-gray-900"
                 }`}
               >
-                <Bot className="w-4 h-4 shrink-0" /> AI Agents
+                <Bot className="w-4 h-4 shrink-0" /> {text.aiTab}
               </button>
             </div>
 
@@ -96,11 +107,11 @@ export const LogsPage = () => {
                 onChange={(e) => setLineCount(Number(e.target.value))}
                 className="flex-1 sm:flex-none bg-white border border-gray-200 text-sm font-medium text-gray-700 rounded-lg px-2 lg:px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-gray-200"
               >
-                <option value={50}>50 lines</option>
-                <option value={100}>100 lines</option>
-                <option value={200}>200 lines</option>
-                <option value={500}>500 lines</option>
-                <option value={1000}>1K lines</option>
+                <option value={50}>{text.lineOptions[50]}</option>
+                <option value={100}>{text.lineOptions[100]}</option>
+                <option value={200}>{text.lineOptions[200]}</option>
+                <option value={500}>{text.lineOptions[500]}</option>
+                <option value={1000}>{text.lineOptions[1000]}</option>
               </select>
 
               <button
@@ -116,7 +127,7 @@ export const LogsPage = () => {
                 ) : (
                   <Play className="w-4 h-4 shrink-0" />
                 )}
-                Auto-refresh
+                {text.autoRefresh}
               </button>
 
               <button
@@ -142,7 +153,7 @@ export const LogsPage = () => {
             </div>
             <span className="text-gray-400 text-xs ml-2 font-mono">
               tail -n {lineCount} logs/
-              {logType === "app" ? "nutri.log" : "ai_agent.log"}
+              {logType === "app" ? text.fileName.app : text.fileName.ai}
             </span>
           </div>
 
@@ -152,13 +163,13 @@ export const LogsPage = () => {
           >
             {error && (
               <div className="text-red-400 mb-4 bg-red-900/20 p-3 rounded-lg border border-red-900/50">
-                Error connecting to log server: {error}
+                {text.serverErrorPrefix}: {error}
               </div>
             )}
 
             {!error && logs.length === 0 && !isLoading && (
               <div className="text-gray-500 italic">
-                No logs found for this context...
+                {text.emptyState}
               </div>
             )}
 

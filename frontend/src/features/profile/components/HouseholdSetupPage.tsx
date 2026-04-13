@@ -7,6 +7,8 @@ import {
   RefreshCw,
   Users,
 } from "lucide-react";
+import { profileMessages } from "@/features/profile/profile.messages";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import React, { useEffect, useState } from "react";
 import {
   OnboardingInitialData,
@@ -16,21 +18,6 @@ import { profileApi } from "../api/profileApi";
 
 type LoadStatus = "loading" | "ready" | "error";
 type SaveStatus = "idle" | "saving" | "success" | "error";
-
-// Summary card shown after save
-const DIET_LABELS: Record<string, string> = {
-  balanced: "⚖️ Balanced",
-  vegetarian: "🥬 Vegetarian",
-  vegan: "🌱 Vegan",
-  keto: "🥑 Keto",
-  pescetarian: "🐟 Pescetarian",
-  paleo: "🦴 Paleo",
-};
-const BUDGET_LABELS: Record<string, string> = {
-  low: "💰 Budget-friendly",
-  medium: "⚖️ Moderate",
-  high: "✨ Premium",
-};
 
 interface SummaryBadgeProps {
   label: string;
@@ -46,6 +33,9 @@ const SummaryBadge: React.FC<SummaryBadgeProps> = ({ label, color }) => (
 
 // Main Component
 const HouseholdSetupPage: React.FC = () => {
+  const { locale } = useLocale();
+  const text = profileMessages[locale].household;
+
   const [loadStatus, setLoadStatus] = useState<LoadStatus>("loading");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [initialData, setInitialData] = useState<OnboardingInitialData | null>(
@@ -91,7 +81,7 @@ const HouseholdSetupPage: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4 text-gray-400">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-sm font-medium">Loading your household settings…</p>
+        <p className="text-sm font-medium">{text.loading}</p>
       </div>
     );
   }
@@ -104,13 +94,13 @@ const HouseholdSetupPage: React.FC = () => {
           <AlertCircle className="w-8 h-8 text-red-400" />
         </div>
         <p className="text-sm font-medium text-gray-600">
-          Couldn't load your settings
+          {text.loadFailed}
         </p>
         <button
           onClick={loadData}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary border border-primary/30 rounded-xl hover:bg-primary/5 transition-colors"
         >
-          <RefreshCw className="w-4 h-4" /> Try again
+          <RefreshCw className="w-4 h-4" /> {text.tryAgain}
         </button>
       </div>
     );
@@ -120,16 +110,14 @@ const HouseholdSetupPage: React.FC = () => {
   const SuccessToast = saveStatus === "success" && (
     <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-green-600 text-white px-5 py-3 rounded-2xl shadow-xl shadow-green-900/20 animate-in slide-in-from-bottom-4 duration-300">
       <CheckCircle2 className="w-5 h-5" />
-      <span className="text-sm font-semibold">Changes saved!</span>
+      <span className="text-sm font-semibold">{text.saveSuccess}</span>
     </div>
   );
 
   const ErrorToast = saveStatus === "error" && (
     <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-red-500 text-white px-5 py-3 rounded-2xl shadow-xl shadow-red-900/20 animate-in slide-in-from-bottom-4 duration-300">
       <AlertCircle className="w-5 h-5" />
-      <span className="text-sm font-semibold">
-        Save failed. Please try again.
-      </span>
+      <span className="text-sm font-semibold">{text.saveFailed}</span>
     </div>
   );
 
@@ -147,13 +135,14 @@ const HouseholdSetupPage: React.FC = () => {
             <div className="flex flex-wrap gap-2 mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
               <div className="flex items-center gap-2 w-full mb-1">
                 <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                  Current Settings
+                  {text.currentSettings}
                 </span>
               </div>
               {savedData.diet_mode && (
                 <SummaryBadge
                   label={
-                    DIET_LABELS[savedData.diet_mode] || savedData.diet_mode
+                    text.dietLabels[savedData.diet_mode as keyof typeof text.dietLabels] ||
+                    savedData.diet_mode
                   }
                   color="bg-green-50 text-green-700 border border-green-100"
                 />
@@ -161,7 +150,9 @@ const HouseholdSetupPage: React.FC = () => {
               {savedData.budget_level && (
                 <SummaryBadge
                   label={
-                    BUDGET_LABELS[savedData.budget_level] ||
+                    text.budgetLabels[
+                      savedData.budget_level as keyof typeof text.budgetLabels
+                    ] ||
                     savedData.budget_level
                   }
                   color="bg-blue-50 text-blue-700 border border-blue-100"
@@ -169,13 +160,13 @@ const HouseholdSetupPage: React.FC = () => {
               )}
               {savedData.members && savedData.members.length > 0 && (
                 <SummaryBadge
-                  label={`👨‍👩‍👧 ${savedData.members.length} member${savedData.members.length > 1 ? "s" : ""}`}
+                  label={text.memberCount(savedData.members.length)}
                   color="bg-purple-50 text-purple-700 border border-purple-100"
                 />
               )}
               {savedData.equipment && savedData.equipment.length > 0 && (
                 <SummaryBadge
-                  label={`🍳 ${savedData.equipment.length} appliance${savedData.equipment.length > 1 ? "s" : ""}`}
+                  label={text.applianceCount(savedData.equipment.length)}
                   color="bg-orange-50 text-orange-700 border border-orange-100"
                 />
               )}
@@ -189,20 +180,20 @@ const HouseholdSetupPage: React.FC = () => {
             {
               icon: ChefHat,
               color: "bg-amber-50 text-amber-600",
-              title: "Diet & Budget",
-              desc: "Choose your preferred diet mode and budget",
+              title: text.cards.dietTitle,
+              desc: text.cards.dietDescription,
             },
             {
               icon: Users,
               color: "bg-purple-50 text-purple-600",
-              title: "Family Members",
-              desc: "Goals, allergies & health info per member",
+              title: text.cards.familyTitle,
+              desc: text.cards.familyDescription,
             },
             {
               icon: Home,
               color: "bg-orange-50 text-orange-600",
-              title: "Kitchen Appliances",
-              desc: "Tell us what equipment you have",
+              title: text.cards.kitchenTitle,
+              desc: text.cards.kitchenDescription,
             },
           ].map((card, i) => (
             <div
@@ -228,10 +219,10 @@ const HouseholdSetupPage: React.FC = () => {
             <div className="flex items-center gap-2 pb-4">
               <div className="w-2 h-2 rounded-full bg-primary" />
               <span className="text-sm font-semibold text-gray-700">
-                Edit Settings
+                {text.editSettings}
               </span>
               <span className="ml-auto text-xs text-gray-400">
-                Changes are saved when you complete all 3 steps
+                {text.saveHint}
               </span>
             </div>
           </div>

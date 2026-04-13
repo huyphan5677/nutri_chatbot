@@ -1,4 +1,5 @@
 import axiosInstance from "axios";
+import { getInitialLocale, getStoredLocale } from "@/shared/i18n/locale";
 
 export const getApiUrl = () => {
   if (typeof window !== "undefined" && (window as any).ENV?.VITE_API_URL) {
@@ -16,8 +17,10 @@ export const api = axiosInstance.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("nutri_token");
+  const locale = getStoredLocale() || getInitialLocale();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  config.headers["Accept-Language"] = locale;
   return config;
 });
