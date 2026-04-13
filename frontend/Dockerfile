@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:20-alpine as builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -29,5 +29,5 @@ EXPOSE 80
 # docker build -t nutri-frontend:latest .
 
 # Push image
-# docker tag nutri-frontend:latest mocdiep/nutri-frontend:13042026_0118
-# docker push mocdiep/nutri-frontend:13042026_0118
+# docker tag nutri-frontend:latest mocdiep/nutri-frontend:14042026_0412
+# docker push mocdiep/nutri-frontend:14042026_0412
