@@ -73,7 +73,7 @@ function ThoughtProcessViewer({
     <div className="flex flex-col mb-3">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 text-[13px] font-medium text-gray-400 hover:text-gray-600 transition-colors w-fit px-2 py-1 rounded-md hover:bg-gray-100"
+        className="flex items-center gap-2 text-[13px] font-medium text-gray-400 hover:text-gray-600 transition-colors w-fit px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 dark:hover:text-gray-300"
       >
         {isActuallyDone ? (
           isOpen ? (
@@ -84,7 +84,7 @@ function ThoughtProcessViewer({
         ) : (
           <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
         )}
-        <span className={isActuallyDone ? "text-gray-400" : "text-primary/70"}>
+        <span className={isActuallyDone ? "text-gray-400 dark:text-gray-500" : "text-primary/70 dark:text-primary/90"}>
           {isActuallyDone
             ? copy.process(displayTime)
             : copy.streaming(displayTime)}
@@ -92,20 +92,20 @@ function ThoughtProcessViewer({
       </button>
 
       {isOpen && tools && tools.length > 0 && (
-        <div className="pl-6 mt-1 flex flex-col gap-2 border-l-2 border-gray-100 ml-3 py-1 bg-white/50">
+        <div className="pl-6 mt-1 flex flex-col gap-2 border-l-2 border-gray-100 ml-3 py-1 bg-white/50 dark:bg-slate-800/30 dark:border-slate-700/50 rounded-r-lg">
           {tools.map((t, idx) => (
             <div key={idx} className="flex flex-col gap-0.5">
               <div className="flex items-center gap-2 text-xs">
                 {t.status === "running" ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400 dark:text-gray-500" />
                 ) : (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
                 )}
                 <span
                   className={
                     t.status === "done"
-                      ? "text-gray-500"
-                      : "text-gray-800 font-medium"
+                      ? "text-gray-500 dark:text-gray-400"
+                      : "text-gray-800 font-medium dark:text-gray-200"
                   }
                 >
                   {copy.toolNames[t.name] ||
@@ -116,12 +116,12 @@ function ThoughtProcessViewer({
                 <div className="pl-6 flex flex-col gap-1.5 mt-1.5">
                   {t.progress_logs.map((log, lIdx) => (
                     <div key={lIdx} className="flex flex-col text-[11px]">
-                      <div className="text-gray-500 font-medium flex gap-1.5 items-center">
-                        <span className="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />
+                      <div className="text-gray-500 font-medium flex gap-1.5 items-center dark:text-gray-400">
+                        <span className="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0 dark:bg-slate-600" />
                         {log.step}
                       </div>
                       {log.preview && (
-                        <div className="pl-4 mt-0.5 text-gray-400/90 whitespace-pre-wrap">
+                        <div className="pl-4 mt-0.5 text-gray-400/90 whitespace-pre-wrap dark:text-gray-400/80">
                           {log.preview}
                         </div>
                       )}
@@ -130,7 +130,7 @@ function ThoughtProcessViewer({
                 </div>
               )}
               {t.status === "done" && t.result_snippet && (
-                <div className="pl-6 text-[11px] text-gray-400 italic line-clamp-2 max-w-[95%] mt-1">
+                <div className="pl-6 text-[11px] text-gray-400 italic line-clamp-2 max-w-[95%] mt-1 dark:text-gray-500">
                   "{t.result_snippet}"
                 </div>
               )}
@@ -216,12 +216,12 @@ function SmoothMarkdown({ content, isStreaming }: { content: string, isStreaming
         code: ({ node, inline, ...props }: any) =>
           inline ? (
             <code
-              className="bg-black/5 rounded px-1 py-0.5 text-xs sm:text-sm font-mono break-all"
+              className="bg-black/5 dark:bg-white/10 rounded px-1 py-0.5 text-xs sm:text-sm font-mono break-all dark:text-gray-300"
               {...props}
             />
           ) : (
-            <pre className="bg-black/5 rounded p-3 overflow-x-auto text-xs sm:text-sm font-mono mt-2 mb-2 w-full max-w-full">
-              <code {...props} />
+            <pre className="bg-black/5 dark:bg-white/10 rounded p-3 overflow-x-auto text-xs sm:text-sm font-mono mt-2 mb-2 w-full max-w-full">
+              <code className="dark:text-gray-300" {...props} />
             </pre>
           ),
       }}
@@ -964,19 +964,19 @@ export default function ChatScreen() {
 
       {/* Chat History Sidebar */}
       <div
-        className={`absolute md:relative z-30 bg-white md:bg-gray-50/30 border-r border-gray-100 flex flex-col h-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden shadow-2xl md:shadow-none ${isSidebarOpen ? "w-[85vw] sm:w-72 md:w-64 translate-x-0" : "w-0 -translate-x-full md:translate-x-0"}`}
+        className={`absolute md:relative z-30 bg-white dark:bg-slate-900 md:bg-gray-50/30 md:dark:bg-slate-900/50 border-r border-gray-100 dark:border-slate-800 flex flex-col h-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden shadow-2xl md:shadow-none ${isSidebarOpen ? "w-[85vw] sm:w-72 md:w-64 translate-x-0" : "w-0 -translate-x-full md:translate-x-0"}`}
       >
         {/* Sidebar Content Wrapper (handles visibility during collapse) */}
         <div
           className={`flex flex-col h-full min-w-[200px] w-full transition-opacity duration-200 ${isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
-          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-bold text-gray-900 font-serif text-lg">
+          <div className="p-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+            <h2 className="font-bold text-gray-900 dark:text-white font-serif text-lg">
               {text.sidebar.title}
             </h2>
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"
+              className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg text-gray-500 dark:text-gray-400 transition-colors"
               title={text.sidebar.closeSidebar}
             >
               <PanelLeftClose className="w-5 h-5" />
@@ -989,7 +989,7 @@ export default function ChatScreen() {
                 handleNewChat();
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
               }}
-              className="w-full bg-white border border-gray-200 hover:border-primary hover:text-primary text-gray-700 rounded-full px-4 py-2.5 flex items-center justify-center gap-2 text-sm font-medium transition-colors shadow-sm mb-4"
+              className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-primary hover:text-primary text-gray-700 dark:text-gray-200 rounded-full px-4 py-2.5 flex items-center justify-center gap-2 text-sm font-medium transition-colors shadow-sm mb-4"
             >
               <Plus className="w-4 h-4" /> {text.sidebar.newChat}
             </button>
@@ -1014,8 +1014,8 @@ export default function ChatScreen() {
                           key={session.id}
                           className={`w-full mb-1 px-3 py-2.5 rounded-xl border border-transparent hover:shadow-sm text-sm flex items-center justify-between gap-2 transition-all group ${
                             threadId === session.id
-                              ? "bg-primary/5 text-primary font-medium border-primary/20"
-                              : "hover:bg-gray-50 text-gray-700"
+                              ? "bg-primary/5 dark:bg-primary/10 text-primary font-medium border-primary/20"
+                              : "hover:bg-gray-50 dark:hover:bg-slate-800/50 text-gray-700 dark:text-gray-300"
                           }`}
                         >
                           {editingSessionId === session.id ? (
@@ -1035,7 +1035,7 @@ export default function ChatScreen() {
                                 onBlur={() => handleRenameSession(session.id)}
                                 autoFocus
                                 disabled={isRenaming}
-                                className="w-full bg-white border border-primary/50 rounded px-2 py-0.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-primary h-6"
+                                className="w-full bg-white dark:bg-slate-800 border border-primary/50 rounded px-2 py-0.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary h-6"
                               />
                             </div>
                           ) : (
@@ -1052,11 +1052,11 @@ export default function ChatScreen() {
                                   className={`w-4 h-4 ${threadId === session.id ? "text-primary" : "text-gray-400 group-hover:text-primary"}`}
                                 />
                                 {session.has_unread && (
-                                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border border-white"></span>
+                                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border border-white dark:border-slate-900"></span>
                                 )}
                               </div>
                               <span
-                                className={`truncate ${session.has_unread ? "font-bold text-gray-900 group-hover:text-primary" : ""}`}
+                                className={`truncate ${session.has_unread ? "font-bold text-gray-900 dark:text-white group-hover:text-primary" : ""}`}
                               >
                                 {session.title}
                               </span>
@@ -1083,7 +1083,7 @@ export default function ChatScreen() {
                                 e.stopPropagation();
                                 setSessionToDelete(session.id);
                               }}
-                              className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                              className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                               title={text.sidebar.deleteChat}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1107,7 +1107,7 @@ export default function ChatScreen() {
           <div className="absolute top-4 left-4 z-10 transition-all duration-300">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2 bg-white/90 backdrop-blur border border-gray-100 shadow-sm rounded-lg text-gray-600 hover:text-primary transition-all hover:shadow-md"
+              className="p-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur border border-gray-100 dark:border-slate-700 shadow-sm rounded-lg text-gray-600 dark:text-gray-300 hover:text-primary transition-all hover:shadow-md"
               title={text.sidebar.openSidebar}
             >
               <PanelLeftOpen className="w-5 h-5" />
@@ -1120,26 +1120,26 @@ export default function ChatScreen() {
           {messages.length === 0 && !isLoading ? (
             <div className="min-h-full flex flex-col items-center justify-center p-4 sm:p-6 pt-16 md:pt-6">
               <div className="w-full max-w-6xl m-auto">
-                <div className="relative overflow-hidden rounded-[28px] border border-rose-100/70 bg-gradient-to-br from-rose-50 via-white to-orange-50 shadow-[0_28px_80px_rgba(255,92,92,0.12)]">
-                  <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-rose-200/25 blur-3xl" />
-                  <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-amber-200/25 blur-3xl" />
+                <div className="relative overflow-hidden rounded-[28px] border border-rose-100/70 bg-gradient-to-br from-rose-50 via-white to-orange-50 shadow-[0_28px_80px_rgba(255,92,92,0.12)] dark:border-slate-800/50 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-800/80">
+                  <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-rose-200/25 blur-3xl dark:bg-rose-900/20" />
+                  <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-amber-200/25 blur-3xl dark:bg-amber-900/10" />
 
                   <div className="relative p-5 sm:p-8">
                     <div className="grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] gap-5 sm:gap-6">
-                      <section className="rounded-2xl border border-white/70 bg-white/80 backdrop-blur-sm p-5 sm:p-6 text-left">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-200/70 bg-rose-50 text-rose-500 text-[11px] font-bold uppercase tracking-[0.14em]">
+                      <section className="rounded-2xl border border-white/70 bg-white/80 backdrop-blur-sm p-5 sm:p-6 text-left dark:bg-slate-800/70 dark:border-slate-700/50">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-200/70 bg-rose-50 text-rose-500 text-[11px] font-bold uppercase tracking-[0.14em] dark:bg-rose-900/30 dark:border-rose-800/50 dark:text-rose-400">
                           <Sparkles className="h-3.5 w-3.5" />
                           {text.empty.badge}
                         </div>
 
-                        <h2 className="mt-4 text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+                        <h2 className="mt-4 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white leading-tight">
                           {text.empty.headingMain}
                           <span className="text-primary">
                             {" "}{text.empty.headingAccent}
                           </span>
                         </h2>
 
-                        <p className="mt-3 text-sm sm:text-base text-gray-600 max-w-xl">
+                        <p className="mt-3 text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-xl">
                           {text.empty.description}
                         </p>
 
@@ -1163,35 +1163,35 @@ export default function ChatScreen() {
                                 text.empty.prompts.reviewProfile,
                               )
                             }
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 text-sm font-semibold hover:border-primary/40 hover:text-primary transition-colors"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 text-sm font-semibold hover:border-primary/40 hover:text-primary transition-colors"
                           >
                             {text.empty.secondaryCta}
                           </button>
                         </div>
 
                         <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                          <div className="rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2 text-rose-700">
+                          <div className="rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2 text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-400">
                             {text.empty.chips.meal}
                           </div>
-                          <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2 text-blue-700">
+                          <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2 text-blue-700 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-400">
                             {text.empty.chips.bmr}
                           </div>
-                          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2 text-emerald-700">
+                          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3 py-2 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-400">
                             {text.empty.chips.profile}
                           </div>
                         </div>
                       </section>
 
-                      <section className="rounded-2xl border border-gray-100 bg-white/85 backdrop-blur-sm p-4 sm:p-5 text-left">
-                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-[0.12em] mb-3">
+                      <section className="rounded-2xl border border-gray-100 dark:border-slate-700 bg-white/85 dark:bg-slate-800/80 backdrop-blur-sm p-4 sm:p-5 text-left">
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-[0.12em] mb-3">
                           {text.empty.quickActionsTitle}
                         </h3>
 
                         <div className="space-y-3">
-                          <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-3">
+                          <div className="rounded-xl border border-rose-100 dark:border-rose-900/30 bg-rose-50/70 dark:bg-rose-900/10 p-3">
                             <div className="flex items-center gap-2 text-primary mb-2">
                               <Utensils className="h-4 w-4" />
-                              <p className="text-sm font-semibold text-gray-900">
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                 {text.empty.cards.mealTitle}
                               </p>
                             </div>
@@ -1203,7 +1203,7 @@ export default function ChatScreen() {
                                     text.empty.prompts.suggestMeal,
                                   )
                                 }
-                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-rose-700 border border-rose-200 hover:bg-rose-100"
+                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-rose-700 border border-rose-200 hover:bg-rose-100 dark:bg-slate-800/80 dark:border-rose-900/50 dark:text-rose-300 dark:hover:bg-slate-700"
                               >
                                 {text.empty.cards.mealSuggest}
                               </button>
@@ -1214,17 +1214,17 @@ export default function ChatScreen() {
                                     text.empty.prompts.twoDayPlan,
                                   )
                                 }
-                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-rose-700 border border-rose-200 hover:bg-rose-100"
+                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-rose-700 border border-rose-200 hover:bg-rose-100 dark:bg-slate-800/80 dark:border-rose-900/50 dark:text-rose-300 dark:hover:bg-slate-700"
                               >
                                 {text.empty.cards.meal2Day}
                               </button>
                             </div>
                           </div>
 
-                          <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3">
-                            <div className="flex items-center gap-2 text-blue-600 mb-2">
+                          <div className="rounded-xl border border-blue-100 dark:border-blue-900/30 bg-blue-50/70 dark:bg-blue-900/10 p-3">
+                            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-2">
                               <Calculator className="h-4 w-4" />
-                              <p className="text-sm font-semibold text-gray-900">
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                 {text.empty.cards.bmrTitle}
                               </p>
                             </div>
@@ -1236,7 +1236,7 @@ export default function ChatScreen() {
                                     text.empty.prompts.calculateBmr,
                                   )
                                 }
-                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-blue-700 border border-blue-200 hover:bg-blue-100"
+                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-blue-700 border border-blue-200 hover:bg-blue-100 dark:bg-slate-800/80 dark:border-blue-900/50 dark:text-blue-300 dark:hover:bg-slate-700"
                               >
                                 {text.empty.cards.bmrCalc}
                               </button>
@@ -1247,7 +1247,7 @@ export default function ChatScreen() {
                                     text.empty.prompts.predictImpact,
                                   )
                                 }
-                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-blue-700 border border-blue-200 hover:bg-blue-100"
+                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-blue-700 border border-blue-200 hover:bg-blue-100 dark:bg-slate-800/80 dark:border-blue-900/50 dark:text-blue-300 dark:hover:bg-slate-700"
                               >
                                 {text.empty.cards.bmrPredict}
                               </button>
@@ -1255,10 +1255,10 @@ export default function ChatScreen() {
                           </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
-                              <div className="flex items-center gap-2 text-emerald-600 mb-2">
+                            <div className="rounded-xl border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/70 dark:bg-emerald-900/10 p-3">
+                              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-2">
                                 <UserRoundCog className="h-4 w-4" />
-                                <p className="text-sm font-semibold text-gray-900">
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                   {text.empty.cards.profileTitle}
                                 </p>
                               </div>
@@ -1269,16 +1269,16 @@ export default function ChatScreen() {
                                     text.empty.prompts.viewProfile,
                                   )
                                 }
-                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-slate-800/80 dark:border-emerald-900/50 dark:text-emerald-300 dark:hover:bg-slate-700"
                               >
                                 {text.empty.cards.profileView}
                               </button>
                             </div>
 
-                            <div className="rounded-xl border border-amber-100 bg-amber-50/70 p-3">
-                              <div className="flex items-center gap-2 text-amber-600 mb-2">
+                            <div className="rounded-xl border border-amber-100 dark:border-amber-900/30 bg-amber-50/70 dark:bg-amber-900/10 p-3">
+                              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 mb-2">
                                 <Search className="h-4 w-4" />
-                                <p className="text-sm font-semibold text-gray-900">
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                   {text.empty.cards.searchTitle}
                                 </p>
                               </div>
@@ -1289,7 +1289,7 @@ export default function ChatScreen() {
                                     text.empty.prompts.goldPrice,
                                   )
                                 }
-                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-amber-700 border border-amber-200 hover:bg-amber-100"
+                                className="text-xs px-2.5 py-1.5 rounded-full bg-white text-amber-700 border border-amber-200 hover:bg-amber-100 dark:bg-slate-800/80 dark:border-amber-900/50 dark:text-amber-300 dark:hover:bg-slate-700"
                               >
                                 {text.empty.cards.searchGold}
                               </button>
@@ -1321,8 +1321,8 @@ export default function ChatScreen() {
                           msg.role === "user"
                             ? "max-w-[85%] sm:max-w-[80%] bg-primary text-white rounded-tr-sm"
                             : msg.meal_plan_draft?.days
-                              ? "w-full max-w-full bg-white text-gray-800 rounded-tl-sm border border-gray-100 shadow-sm"
-                              : "max-w-[85%] sm:max-w-[80%] bg-white text-gray-800 rounded-tl-sm border border-gray-100 shadow-sm"
+                              ? "w-full max-w-full bg-white dark:bg-slate-800 text-gray-800 dark:text-white rounded-tl-sm border border-gray-100 dark:border-slate-700 shadow-sm"
+                              : "max-w-[85%] sm:max-w-[80%] bg-white dark:bg-slate-800 text-gray-800 dark:text-white rounded-tl-sm border border-gray-100 dark:border-slate-700 shadow-sm"
                         }`}
                       >
                         {msg.role === "assistant" &&
@@ -1383,7 +1383,7 @@ export default function ChatScreen() {
                       </div>
                       {/* Timestamp */}
                       {msg.created_at && (
-                        <span className="text-[11px] text-gray-400 mt-1 px-1">
+                        <span className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 px-1">
                           {new Date(msg.created_at).toLocaleString(text.dateLocale, {
                             day: "2-digit",
                             month: "2-digit",
@@ -1448,7 +1448,7 @@ export default function ChatScreen() {
         </div>
 
         {/* Input Area */}
-        <div className="flex-none bg-white border-t p-3 sm:p-6 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] z-20">
+        <div className="flex-none bg-white dark:bg-slate-900 border-t dark:border-slate-800 p-3 sm:p-6 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] dark:shadow-none z-20">
           <form
             onSubmit={handleSend}
             className="max-w-3xl mx-auto relative flex items-end w-full"
@@ -1467,7 +1467,7 @@ export default function ChatScreen() {
               }}
               placeholder={text.message.askPlaceholder}
               rows={1}
-              className="w-full pl-4 sm:pl-5 pr-12 sm:pr-14 py-3 sm:py-4 bg-gray-50 border border-gray-200 rounded-[24px] focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm text-sm sm:text-base resize-none overflow-y-auto invisible-scrollbar"
+              className="w-full pl-4 sm:pl-5 pr-12 sm:pr-14 py-3 sm:py-4 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-[24px] focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm text-sm sm:text-base resize-none overflow-y-auto invisible-scrollbar dark:text-white"
               style={{ minHeight: "44px", maxHeight: "150px" }}
               disabled={isLoading}
             />

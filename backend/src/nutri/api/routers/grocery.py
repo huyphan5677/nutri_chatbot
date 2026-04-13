@@ -1,4 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from nutri.ai.agents.fridge_check_agent import FridgeCheckAgent
 from nutri.api.dependencies import get_current_user
 from nutri.core.auth.models import User
 from nutri.core.db.session import get_db
@@ -7,12 +8,14 @@ from nutri.core.grocery.dto import (
     GroceryItemDTO,
     GroceryListResponse,
     GroceryMenuGroupDTO,
+    ShoppingHistoryItemDTO,
+    ShoppingHistoryResponse,
     ShoppingOrderResponse,
     ShoppingOrderStartResponse,
     ShoppingRequest,
     UpdateGroceryItemRequest,
 )
-from nutri.core.grocery.models import GroceryItem, ShoppingOrder
+from nutri.core.grocery.models import GroceryItem, ShoppingOrder, UserInventory
 from nutri.core.grocery.services import format_quantity_grams
 from nutri.core.grocery.store_mapping import (
     get_lotte_branches,
@@ -24,8 +27,6 @@ from sqlalchemy import delete, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from nutri.ai.agents.fridge_check_agent import FridgeCheckAgent
-from nutri.core.grocery.models import UserInventory
 
 router = APIRouter()
 
@@ -428,21 +429,29 @@ async def start_shopping(
     search_items = []
     fridge_covered = []
     for i, decision in enumerate(fridge_result.items):
-        original = raw_grocery[i] if i < len(raw_grocery) else {"name": decision.name, "quantity": ""}
+        original = (
+            raw_grocery[i]
+            if i < len(raw_grocery)
+            else {"name": decision.name, "quantity": ""}
+        )
 
         if decision.action == "skip":
-            fridge_covered.append({
-                "name": decision.name,
-                "fridge_quantity": decision.fridge_has,
-                "required_quantity": original.get("quantity", ""),
-            })
+            fridge_covered.append(
+                {
+                    "name": decision.name,
+                    "fridge_quantity": decision.fridge_has,
+                    "required_quantity": original.get("quantity", ""),
+                }
+            )
         else:
-            search_items.append({
-                "name": decision.name,
-                "quantity": decision.buy_quantity or original.get("quantity", ""),
-                "original_quantity": original.get("quantity", ""),
-                "fridge_deducted": decision.fridge_has,
-            })
+            search_items.append(
+                {
+                    "name": decision.name,
+                    "quantity": decision.buy_quantity or original.get("quantity", ""),
+                    "original_quantity": original.get("quantity", ""),
+                    "fridge_deducted": decision.fridge_has,
+                }
+            )
 
     # If everything is covered by fridge
     if not search_items:
@@ -471,7 +480,9 @@ async def start_shopping(
     for item in fridge_covered:
         logger.info(
             "Fridge covered item: %s | available: %s | needed: %s",
-            item["name"], item["fridge_quantity"], item["required_quantity"]
+            item["name"],
+            item["fridge_quantity"],
+            item["required_quantity"],
         )
 
     logger.info(
@@ -513,6 +524,68 @@ async def start_shopping(
         order_id=str(order.id),
         status="processing",
         message="Background matching started",
+    )
+
+
+@router.get("/shopping/history", response_model=ShoppingHistoryResponse)
+async def get_shopping_history(
+    db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)
+):
+    """Get the shopping history for the current user."""
+    result = await db.execute(
+        select(ShoppingOrder)
+        .where(ShoppingOrder.user_id == current_user.id)
+        .order_by(ShoppingOrder.ordered_at.desc())
+    )
+    orders = result.scalars().all()
+
+    total_trips = len(orders)
+    total_spent = sum(
+        float(o.total_amount or 0) for o in orders if o.status == "completed"
+    )
+
+    total_items = 0
+    history_items = []
+
+    for o in orders:
+        items_count = 0
+        current_amount = 0.0
+
+        if o.result_data:
+            items_count = len(o.result_data.get("items", []))
+
+            # Use total_estimated_cost if total_amount is not present
+            if o.total_amount is None:
+                current_amount = float(o.result_data.get("total_estimated_cost", 0))
+            else:
+                current_amount = float(o.total_amount)
+        else:
+            current_amount = float(o.total_amount or 0)
+
+        if o.status == "completed":
+            total_items += items_count
+
+        history_items.append(
+            ShoppingHistoryItemDTO(
+                id=str(o.id),
+                date=o.ordered_at.isoformat() if o.ordered_at else "",
+                items_count=items_count,
+                cost=current_amount,
+                currency=o.currency or "VND",
+                status=o.status,
+            )
+        )
+
+    completed_trips = sum(1 for o in orders if o.status == "completed")
+    avg_items = (total_items // completed_trips) if completed_trips > 0 else 0
+    avg_cost = (total_spent / completed_trips) if completed_trips > 0 else 0.0
+
+    return ShoppingHistoryResponse(
+        total_trips=total_trips,
+        total_spent=float(total_spent),
+        avg_items=int(avg_items),
+        avg_cost=float(avg_cost),
+        history=history_items,
     )
 
 

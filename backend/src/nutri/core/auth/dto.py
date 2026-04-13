@@ -26,6 +26,10 @@ class LanguagePreferenceUpdate(BaseModel):
     preferred_language: str
 
 
+class ThemePreferenceUpdate(BaseModel):
+    preferred_theme: str
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
@@ -33,6 +37,7 @@ class UserResponse(BaseModel):
     full_name: str
     status: str
     preferred_language: str = "en"
+    preferred_theme: str = "light"
     diet_mode: Optional[str] = None
     budget_level: Optional[str] = None
 
@@ -44,5 +49,6 @@ class UserDTO(BaseModel):
     full_name: str
     status: str
     preferred_language: str = "en"
+    preferred_theme: str = "light"
     diet_mode: Optional[str] = None
     budget_level: Optional[str] = None

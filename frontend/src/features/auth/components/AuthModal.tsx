@@ -7,8 +7,9 @@ import {
   type SupportedLocale,
 } from "@/shared/i18n/locale";
 import { useLocale } from "@/shared/i18n/LocaleContext";
+import { useTheme } from "@/shared/theme/ThemeContext";
 import { useGoogleLogin } from "@react-oauth/google";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Moon, Sun } from "lucide-react";
 import React, { useState } from "react";
 
 interface AuthModalProps {
@@ -35,6 +36,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const { locale: contextLocale, setLocale: setContextLocale } = useLocale();
+  const { theme, setTheme } = useTheme();
   const [internalLocale, setInternalLocale] = useState<SupportedLocale>(getInitialLocale);
 
   React.useEffect(() => {
@@ -61,6 +63,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const handleLoginSuccess = (token: string) => {
     // Save to LocalStorage
     localStorage.setItem("nutri_token", token);
+    
+    // Explicitly persist the current theme to the new account
+    // This ensures the user's choice in the modal is saved to their profile
+    void setTheme(theme);
+
     onLoginSuccess(token);
     setAuthError("");
     onClose();
@@ -201,42 +208,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6 sm:py-8 overflow-y-auto invisible-scrollbar">
-      <div className="bg-white rounded-[1.5rem] w-full max-w-md p-6 sm:px-8 sm:py-7 relative shadow-2xl animate-in fade-in zoom-in duration-200 my-auto shrink-0 max-h-full overflow-y-auto invisible-scrollbar">
+      <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] w-full max-w-md p-6 sm:px-8 sm:py-7 relative shadow-2xl animate-in fade-in zoom-in duration-200 my-auto shrink-0 max-h-full overflow-y-auto invisible-scrollbar dark:border dark:border-slate-800">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
           aria-label={text.close}
         >
           X
         </button>
 
-        <div className="mb-5 flex items-center justify-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
-            {text.languageLabel}
-          </span>
-          <div className="inline-flex rounded-full border border-gray-200 bg-gray-50 p-1">
-            {SUPPORTED_LOCALES.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setLocale(option)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                  currentLocale === option
-                    ? "bg-white text-primary shadow-sm"
-                    : "text-gray-500 hover:text-gray-800"
-                }`}
-              >
-                {option.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
+
 
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             {isLogin ? text.welcome : text.joinNutri}
           </h2>
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-gray-400">
             {isLogin ? text.loginSubtitle : text.signupSubtitle}
           </p>
         </div>
@@ -245,7 +232,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {authError && (
             <div
               role="alert"
-              className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              className="flex items-start gap-2 rounded-xl border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 px-3 py-2 text-sm text-red-700 dark:text-red-400"
             >
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
               <span>{authError}</span>
@@ -254,7 +241,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {text.fullName}
               </label>
               <input
@@ -265,14 +252,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   setName(e.target.value);
                   if (authError) setAuthError("");
                 }}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-white dark:bg-slate-800 dark:text-white dark:placeholder:text-gray-500"
                 placeholder={text.fullNamePlaceholder}
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {text.email}
             </label>
             <input
@@ -283,13 +270,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setEmail(e.target.value);
                 if (authError) setAuthError("");
               }}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-white dark:bg-slate-800 dark:text-white dark:placeholder:text-gray-500"
               placeholder={text.emailPlaceholder}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {text.password}
             </label>
             <input
@@ -300,7 +287,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setPassword(e.target.value);
                 if (authError) setAuthError("");
               }}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-white dark:bg-slate-800 dark:text-white dark:placeholder:text-gray-500"
               placeholder="********"
             />
           </div>
@@ -316,10 +303,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         <div className="relative my-5">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-gray-200" />
+            <span className="w-full border-t border-gray-200 dark:border-slate-700" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-gray-500">{text.divider}</span>
+            <span className="bg-white dark:bg-slate-900 px-2 text-gray-500 dark:text-gray-400">{text.divider}</span>
           </div>
         </div>
 
@@ -330,7 +317,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         />
 
         <div className="mt-5 text-center">
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             {isLogin ? `${text.noAccount} ` : `${text.hasAccount} `}
             <button
               onClick={() => {
@@ -342,6 +329,67 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {isLogin ? text.switchToSignup : text.switchToLogin}
             </button>
           </p>
+        </div>
+
+        {/* Footer Settings Utility */}
+        <div className="mt-8 pt-5 border-t border-gray-100 dark:border-slate-800/60 flex flex-col items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            {/* Language Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                {text.languageLabel}
+              </span>
+              <div className="inline-flex rounded-lg border border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/30 p-0.5">
+                {SUPPORTED_LOCALES.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setLocale(option)}
+                    className={`rounded-md px-2 py-0.5 text-[10px] font-bold transition-all ${
+                      currentLocale === option
+                        ? "bg-white dark:bg-slate-700 text-primary shadow-sm"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    {option.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Theme Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                {text.themeLabel}
+              </span>
+              <div className="inline-flex rounded-lg border border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/30 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => void setTheme("light")}
+                  className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold transition-all ${
+                    theme === "light"
+                      ? "bg-white dark:bg-slate-700 text-amber-500 shadow-sm"
+                      : "text-gray-500 dark:text-gray-400 hover:text-amber-500 dark:hover:text-amber-400"
+                  }`}
+                >
+                  <Sun className="w-3 h-3" />
+                  {text.themeLightLabel}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void setTheme("dark")}
+                  className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold transition-all ${
+                    theme === "dark"
+                      ? "bg-white dark:bg-slate-700 text-indigo-500 shadow-sm"
+                      : "text-gray-500 dark:text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400"
+                  }`}
+                >
+                  <Moon className="w-3 h-3" />
+                  {text.themeDarkLabel}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -366,7 +414,7 @@ const GoogleLoginButton = ({
     <Button
       type="button"
       variant="outline"
-      className="w-full h-12 text-lg font-medium text-gray-700 border-gray-300 hover:bg-gray-50 flex items-center gap-3 justify-center rounded-xl"
+      className="w-full h-12 text-lg font-medium text-gray-700 dark:text-gray-200 border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-3 justify-center rounded-xl"
       onClick={() => login()}
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24">

@@ -60,28 +60,28 @@ export const LogsPage = () => {
   }, [logs]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 md:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 p-6 md:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
               <Terminal className="w-8 h-8 text-[#FF5C5C]" />
               {text.title}
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
               {text.subtitle}
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-100 w-full md:w-fit overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white dark:bg-slate-900 p-2 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 w-full md:w-fit overflow-hidden">
             {/* Tab Toggle */}
-            <div className="flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
+            <div className="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-lg w-full sm:w-auto">
               <button
                 onClick={() => setLogType("app")}
                 className={`flex-1 sm:flex-initial flex justify-center items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                   logType === "app"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-900"
+                    ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
                 <Server className="w-4 h-4 shrink-0" /> {text.appTab}
@@ -90,8 +90,8 @@ export const LogsPage = () => {
                 onClick={() => setLogType("ai")}
                 className={`flex-1 sm:flex-initial flex justify-center items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                   logType === "ai"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-900"
+                    ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
                 <Bot className="w-4 h-4 shrink-0" /> {text.aiTab}
@@ -99,13 +99,13 @@ export const LogsPage = () => {
             </div>
 
             {/* Controls */}
-            <div className="hidden sm:block h-6 w-px bg-gray-200 shrink-0"></div>
+            <div className="hidden sm:block h-6 w-px bg-gray-200 dark:bg-slate-700 shrink-0"></div>
 
             <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
               <select
                 value={lineCount}
                 onChange={(e) => setLineCount(Number(e.target.value))}
-                className="flex-1 sm:flex-none bg-white border border-gray-200 text-sm font-medium text-gray-700 rounded-lg px-2 lg:px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-gray-200"
+                className="flex-1 sm:flex-none bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg px-2 lg:px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-slate-700"
               >
                 <option value={50}>{text.lineOptions[50]}</option>
                 <option value={100}>{text.lineOptions[100]}</option>
@@ -118,8 +118,8 @@ export const LogsPage = () => {
                 onClick={() => setIsAutoRefresh(!isAutoRefresh)}
                 className={`flex-1 sm:flex-none flex justify-center items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                   isAutoRefresh
-                    ? "bg-green-100 text-green-700 hover:bg-green-200 border border-green-200"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-transparent"
+                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/40 border border-green-200 dark:border-green-800"
+                    : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700 border border-transparent"
                 }`}
               >
                 {isAutoRefresh ? (
@@ -133,7 +133,7 @@ export const LogsPage = () => {
               <button
                 onClick={() => loadLogs()}
                 disabled={isLoading}
-                className="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 p-2 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50 shrink-0"
+                className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white p-2 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50 shrink-0"
               >
                 <RefreshCw
                   className={`w-5 h-5 ${isLoading ? "animate-spin" : ""}`}

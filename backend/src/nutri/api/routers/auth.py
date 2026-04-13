@@ -6,6 +6,7 @@ from nutri.common.i18n import get_request_language, normalize_language
 from nutri.core.auth.dto import (
     AuthResponse,
     LanguagePreferenceUpdate,
+    ThemePreferenceUpdate,
     UserCreate,
     UserDTO,
 )
@@ -81,6 +82,22 @@ async def update_language_preference(
     db: AsyncSession = Depends(get_db),
 ):
     await persist_user_language(current_user, payload.preferred_language, db)
+    await db.refresh(current_user)
+    return current_user
+
+
+@router.patch("/preferences/theme", response_model=UserDTO)
+async def update_theme_preference(
+    payload: ThemePreferenceUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    normalized = payload.preferred_theme.strip().lower()
+    if normalized not in ("light", "dark"):
+        normalized = "light"
+    if current_user.preferred_theme != normalized:
+        current_user.preferred_theme = normalized
+        await db.commit()
     await db.refresh(current_user)
     return current_user
 

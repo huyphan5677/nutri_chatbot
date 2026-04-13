@@ -85,3 +85,20 @@ class ShoppingOrderStartResponse(BaseModel):
     order_id: str
     status: str
     message: str
+
+
+class ShoppingHistoryItemDTO(BaseModel):
+    id: str
+    date: str
+    items_count: int
+    cost: Optional[float] = None
+    currency: Optional[str] = "VND"
+    status: str
+
+
+class ShoppingHistoryResponse(BaseModel):
+    total_trips: int
+    total_spent: float
+    avg_items: int
+    avg_cost: float
+    history: List[ShoppingHistoryItemDTO]

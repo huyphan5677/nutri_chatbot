@@ -71,6 +71,30 @@ export const profileMessages = {
       itemsCount: (count: number) => `${count} items`,
       viewDetails: "View Details",
       viewOlderTrips: "View older trips",
+      modal: {
+        title: "Trip Details",
+        orderId: "Order #",
+        strategy: "Strategy",
+        totalCost: "Total Cost",
+        purchasedItems: "Purchased Items",
+        usedFromFridge: "Used from Fridge",
+        saved: "Saved",
+        close: "Close",
+        noData: "No detailed data available for this trip.",
+        deducted: "DEDUCTED",
+        summaryText: (found: number, saved: number, cost: string, notFound: number) => {
+          let txt = `Found ${found} items`;
+          if (saved > 0) txt += `, ${saved} saved from fridge`;
+          if (cost) txt += `, total ≈ ${cost}`;
+          if (notFound > 0) txt += ` (${notFound} not found)`;
+          return txt;
+        },
+        strategyMap: {
+          cost_optimized: "Cost Optimized",
+          lotte_priority: "Priority Lotte Mart",
+          winmart_priority: "Priority WinMart",
+        } as Record<string, string>,
+      },
     },
     rewards: {
       title: "Nutri Rewards",
@@ -96,10 +120,6 @@ export const profileMessages = {
         consistentPlanner: {
           name: "Consistent Planner",
           description: "Generated 4 meal plans within a single month",
-        },
-        recipeCreator: {
-          name: "Recipe Creator",
-          description: "Uploaded your first personal recipe",
         },
       },
     },
@@ -254,6 +274,30 @@ export const profileMessages = {
       itemsCount: (count: number) => `${count} món`,
       viewDetails: "Xem chi tiết",
       viewOlderTrips: "Xem các lần cũ hơn",
+      modal: {
+        title: "Chi tiết chuyến đi",
+        orderId: "Mã đơn #",
+        strategy: "Chiến lược",
+        totalCost: "Tổng chi phí",
+        purchasedItems: "Đã mua",
+        usedFromFridge: "Dùng từ tủ lạnh",
+        saved: "Tiết kiệm",
+        close: "Đóng",
+        noData: "Không có dữ liệu chi tiết cho chuyến đi này.",
+        deducted: "ĐÃ KHẤU TRỪ",
+        summaryText: (found: number, saved: number, cost: string, notFound: number) => {
+          let txt = `Tìm thấy ${found} món`;
+          if (saved > 0) txt += `, tiết kiệm ${saved} món từ tủ lạnh`;
+          if (cost) txt += `, tổng ≈ ${cost}`;
+          if (notFound > 0) txt += ` (${notFound} chưa tìm thấy)`;
+          return txt;
+        },
+        strategyMap: {
+          cost_optimized: "Tối ưu chi phí",
+          lotte_priority: "Ưu tiên Lotte Mart",
+          winmart_priority: "Ưu tiên WinMart",
+        } as Record<string, string>,
+      },
     },
     rewards: {
       title: "Điểm thưởng Nutri",
@@ -279,10 +323,6 @@ export const profileMessages = {
         consistentPlanner: {
           name: "Lên kế hoạch đều đặn",
           description: "Tạo 4 thực đơn trong một tháng",
-        },
-        recipeCreator: {
-          name: "Người tạo công thức",
-          description: "Đăng công thức cá nhân đầu tiên",
         },
       },
     },

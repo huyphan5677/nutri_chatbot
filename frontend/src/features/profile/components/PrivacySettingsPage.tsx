@@ -23,10 +23,10 @@ export default function PrivacySettingsPage() {
     <div className="flex flex-col gap-8 md:gap-12 max-w-3xl">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-slate-50 mb-2">
             {text.title}
           </h2>
-          <p className="text-gray-500 text-sm md:text-base">
+          <p className="text-gray-500 dark:text-slate-400 text-sm md:text-base">
             {text.subtitle}
           </p>
         </div>
@@ -46,16 +46,16 @@ export default function PrivacySettingsPage() {
 
       <div className="space-y-6">
         {/* Profile Visibility */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-            <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500">
+        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100 dark:border-slate-800">
+            <div className="w-10 h-10 rounded-full bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-purple-500 dark:text-purple-400">
               <Eye className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">
+              <h3 className="font-bold text-gray-900 dark:text-slate-100">
                 {text.profileVisibilityTitle}
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-slate-400">
                 {text.profileVisibilityDescription}
               </p>
             </div>
@@ -64,10 +64,10 @@ export default function PrivacySettingsPage() {
           <div className="space-y-6">
             <label className="flex items-start justify-between cursor-pointer group">
               <div className="pr-4">
-                <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
+                <span className="block font-medium text-gray-900 dark:text-slate-100 group-hover:text-primary transition-colors">
                   {text.publicProfileTitle}
                 </span>
-                <span className="block text-sm text-gray-500 mt-1">
+                <span className="block text-sm text-gray-500 dark:text-slate-400 mt-1">
                   {text.publicProfileDescription}
                 </span>
               </div>
@@ -83,7 +83,7 @@ export default function PrivacySettingsPage() {
                     })
                   }
                 />
-                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                <div className="w-11 h-6 bg-gray-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-slate-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
               </div>
             </label>
 
@@ -140,16 +140,16 @@ export default function PrivacySettingsPage() {
         </div>
 
         {/* Account Security */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-            <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
+        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100 dark:border-slate-800">
+            <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center text-orange-500 dark:text-orange-400">
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">
+              <h3 className="font-bold text-gray-900 dark:text-slate-100">
                 {text.accountSecurityTitle}
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-slate-400">
                 {text.accountSecurityDescription}
               </p>
             </div>

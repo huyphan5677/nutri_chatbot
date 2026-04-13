@@ -1,5 +1,7 @@
 import { profileMessages } from "@/features/profile/profile.messages";
 import { useLocale } from "@/shared/i18n/LocaleContext";
+import { getApiUrl } from "@/shared/api/client";
+import { useEffect, useState } from "react";
 import {
   Award,
   CheckCircle2,
@@ -7,43 +9,75 @@ import {
   Gift,
   Star,
   Zap,
+  Loader2,
 } from "lucide-react";
+
+interface AchievementDTO {
+  id: string;
+  points: string;
+  unlocked: boolean;
+}
+
+interface RewardsDTO {
+  currentPoints: number;
+  nextTierPoints: number;
+  tierName: string;
+  progress: number;
+  achievements: AchievementDTO[];
+}
 
 export default function RewardsPage() {
   const { locale } = useLocale();
   const text = profileMessages[locale].rewards;
-  const currentPoints = 1250;
-  const nextTierPoints = 2000;
-  const progress = (currentPoints / nextTierPoints) * 100;
+  
+  const [data, setData] = useState<RewardsDTO | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const achievements = [
-    {
-      name: text.achievements.pantryMaster.name,
-      description: text.achievements.pantryMaster.description,
-      points: "+50",
-      unlocked: true,
-    },
-    {
-      name: text.achievements.consistentPlanner.name,
-      description: text.achievements.consistentPlanner.description,
-      points: "+100",
-      unlocked: true,
-    },
-    {
-      name: text.achievements.recipeCreator.name,
-      description: text.achievements.recipeCreator.description,
-      points: "+20",
-      unlocked: false,
-    },
-  ];
+  useEffect(() => {
+    const fetchRewards = async () => {
+      const token = localStorage.getItem("nutri_token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(`${getApiUrl()}/profile/rewards`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          setData(await response.json());
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRewards();
+  }, []);
+
+  const getAchievementDetails = (id: string) => {
+    if (id === "pantryMaster") return text.achievements.pantryMaster;
+    if (id === "consistentPlanner") return text.achievements.consistentPlanner;
+    return { name: id, description: "" };
+  };
+
+  const currentPoints = data?.currentPoints || 0;
+  const nextTierPoints = data?.nextTierPoints || 1000;
+  const progress = data?.progress || 0;
 
   return (
-    <div className="flex flex-col gap-8 md:gap-12 max-w-4xl">
+    <div className="flex flex-col gap-8 md:gap-12 max-w-4xl relative">
+      {loading && (
+         <div className="absolute inset-0 z-50 bg-white/50 flex items-start pt-32 justify-center">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+         </div>
+      )}
       <div>
-        <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-slate-50 mb-2">
           {text.title}
         </h2>
-        <p className="text-gray-500 text-sm md:text-base mb-8">
+        <p className="text-gray-500 dark:text-slate-400 text-sm md:text-base mb-8">
           {text.subtitle}
         </p>
 
@@ -61,7 +95,7 @@ export default function RewardsPage() {
                   {text.currentTier}
                 </h3>
                 <h1 className="text-3xl md:text-4xl font-bold font-serif">
-                  {text.currentTierName}
+                  {data?.tierName || text.currentTierName}
                 </h1>
               </div>
             </div>
@@ -92,67 +126,70 @@ export default function RewardsPage() {
             </div>
             <p className="text-xs text-white/70 mt-3 flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 fill-current" />
-              {text.earnMore(nextTierPoints - currentPoints)}
+              {text.earnMore(Math.max(0, nextTierPoints - currentPoints))}
             </p>
           </div>
         </div>
 
         {/* Badges & Achievements */}
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 mb-8">
+        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm p-6 mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
               <Award className="w-5 h-5 text-primary" />
               {text.recentAchievements}
             </h3>
-            <button className="text-sm font-medium text-gray-500 hover:text-primary transition-colors flex items-center gap-1">
+            <button className="text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-primary transition-colors flex items-center gap-1">
               {text.viewAll} <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {achievements.map((achieve, i) => (
-              <div
-                key={i}
-                className={`p-4 rounded-xl border ${achieve.unlocked ? "bg-orange-50 border-orange-100" : "bg-gray-50 border-gray-100 opacity-60"} transition-all`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${achieve.unlocked ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-400"}`}
-                  >
-                    {achieve.unlocked ? (
-                      <CheckCircle2 className="w-5 h-5" />
-                    ) : (
-                      <Award className="w-5 h-5" />
-                    )}
-                  </div>
-                  <span
-                    className={`text-xs font-bold px-2 py-1 rounded-full ${achieve.unlocked ? "bg-orange-100 text-orange-700" : "bg-gray-200 text-gray-500"}`}
-                  >
-                    {achieve.points}
-                  </span>
-                </div>
-                <h4
-                  className={`font-bold mt-3 mb-1 ${achieve.unlocked ? "text-orange-900" : "text-gray-900"}`}
-                >
-                  {achieve.name}
-                </h4>
-                <p className="text-xs text-gray-500 line-clamp-2">
-                  {achieve.description}
-                </p>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data?.achievements.map((achieve, i) => {
+              const details = getAchievementDetails(achieve.id);
+              return (
+                 <div
+                   key={i}
+                   className={`p-4 rounded-xl border ${achieve.unlocked ? "bg-orange-50 dark:bg-orange-500/10 border-orange-100 dark:border-orange-500/20" : "bg-gray-50 dark:bg-slate-800/40 border-gray-100 dark:border-slate-800 opacity-60"} transition-all`}
+                 >
+                   <div className="flex justify-between items-start mb-2">
+                     <div
+                       className={`w-10 h-10 rounded-full flex items-center justify-center ${achieve.unlocked ? "bg-orange-500 text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500"}`}
+                     >
+                       {achieve.unlocked ? (
+                         <CheckCircle2 className="w-5 h-5" />
+                       ) : (
+                         <Award className="w-5 h-5" />
+                       )}
+                     </div>
+                     <span
+                       className={`text-xs font-bold px-2 py-1 rounded-full ${achieve.unlocked ? "bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400" : "bg-gray-200 dark:bg-slate-700 text-gray-500"}`}
+                     >
+                       {achieve.points}
+                     </span>
+                   </div>
+                   <h4
+                     className={`font-bold mt-3 mb-1 ${achieve.unlocked ? "text-orange-900 dark:text-orange-100" : "text-gray-900 dark:text-slate-400"}`}
+                   >
+                     {details.name}
+                   </h4>
+                   <p className="text-xs text-gray-500 dark:text-slate-500 line-clamp-2">
+                     {details.description}
+                   </p>
+                 </div>
+              );
+            })}
           </div>
         </div>
 
         {/* Redeem Rewards Placeholder */}
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 mb-4">
+        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-sm p-6 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 bg-blue-50 dark:bg-blue-500/10 rounded-full flex items-center justify-center text-blue-500 dark:text-blue-400 mb-4">
             <Gift className="w-8 h-8" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900 mb-2">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-2">
             {text.rewardsStoreTitle}
           </h3>
-          <p className="text-gray-500 text-sm max-w-sm">
+          <p className="text-gray-500 dark:text-slate-400 text-sm max-w-sm">
             {text.rewardsStoreDescription}
           </p>
         </div>

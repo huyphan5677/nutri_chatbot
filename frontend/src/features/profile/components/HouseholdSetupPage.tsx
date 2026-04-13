@@ -127,14 +127,14 @@ const HouseholdSetupPage: React.FC = () => {
       {SuccessToast}
       {ErrorToast}
 
-      <div className="flex flex-col gap-8 md:gap-12 max-w-3xl">
+      <div className="flex flex-col gap-4 md:gap-6 max-w-3xl">
         {/* Page Header */}
-        <div className="mb-8">
+        <div>
           {/* Quick summary chips (show current saved state) */}
           {savedData && (
-            <div className="flex flex-wrap gap-2 mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+            <div className="flex flex-wrap gap-2 mt-4 p-4 bg-gray-50 dark:bg-slate-800/40 dark:backdrop-blur-md rounded-2xl border border-gray-100 dark:border-slate-700/50">
               <div className="flex items-center gap-2 w-full mb-1">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   {text.currentSettings}
                 </span>
               </div>
@@ -144,7 +144,7 @@ const HouseholdSetupPage: React.FC = () => {
                     text.dietLabels[savedData.diet_mode as keyof typeof text.dietLabels] ||
                     savedData.diet_mode
                   }
-                  color="bg-green-50 text-green-700 border border-green-100"
+                  color="bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-500/20"
                 />
               )}
               {savedData.budget_level && (
@@ -155,19 +155,19 @@ const HouseholdSetupPage: React.FC = () => {
                     ] ||
                     savedData.budget_level
                   }
-                  color="bg-blue-50 text-blue-700 border border-blue-100"
+                  color="bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20"
                 />
               )}
               {savedData.members && savedData.members.length > 0 && (
                 <SummaryBadge
                   label={text.memberCount(savedData.members.length)}
-                  color="bg-purple-50 text-purple-700 border border-purple-100"
+                  color="bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-500/20"
                 />
               )}
               {savedData.equipment && savedData.equipment.length > 0 && (
                 <SummaryBadge
                   label={text.applianceCount(savedData.equipment.length)}
-                  color="bg-orange-50 text-orange-700 border border-orange-100"
+                  color="bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-100 dark:border-orange-500/20"
                 />
               )}
             </div>
@@ -175,53 +175,53 @@ const HouseholdSetupPage: React.FC = () => {
         </div>
 
         {/* Cards row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             {
               icon: ChefHat,
-              color: "bg-amber-50 text-amber-600",
+              color: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
               title: text.cards.dietTitle,
               desc: text.cards.dietDescription,
             },
             {
               icon: Users,
-              color: "bg-purple-50 text-purple-600",
+              color: "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400",
               title: text.cards.familyTitle,
               desc: text.cards.familyDescription,
             },
             {
               icon: Home,
-              color: "bg-orange-50 text-orange-600",
+              color: "bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400",
               title: text.cards.kitchenTitle,
               desc: text.cards.kitchenDescription,
             },
           ].map((card, i) => (
             <div
               key={i}
-              className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+              className="p-4 bg-white dark:bg-slate-800/60 dark:backdrop-blur-sm rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:shadow-md dark:hover:border-primary/50 transition-all overflow-hidden relative group"
             >
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${card.color}`}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${card.color}`}
               >
                 <card.icon className="w-5 h-5" />
               </div>
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">
                 {card.title}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">{card.desc}</p>
+              <p className="text-xs text-gray-400 dark:text-slate-400 mt-1 leading-relaxed">{card.desc}</p>
             </div>
           ))}
         </div>
 
         {/* Wizard container — re-mounted with key={JSON} so it resets when save succeeds */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 pt-6 pb-0 border-b border-gray-50">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+          <div className="px-6 pt-6 pb-0 border-b border-gray-50 dark:border-slate-800">
             <div className="flex items-center gap-2 pb-4">
               <div className="w-2 h-2 rounded-full bg-primary" />
-              <span className="text-sm font-semibold text-gray-700">
+              <span className="text-sm font-semibold text-gray-700 dark:text-slate-200">
                 {text.editSettings}
               </span>
-              <span className="ml-auto text-xs text-gray-400">
+              <span className="ml-auto text-xs text-gray-400 dark:text-slate-500">
                 {text.saveHint}
               </span>
             </div>

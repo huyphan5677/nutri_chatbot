@@ -45,15 +45,15 @@ export default function OnboardingScreen() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-full bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl border border-gray-100 p-12 text-center">
-          <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+      <div className="min-h-full bg-gray-50 dark:bg-slate-950 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-xl w-full bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-gray-100 dark:border-slate-800 p-12 text-center">
+          <div className="w-20 h-20 bg-green-50 dark:bg-green-900/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-12 h-12" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2 font-serif">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 font-serif">
             {text.setupCompleteTitle}
           </h2>
-          <p className="text-gray-500 mb-8">
+          <p className="text-gray-500 dark:text-gray-400 mb-8">
             {text.setupCompleteDescription}
           </p>
           <Button
@@ -68,9 +68,9 @@ export default function OnboardingScreen() {
   }
 
   return (
-    <div className="min-h-full bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-gray-50 dark:bg-slate-950 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       <div
-        className="max-w-xl w-full bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden"
+        className="max-w-xl w-full bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-gray-100 dark:border-slate-800 overflow-hidden"
         style={{ minHeight: "600px" }}
       >
         <QuizWizard

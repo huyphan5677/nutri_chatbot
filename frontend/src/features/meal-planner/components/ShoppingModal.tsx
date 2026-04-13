@@ -512,14 +512,14 @@ export default function ShoppingModal({
       className="max-w-2xl p-0 overflow-hidden"
     >
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary/10 via-orange-50 to-rose-50 px-6 py-4 border-b border-gray-100">
+      <div className="bg-gradient-to-r from-primary/10 via-orange-50 to-rose-50 dark:from-primary/20 dark:via-slate-800 dark:to-slate-800 px-6 py-4 border-b border-gray-100 dark:border-slate-700/50">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
             <ShoppingCart className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Go shopping</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{mealPlanName}</p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Go shopping</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{mealPlanName}</p>
           </div>
         </div>
       </div>
@@ -528,7 +528,7 @@ export default function ShoppingModal({
         {/* Step 1: Select Strategy */}
         {step === "select_strategy" && (
           <div className="space-y-3">
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               Select a shopping strategy that fits your needs.:
             </p>
             {STRATEGIES.map((s) => (
@@ -540,15 +540,15 @@ export default function ShoppingModal({
               >
                 <div className="flex items-start gap-3">
                   <div
-                    className={`mt-0.5 p-2 rounded-lg ${s.bgColor} ${s.color} transition-colors`}
+                    className={`mt-0.5 p-2 rounded-lg ${s.bgColor} dark:bg-slate-800 ${s.color} transition-colors`}
                   >
                     {s.icon}
                   </div>
                   <div>
-                    <div className={`font-semibold text-gray-900 text-sm`}>
+                    <div className={`font-semibold text-gray-900 dark:text-white text-sm`}>
                       {s.label}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {s.description}
                     </p>
                   </div>
@@ -569,10 +569,10 @@ export default function ShoppingModal({
               ← Change strategy
             </button>
 
-            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+            <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700/50">
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-500">Strategy:</span>
-                <span className="font-semibold text-gray-900">
+                <span className="text-gray-500 dark:text-gray-400">Strategy:</span>
+                <span className="font-semibold text-gray-900 dark:text-white">
                   {STRATEGIES.find((s) => s.key === selectedStrategy)?.label}
                 </span>
               </div>
@@ -581,7 +581,7 @@ export default function ShoppingModal({
             {/* Lotte Branch Picker */}
             {needsLotteStore && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <Store className="inline h-4 w-4 mr-1 text-red-500" />
                   Lotte Mart Branch
                 </label>
@@ -589,7 +589,7 @@ export default function ShoppingModal({
                   <select
                     value={selectedLotteBranch}
                     onChange={(e) => setSelectedLotteBranch(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition-all text-sm appearance-none pr-10"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900/40 focus:border-red-400 transition-all text-sm appearance-none pr-10 text-gray-900 dark:text-white"
                   >
                     {lotteBranches.map((b) => (
                       <option key={b.code} value={b.code}>
@@ -607,7 +607,7 @@ export default function ShoppingModal({
               <div className="space-y-3">
                 {/* Province picker */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <MapPin className="inline h-4 w-4 mr-1 text-green-500" />
                     Province / City (WinMart)
                   </label>
@@ -615,11 +615,11 @@ export default function ShoppingModal({
                     <select
                       value={selectedProvince}
                       onChange={(e) => setSelectedProvince(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-400 transition-all text-sm appearance-none pr-10"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-200 dark:focus:ring-green-900/40 focus:border-green-400 transition-all text-sm appearance-none pr-10 text-gray-900 dark:text-white"
                     >
-                      <option value="">-- Select Province/City --</option>
+                      <option value="" className="dark:bg-slate-800">-- Select Province/City --</option>
                       {winmartProvinces.map((p) => (
-                        <option key={p} value={p}>
+                        <option key={p} value={p} className="dark:bg-slate-800">
                           {p}
                         </option>
                       ))}
@@ -631,7 +631,7 @@ export default function ShoppingModal({
                 {/* Store picker (after province is selected) */}
                 {selectedProvince && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       <Store className="inline h-4 w-4 mr-1 text-green-500" />
                       WinMart Store
                     </label>
@@ -654,10 +654,10 @@ export default function ShoppingModal({
                             );
                             setSelectedWinmartStore(store || null);
                           }}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-400 transition-all text-sm appearance-none pr-10"
+                          className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-200 dark:focus:ring-green-900/40 focus:border-green-400 transition-all text-sm appearance-none pr-10 text-gray-900 dark:text-white"
                         >
                           {winmartStores.map((s) => (
-                            <option key={s.storeCode} value={s.storeCode}>
+                            <option key={s.storeCode} value={s.storeCode} className="dark:bg-slate-800">
                               {s.storeName} ({s.districtTitle})
                             </option>
                           ))}
@@ -671,7 +671,7 @@ export default function ShoppingModal({
             )}
 
             {error && (
-              <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100 text-sm text-red-700">
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-900/40 text-sm text-red-700 dark:text-red-400">
                 <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -697,7 +697,7 @@ export default function ShoppingModal({
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               Searching for products...
             </h3>
             <p className="text-sm text-gray-500 max-w-xs mb-4">
@@ -726,13 +726,13 @@ export default function ShoppingModal({
             </button>
 
             {/* Summary Card */}
-            <div className="p-4 rounded-xl bg-gradient-to-r from-primary/5 to-orange-50 border border-primary/10">
+            <div className="p-4 rounded-xl bg-gradient-to-r from-primary/5 to-orange-50 border border-primary/10 dark:from-slate-800 dark:to-slate-800/80 dark:border-slate-700/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {result.summary}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Strategy:{" "}
                     {STRATEGIES.find((s) => s.key === result.strategy)?.label ||
                       result.strategy}
@@ -740,8 +740,8 @@ export default function ShoppingModal({
                 </div>
                 {result.total_estimated_cost > 0 && (
                   <div className="text-right">
-                    <p className="text-xs text-gray-500">Total Estimated</p>
-                    <p className="text-lg font-bold text-primary">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Total Estimated</p>
+                    <p className="text-lg font-bold text-primary dark:text-rose-400">
                       {formatPrice(result.total_estimated_cost)}
                     </p>
                   </div>
@@ -749,19 +749,19 @@ export default function ShoppingModal({
               </div>
             </div>
             
-            {/* Fridge covered items - Moved to top for better visibility */}
+            {/* Fridge covered items */}
             {result.fridge_covered && result.fridge_covered.length > 0 && (
-              <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-emerald-50/40 shadow-sm transition-all hover:shadow-md">
-                <div className="bg-emerald-50/80 px-4 py-2.5 border-b border-emerald-100/50 flex items-center justify-between">
+              <div className="overflow-hidden rounded-2xl border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-900/10 shadow-sm transition-all hover:shadow-md">
+                <div className="bg-emerald-50/80 dark:bg-emerald-900/20 px-4 py-2.5 border-b border-emerald-100/50 dark:border-emerald-900/40 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center">
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                     </div>
-                    <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-tight">
+                    <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-tight">
                       Deducted from fridge
                     </span>
                   </div>
-                  <span className="text-[10px] font-black text-emerald-600 bg-white px-2 py-0.5 rounded-full shadow-sm border border-emerald-100/30">
+                  <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full shadow-sm border border-emerald-100/30 dark:border-emerald-900/40">
                     {result.fridge_covered.length} ITEMS SAVED
                   </span>
                 </div>
@@ -772,10 +772,10 @@ export default function ShoppingModal({
                       className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/60 transition-colors"
                     >
                       <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="text-xs font-bold text-gray-800 truncate">{item.name}</span>
+                        <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">{item.name}</span>
                         <div className="flex items-center gap-1.5">
                           <span className="flex h-1 w-1 rounded-full bg-emerald-400" />
-                          <span className="text-[10px] font-medium text-emerald-600">Inventory: {item.fridge_quantity}</span>
+                          <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-500">Inventory: {item.fridge_quantity}</span>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
@@ -790,7 +790,7 @@ export default function ShoppingModal({
 
             {/* Save to Fridge Section */}
             {isSuccess ? (
-              <div className="p-4 rounded-xl bg-green-50 border border-green-200 flex items-center gap-3 text-green-700 mt-2">
+              <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/40 flex items-center gap-3 text-green-700 dark:text-green-400 mt-2">
                 <CheckCircle2 className="h-5 w-5" />
                 <span className="font-semibold">
                   Successfully saved to your Fridge!
@@ -819,48 +819,46 @@ export default function ShoppingModal({
                 {Object.entries(groupedResults).map(([mart, products]) => (
                   <div
                     key={mart}
-                    className="rounded-xl border border-gray-100 overflow-hidden"
+                    className="rounded-xl border border-gray-100 overflow-hidden dark:border-slate-700/50"
                   >
                     <div
-                      className={`px-4 py-2 border-b border-gray-100 flex items-center gap-2 ${
-                        mart === "Lotte" ? "bg-red-50" : "bg-green-50"
+                      className={`px-4 py-2 border-b border-gray-100 flex items-center gap-2 dark:border-slate-700/30 ${
+                        mart === "Lotte" ? "bg-red-50 dark:bg-red-900/20" : "bg-green-50 dark:bg-green-900/20"
                       }`}
                     >
                       <Store
-                        className={`h-4 w-4 ${mart === "Lotte" ? "text-red-600" : "text-green-600"}`}
+                        className={`h-4 w-4 ${mart === "Lotte" ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}
                       />
-                      <span className="text-xs font-bold uppercase tracking-wider text-gray-700">
+                      <span className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
                         {mart === "Lotte" ? "Lotte Mart" : "WinMart"}
                       </span>
-                      <span className="text-xs text-gray-500 ml-auto">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
                         {products.length} products
                       </span>
                     </div>
-                    <ul className="divide-y divide-gray-50">
+                    <ul className="divide-y divide-gray-50 dark:divide-slate-700/30">
                       {products.map((product) => {
                         const idx = product._originalIndex;
                         const isEditing = editingIndex === idx;
                         const buyQty = product.buy_quantity ?? 1;
                         const unitPrice = product.price ?? 0;
                         const totalPrice = unitPrice * buyQty;
-                        // Use required_quantity if available, fallback to quantity (e.g. "800g")
-                        const neededQty =
-                          product.required_quantity || product.quantity || "";
+                        const neededQty = product.required_quantity || product.quantity || "";
 
                         return (
                           <li
                             key={idx}
-                            className="px-4 py-3 hover:bg-gray-50/50 group/item relative"
+                            className="px-4 py-3 hover:bg-gray-50/50 dark:hover:bg-slate-800/50 group/item relative"
                           >
                             {isEditing ? (
                               <div className="flex flex-col gap-3 w-full">
                                 <div className="flex items-center gap-3 w-full">
                                   <div className="flex-1">
-                                    <label className="text-[10px] font-medium text-gray-500 mb-0.5 block uppercase tracking-wider">
+                                    <label className="text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-0.5 block uppercase tracking-wider">
                                       Display name
                                     </label>
                                     <input
-                                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 flex-1 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all"
+                                      className="w-full text-sm border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 flex-1 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all dark:bg-slate-800 dark:text-white"
                                       value={editName}
                                       onChange={(e) =>
                                         setEditName(e.target.value)
@@ -868,13 +866,13 @@ export default function ShoppingModal({
                                     />
                                   </div>
                                   <div className="w-20 shrink-0">
-                                    <label className="text-[10px] font-medium text-gray-500 mb-0.5 block uppercase tracking-wider">
+                                    <label className="text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-0.5 block uppercase tracking-wider">
                                       Quantity
                                     </label>
                                     <input
                                       type="number"
                                       min="1"
-                                      className="w-full text-sm border border-gray-200 rounded-lg px-2 py-2 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all text-center"
+                                      className="w-full text-sm border border-gray-200 dark:border-slate-700 rounded-lg px-2 py-2 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all text-center dark:bg-slate-800 dark:text-white"
                                       value={editQty}
                                       onChange={(e) =>
                                         setEditQty(
@@ -909,7 +907,7 @@ export default function ShoppingModal({
                                       href={buildProductUrl(product)}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-sm font-semibold text-gray-900 hover:text-primary transition-colors flex items-start gap-1.5 group/link flex-1 line-clamp-2 leading-snug tracking-tight"
+                                      className="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-primary transition-colors flex items-start gap-1.5 group/link flex-1 line-clamp-2 leading-snug tracking-tight"
                                     >
                                       {product.product_name}
                                       <ExternalLink className="h-3.5 w-3.5 shrink-0 mt-0.5 text-gray-400 group-hover/link:text-primary transition-colors" />
@@ -930,7 +928,7 @@ export default function ShoppingModal({
 
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span
-                                      className="inline-flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-1.5 rounded-md max-w-full sm:max-w-[220px]"
+                                      className="inline-flex items-center text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-slate-700 px-2 py-1.5 rounded-md max-w-full sm:max-w-[220px]"
                                       title={product.ingredient_name}
                                     >
                                       <span className="font-medium mr-1 text-gray-400 shrink-0">For:</span>
@@ -950,8 +948,8 @@ export default function ShoppingModal({
                                       <span
                                         className={`text-xs px-2 py-1.5 rounded-md font-semibold shrink-0 ${
                                           product.fridge_deducted 
-                                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm" 
-                                            : "bg-blue-50 text-blue-600"
+                                            ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 shadow-sm" 
+                                            : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                                         }`}
                                         title={product.fridge_deducted ? "Quantity after fridge deduction" : "Required quantity for the recipe"}
                                       >
@@ -968,7 +966,7 @@ export default function ShoppingModal({
                                       </span>
                                     )}
                                     <span
-                                      className="text-xs px-2 py-1.5 rounded-md bg-orange-50 text-orange-600 font-semibold shrink-0 shadow-sm border border-orange-100/50"
+                                      className="text-xs px-2 py-1.5 rounded-md bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 font-semibold shrink-0 shadow-sm border border-orange-100/50 dark:border-orange-900/40"
                                       title="Number of products to buy from the supermarket"
                                     >
                                       Buy: ×{buyQty}
@@ -977,15 +975,15 @@ export default function ShoppingModal({
 
                                   {getLeftoverDisplay(product) && (
                                     <div className="flex items-center gap-1.5 mt-0.5">
-                                      <span className={`w-1.5 h-1.5 rounded-full ${getLeftoverDisplay(product)?.includes("+") ? "bg-green-500" : "bg-gray-300"}`} />
-                                      <p className={`text-xs font-medium ${getLeftoverDisplay(product)?.includes("+") ? "text-green-700" : "text-gray-500"}`}>
+                                      <span className={`w-1.5 h-1.5 rounded-full ${getLeftoverDisplay(product)?.includes("+") ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700"}`} />
+                                      <p className={`text-xs font-medium ${getLeftoverDisplay(product)?.includes("+") ? "text-green-700 dark:text-green-500" : "text-gray-500 dark:text-gray-400"}`}>
                                         {getLeftoverDisplay(product)}
                                       </p>
                                     </div>
                                   )}
 
                                   {product.description && (
-                                    <p className="text-xs text-gray-400 line-clamp-1 italic mt-0.5">
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 line-clamp-1 italic mt-0.5">
                                       {product.description}
                                     </p>
                                   )}
@@ -1000,7 +998,7 @@ export default function ShoppingModal({
                                         <p className="text-[15px] font-bold text-primary">
                                           {formatPrice(totalPrice)}
                                         </p>
-                                        <p className="text-[11px] text-gray-400 mt-1 font-medium bg-gray-50 inline-block px-1.5 py-0.5 rounded">
+                                        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 font-medium bg-gray-50 dark:bg-slate-700 inline-block px-1.5 py-0.5 rounded">
                                           {formatPrice(unitPrice)} / item
                                         </p>
                                       </>
@@ -1020,7 +1018,7 @@ export default function ShoppingModal({
                                   <div className="flex items-center gap-1.5 sm:opacity-0 group-hover/item:opacity-100 focus-within:opacity-100 transition-opacity">
                                     <button
                                       onClick={() => handleStartEdit(idx, product)}
-                                      className="px-2 py-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-md transition-colors flex items-center justify-center gap-1.5 text-xs font-medium border border-transparent hover:border-blue-100"
+                                      className="px-2 py-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 rounded-md transition-colors flex items-center justify-center gap-1.5 text-xs font-medium border border-transparent hover:border-blue-100 dark:hover:border-blue-900/40"
                                       title="Edit item"
                                     >
                                       <Pencil className="w-3.5 h-3.5" />
@@ -1028,7 +1026,7 @@ export default function ShoppingModal({
                                     </button>
                                     <button
                                       onClick={() => handleDeleteItem(idx)}
-                                      className="px-2 py-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-md transition-colors flex items-center justify-center gap-1.5 text-xs font-medium border border-transparent hover:border-red-100"
+                                      className="px-2 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-300 rounded-md transition-colors flex items-center justify-center gap-1.5 text-xs font-medium border border-transparent hover:border-red-100 dark:hover:border-red-900/40"
                                       title="Remove item"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
@@ -1049,14 +1047,14 @@ export default function ShoppingModal({
 
             {/* Add Custom Item */}
             {isAddingCustom ? (
-              <div className="p-5 rounded-xl border border-primary/20 bg-primary/5 shadow-sm mt-4 mx-1">
+              <div className="p-5 rounded-xl border border-primary/20 dark:border-primary/40 bg-primary/5 dark:bg-primary/10 shadow-sm mt-4 mx-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div className="sm:col-span-2">
                     <label className="text-[11px] font-bold text-primary uppercase tracking-wider mb-1.5 block">
                       PRODUCT NAME *
                     </label>
                     <input
-                      className="w-full text-sm border-0 ring-1 ring-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all"
+                      className="w-full text-sm border-0 ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all dark:bg-slate-800 dark:text-white"
                       value={customName}
                       onChange={(e) => setCustomName(e.target.value)}
                       placeholder="Enter product name..."
@@ -1069,7 +1067,7 @@ export default function ShoppingModal({
                     </label>
                     <input
                       type="text"
-                      className="w-full text-sm border-0 ring-1 ring-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all"
+                      className="w-full text-sm border-0 ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all dark:bg-slate-800 dark:text-white"
                       value={customPrice}
                       onChange={(e) => setCustomPrice(e.target.value)}
                       placeholder="e.g. 50000"
@@ -1082,7 +1080,7 @@ export default function ShoppingModal({
                     <input
                       type="number"
                       min="1"
-                      className="w-full text-sm border-0 ring-1 ring-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all"
+                      className="w-full text-sm border-0 ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all dark:bg-slate-800 dark:text-white"
                       value={customQty}
                       onChange={(e) =>
                         setCustomQty(parseInt(e.target.value) || 1)
@@ -1095,7 +1093,7 @@ export default function ShoppingModal({
                     </label>
                     <input
                       type="text"
-                      className="w-full text-sm border-0 ring-1 ring-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all"
+                      className="w-full text-sm border-0 ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all dark:bg-slate-800 dark:text-white"
                       value={customNeeded}
                       onChange={(e) => setCustomNeeded(e.target.value)}
                       placeholder="e.g. 50g, 2 pieces..."
@@ -1107,7 +1105,7 @@ export default function ShoppingModal({
                     </label>
                     <input
                       type="text"
-                      className="w-full text-sm border-0 ring-1 ring-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all"
+                      className="w-full text-sm border-0 ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all dark:bg-slate-800 dark:text-white"
                       value={customFridge}
                       onChange={(e) => setCustomFridge(e.target.value)}
                       placeholder="e.g. 500g, 1 box..."
@@ -1134,7 +1132,7 @@ export default function ShoppingModal({
             ) : (
               <button
                 onClick={() => setIsAddingCustom(true)}
-                className="w-full py-3.5 mt-4 border-2 border-dashed border-gray-200 rounded-xl text-sm font-medium text-gray-400 hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all flex items-center justify-center gap-2 group mx-1"
+                className="w-full py-3.5 mt-4 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-xl text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-primary hover:border-primary/40 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all flex items-center justify-center gap-2 group mx-1"
               >
                 <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />{" "}
                 ADD PRODUCT
@@ -1143,10 +1141,10 @@ export default function ShoppingModal({
 
             {/* Not found items */}
             {result.not_found.length > 0 && (
-              <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 mt-6">
+              <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 mt-6 dark:bg-amber-900/10 dark:border-amber-900/30">
                 <div className="flex items-center gap-2 mb-2">
-                  <XCircle className="h-4 w-4 text-amber-600" />
-                  <span className="text-sm font-semibold text-amber-800">
+                  <XCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                  <span className="text-sm font-semibold text-amber-800 dark:text-amber-400">
                     Not Found ({result.not_found.length})
                   </span>
                 </div>
@@ -1154,7 +1152,7 @@ export default function ShoppingModal({
                   {result.not_found.map((name) => (
                     <span
                       key={name}
-                      className="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-700"
+                      className="text-xs px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
                     >
                       {name}
                     </span>

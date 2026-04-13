@@ -18,14 +18,14 @@ export const QuizStep1: React.FC<QuizStep1Props> = ({ data, onChange }) => {
 
   return (
     <div className="flex flex-col gap-8">
-      <h2 className="text-2xl font-bold text-center">{text.title}</h2>
-      <p className="text-gray-400 text-center text-sm -mt-5">
+      <h2 className="text-2xl font-bold text-center dark:text-white">{text.title}</h2>
+      <p className="text-gray-400 dark:text-gray-500 text-center text-sm -mt-5">
         {text.description}
       </p>
 
       {/* Diet Mode */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-3">
+        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
           {text.preferredDiet}
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -41,8 +41,8 @@ export const QuizStep1: React.FC<QuizStep1Props> = ({ data, onChange }) => {
               className={`p-3 rounded-xl border text-sm font-medium transition-all flex items-center gap-2
                 ${
                   data.diet_mode === diet.id
-                    ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
-                    : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"
+                    ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary ring-1 ring-primary"
+                    : "border-gray-200 dark:border-slate-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800"
                 }`}
             >
               <span>{diet.icon}</span> {diet.label}

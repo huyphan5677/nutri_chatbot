@@ -52,21 +52,21 @@ export const FilterModal: React.FC<FilterModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-xl relative animate-in fade-in slide-in-from-bottom-4 duration-200">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 shadow-xl relative animate-in fade-in slide-in-from-bottom-4 duration-200 border border-gray-100 dark:border-slate-800">
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 transition-colors"
+          className="absolute top-6 right-6 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           <X className="w-6 h-6" />
         </button>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-8 font-serif">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 font-serif">
           {messages.title}
         </h2>
 
         {/* Diet Type */}
         <div className="mb-6">
-          <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-wider">
             {messages.type}
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -82,7 +82,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                                     ${
                                       selectedType === type.value
                                         ? "bg-[#FF5C5C] text-white border-[#FF5C5C]"
-                                        : "bg-white text-gray-600 border-gray-200 hover:border-[#FF5C5C] hover:text-[#FF5C5C]"
+                                        : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:border-[#FF5C5C] hover:text-[#FF5C5C]"
                                     }`}
               >
                 {type.label}
@@ -93,7 +93,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
 
         {/* Max Prep Time */}
         <div className="mb-8">
-          <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-wider">
             {messages.maxTime}
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -107,7 +107,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
                                     ${
                                       selectedTime === time
                                         ? "bg-[#FF5C5C] text-white border-[#FF5C5C]"
-                                        : "bg-white text-gray-600 border-gray-200 hover:border-[#FF5C5C] hover:text-[#FF5C5C]"
+                                        : "bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:border-[#FF5C5C] hover:text-[#FF5C5C]"
                                     }`}
               >
                 ≤ {time}
@@ -120,7 +120,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
         <div className="flex gap-4">
           <button
             onClick={handleReset}
-            className="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-full transition-colors"
+            className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-bold hover:bg-gray-50 dark:hover:bg-slate-800 rounded-full transition-colors"
           >
             {messages.reset}
           </button>

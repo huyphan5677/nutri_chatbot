@@ -23,7 +23,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
   onSwap,
 }) => {
   return (
-    <div className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all">
+    <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden hover:shadow-md transition-all">
       {/* Image */}
       <div className="relative h-32 overflow-hidden">
         <img
@@ -31,7 +31,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           alt={recipe.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        <div className="absolute top-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-xs font-semibold text-gray-700">
+        <div className="absolute top-2 left-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-2 py-1 rounded-lg text-xs font-semibold text-gray-700 dark:text-slate-200">
           {mealType}
         </div>
       </div>
@@ -39,13 +39,13 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
       {/* Content */}
       <div className="p-4">
         <h3
-          className="font-bold text-gray-900 leading-tight mb-2 line-clamp-1"
+          className="font-bold text-gray-900 dark:text-white leading-tight mb-2 line-clamp-1"
           title={recipe.title}
         >
           {recipe.title}
         </h3>
 
-        <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
+        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-4">
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {recipe.prep_time_minutes}m
@@ -62,7 +62,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           <Button
             variant="ghost"
             onClick={onSwap}
-            className="w-full h-8 text-xs text-primary hover:bg-primary/5 hover:text-primary gap-1"
+            className="w-full h-8 text-xs text-primary hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary gap-1"
           >
             <Repeat className="w-3 h-3" /> Swap Meal
           </Button>

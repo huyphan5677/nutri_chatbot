@@ -55,7 +55,7 @@ const LanguageToggle = ({
   className?: string;
 }) => (
   <div
-    className={`inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white/90 p-1 shadow-sm ${className}`}
+    className={`inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 p-1 shadow-sm ${className}`}
   >
     {SUPPORTED_LOCALES.map((option) => (
       <button
@@ -65,7 +65,7 @@ const LanguageToggle = ({
         className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
           locale === option
             ? "bg-primary text-white"
-            : "text-gray-500 hover:text-gray-800"
+            : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
         }`}
         aria-pressed={locale === option}
       >
@@ -127,9 +127,9 @@ export const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-warm-50 flex flex-col font-sans text-slate-800 selection:bg-primary/20">
+    <div className="min-h-screen bg-warm-50 dark:bg-slate-950 flex flex-col font-sans text-slate-800 dark:text-slate-100 selection:bg-primary/20">
       {/* 1. Navbar */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all duration-300">
+      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
           <div className="text-3xl font-extrabold text-primary font-display tracking-tight flex items-center gap-2">
             <span className="bg-primary text-white p-1 rounded-lg">
@@ -139,7 +139,7 @@ export const HomePage = () => {
           </div>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex gap-8 text-sm font-medium text-gray-600">
+          <div className="hidden md:flex gap-8 text-sm font-medium text-gray-600 dark:text-gray-300">
             <a
               href="#how-it-works"
               className="relative py-1 transition-colors hover:text-primary after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-right after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 hover:after:origin-bottom-left hover:after:scale-x-100"
@@ -179,7 +179,7 @@ export const HomePage = () => {
 
           {/* Mobile Menu Toggle */}
           <button
-            className="md:hidden p-2 text-gray-600 focus:outline-none"
+            className="md:hidden p-2 text-gray-600 dark:text-gray-400 focus:outline-none"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? (
@@ -192,9 +192,9 @@ export const HomePage = () => {
 
         {/* Mobile Nav */}
         {isMenuOpen && (
-          <div className="md:hidden bg-white border-b border-gray-100 p-6 flex flex-col gap-4 animate-fade-in absolute w-full left-0 top-20 shadow-xl">
-            <div className="flex items-center justify-between rounded-xl bg-gray-50/70 px-4 py-3">
-              <span className="text-sm font-semibold text-gray-500">
+          <div className="md:hidden bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 p-6 flex flex-col gap-4 animate-fade-in absolute w-full left-0 top-20 shadow-xl">
+            <div className="flex items-center justify-between rounded-xl bg-gray-50/70 dark:bg-slate-800/70 px-4 py-3">
+              <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
                 {copy.nav.languageLabel}
               </span>
               <LanguageToggle locale={locale} onChange={handleLocaleChange} />
@@ -202,21 +202,21 @@ export const HomePage = () => {
             <a
               href="#how-it-works"
               onClick={() => setIsMenuOpen(false)}
-              className="block px-4 py-3 text-lg font-medium text-gray-700 bg-gray-50/50 rounded-xl hover:bg-primary/10 hover:text-primary hover:translate-x-1 transition-all duration-300"
+              className="block px-4 py-3 text-lg font-medium text-gray-700 dark:text-gray-300 bg-gray-50/50 dark:bg-slate-800/50 rounded-xl hover:bg-primary/10 hover:text-primary hover:translate-x-1 transition-all duration-300"
             >
               {copy.nav.howItWorks}
             </a>
             <a
               href="#features"
               onClick={() => setIsMenuOpen(false)}
-              className="block px-4 py-3 text-lg font-medium text-gray-700 bg-gray-50/50 rounded-xl hover:bg-primary/10 hover:text-primary hover:translate-x-1 transition-all duration-300"
+              className="block px-4 py-3 text-lg font-medium text-gray-700 dark:text-gray-300 bg-gray-50/50 dark:bg-slate-800/50 rounded-xl hover:bg-primary/10 hover:text-primary hover:translate-x-1 transition-all duration-300"
             >
               {copy.nav.features}
             </a>
             <a
               href="#testimonials"
               onClick={() => setIsMenuOpen(false)}
-              className="block px-4 py-3 text-lg font-medium text-gray-700 bg-gray-50/50 rounded-xl hover:bg-primary/10 hover:text-primary hover:translate-x-1 transition-all duration-300"
+              className="block px-4 py-3 text-lg font-medium text-gray-700 dark:text-gray-300 bg-gray-50/50 dark:bg-slate-800/50 rounded-xl hover:bg-primary/10 hover:text-primary hover:translate-x-1 transition-all duration-300"
             >
               {copy.nav.reviews}
             </a>
@@ -224,7 +224,7 @@ export const HomePage = () => {
               <Button
                 variant="ghost"
                 onClick={handleLoginClick}
-                className="w-full justify-center text-lg h-12 text-gray-600 hover:text-primary hover:bg-primary/10 rounded-full transition-all duration-300 font-medium"
+                className="w-full justify-center text-lg h-12 text-gray-600 dark:text-gray-400 hover:text-primary hover:bg-primary/10 rounded-full transition-all duration-300 font-medium"
               >
                 {copy.nav.login}
               </Button>
@@ -241,7 +241,7 @@ export const HomePage = () => {
 
       <main className="flex-1">
         {/* 2. Hero Section */}
-        <section className="relative pt-5 pb-8 md:pt-8 md:pb-12 overflow-hidden bg-gradient-to-b from-warm-50 to-white">
+        <section className="relative pt-5 pb-8 md:pt-8 md:pb-12 overflow-hidden bg-gradient-to-b from-warm-50 to-white dark:from-slate-950 dark:to-slate-900">
           <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
             {/* Text Content */}
             <div className="text-center lg:text-left z-10 animate-fade-up">
@@ -249,7 +249,7 @@ export const HomePage = () => {
                 <Star className="w-4 h-4 fill-current" />
                 <span>{copy.hero.badge}</span>
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight font-display text-gray-900 mb-6 leading-tight">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight font-display text-gray-900 dark:text-white mb-6 leading-tight">
                 {copy.hero.titlePrefix} <br className="hidden md:block" />
                 <span className="text-primary relative mt-2">
                   {copy.hero.titleHighlight}
@@ -265,7 +265,7 @@ export const HomePage = () => {
                   </svg>
                 </span>
               </h1>
-              <p className="text-xl text-gray-600 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
+              <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
                 {copy.hero.description}
               </p>
 
@@ -278,7 +278,7 @@ export const HomePage = () => {
                 </Button>
                 <Button
                   variant="secondary"
-                  className="h-14 px-8 text-lg rounded-full bg-white text-gray-800 hover:bg-gray-50 border-2 border-gray-100 font-semibold transition-colors"
+                  className="h-14 px-8 text-lg rounded-full bg-white dark:bg-slate-800 text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700 border-2 border-gray-100 dark:border-slate-700 font-semibold transition-colors"
                   onClick={() =>
                     document
                       .getElementById("how-it-works")
@@ -289,7 +289,7 @@ export const HomePage = () => {
                 </Button>
               </div>
 
-              <div className="mt-8 flex items-center justify-center lg:justify-start gap-4 text-sm text-gray-500 font-medium">
+              <div className="mt-8 flex items-center justify-center lg:justify-start gap-4 text-sm text-gray-500 dark:text-gray-400 font-medium">
                 <span className="flex items-center gap-1">
                   <CheckCircle className="w-4 h-4 text-green-500" />{" "}
                   {copy.hero.noCard}
@@ -306,7 +306,7 @@ export const HomePage = () => {
               className="relative animate-fade-in opacity-0"
               style={{ animationDelay: "300ms", animationFillMode: "forwards" }}
             >
-              <div className="relative aspect-square md:aspect-[4/3] rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white transform rotate-1 hover:rotate-0 transition-transform duration-700 bg-gray-100">
+              <div className="relative aspect-square md:aspect-[4/3] rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white dark:border-slate-800 transform rotate-1 hover:rotate-0 transition-transform duration-700 bg-gray-100 dark:bg-slate-800">
                 <img
                   src="/hero-food.png"
                   alt={copy.hero.imageAlt}
@@ -319,15 +319,15 @@ export const HomePage = () => {
                 />
 
                 {/* Floating Badge 1 */}
-                <div className="absolute top-8 right-8 bg-white/95 backdrop-blur-sm p-4 rounded-2xl shadow-xl border border-white/50 flex items-center gap-3 animate-float">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                <div className="absolute top-8 right-8 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm p-4 rounded-2xl shadow-xl border border-white/50 dark:border-slate-700/50 flex items-center gap-3 animate-float">
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400">
                     <CheckCircle className="w-6 h-6" />
                   </div>
                   <div className="pr-2">
-                    <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
                       {copy.hero.cartLabel}
                     </div>
-                    <div className="text-gray-900 font-bold text-sm">
+                    <div className="text-gray-900 dark:text-white font-bold text-sm">
                       {copy.hero.cartValue}
                     </div>
                   </div>
@@ -335,17 +335,17 @@ export const HomePage = () => {
 
                 {/* Floating Badge 2 */}
                 <div
-                  className="absolute bottom-8 left-8 bg-white/95 backdrop-blur-sm p-4 rounded-2xl shadow-xl border border-white/50 flex items-center gap-3 animate-float"
+                  className="absolute bottom-8 left-8 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm p-4 rounded-2xl shadow-xl border border-white/50 dark:border-slate-700/50 flex items-center gap-3 animate-float"
                   style={{ animationDelay: "1.5s" }}
                 >
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                  <div className="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-full flex items-center justify-center text-primary">
                     <ChefHat className="w-6 h-6" />
                   </div>
                   <div className="pr-2">
-                    <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
                       {copy.hero.generatedLabel}
                     </div>
-                    <div className="text-gray-900 font-bold text-sm">
+                    <div className="text-gray-900 dark:text-white font-bold text-sm">
                       {copy.hero.generatedValue}
                     </div>
                   </div>
@@ -360,9 +360,9 @@ export const HomePage = () => {
         </section>
 
         {/* 3. Social Proof Bar */}
-        <section className="border-y border-gray-100 bg-white py-10 overflow-hidden">
+        <section className="border-y border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 py-10 overflow-hidden">
           <div className="max-w-[100vw] mx-auto relative z-10">
-            <p className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-6 px-6">
+            <p className="text-center text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-6 px-6">
               {copy.socialProof}
             </p>
             <div
@@ -385,7 +385,7 @@ export const HomePage = () => {
         {/* 4. How It Works */}
         <section
           id="how-it-works"
-          className="py-5 md:py-8 bg-gray-50 relative overflow-hidden"
+          className="py-5 md:py-8 bg-gray-50 dark:bg-slate-900 relative overflow-hidden"
         >
           <div className="absolute top-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
           <div className="max-w-7xl mx-auto px-6 text-center">
@@ -393,13 +393,13 @@ export const HomePage = () => {
               {copy.howItWorks.badge}
             </div>
             <h2
-              className="text-3xl md:text-5xl font-bold font-display text-gray-900 mb-6 reveal-on-scroll opacity-0"
+              className="text-3xl md:text-5xl font-bold font-display text-gray-900 dark:text-white mb-6 reveal-on-scroll opacity-0"
               style={{ animationDelay: "100ms" }}
             >
               {copy.howItWorks.title}
             </h2>
             <p
-              className="text-xl text-gray-500 max-w-2xl mx-auto mb-20 reveal-on-scroll opacity-0"
+              className="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-20 reveal-on-scroll opacity-0"
               style={{ animationDelay: "200ms" }}
             >
               {copy.howItWorks.description}
@@ -419,16 +419,16 @@ export const HomePage = () => {
                     className="flex flex-col items-center group relative z-10 reveal-on-scroll opacity-0"
                     style={{ animationDelay: `${300 + index * 100}ms` }}
                   >
-                    <div className="w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center text-primary mb-8 group-hover:-translate-y-2 transition-transform duration-300 relative border border-gray-100">
-                      <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm shadow-md">
+                    <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-2xl shadow-xl flex items-center justify-center text-primary mb-8 group-hover:-translate-y-2 transition-transform duration-300 relative border border-gray-100 dark:border-slate-700">
+                      <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gray-900 dark:bg-slate-700 text-white flex items-center justify-center font-bold text-sm shadow-md">
                         {index + 1}
                       </div>
                       <StepIcon className="w-10 h-10" />
                     </div>
-                    <h3 className="text-xl font-bold font-display text-gray-900 mb-3 group-hover:text-primary transition-colors">
+                    <h3 className="text-xl font-bold font-display text-gray-900 dark:text-white mb-3 group-hover:text-primary transition-colors">
                       {step.title}
                     </h3>
-                    <p className="text-gray-500 leading-relaxed text-center px-4">
+                    <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-center px-4">
                       {step.description}
                     </p>
                   </div>
@@ -439,14 +439,14 @@ export const HomePage = () => {
         </section>
 
         {/* 5. Features Showcase */}
-        <section id="features" className="py-5 md:py-8 bg-white">
+        <section id="features" className="py-5 md:py-8 bg-white dark:bg-slate-950">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6 reveal-on-scroll opacity-0">
               <div className="max-w-2xl">
                 <div className="inline-block mb-4 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm font-semibold">
                   {copy.features.badge}
                 </div>
-                <h2 className="text-3xl md:text-5xl font-bold font-display text-gray-900 leading-tight">
+                <h2 className="text-3xl md:text-5xl font-bold font-display text-gray-900 dark:text-white leading-tight">
                   {copy.features.titleLine1} <br />
                   {copy.features.titleLine2}
                 </h2>
@@ -458,19 +458,19 @@ export const HomePage = () => {
                 const palettes = [
                   {
                     container:
-                      "bg-warm-50 border-warm-100 hover:border-warm-200",
+                      "bg-warm-50 dark:bg-slate-800 border-warm-100 dark:border-slate-700 hover:border-warm-200 dark:hover:border-slate-600",
                     iconColor: "text-primary",
                     Icon: Zap,
                   },
                   {
                     container:
-                      "bg-slate-50 border-slate-100 hover:border-slate-200",
+                      "bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600",
                     iconColor: "text-blue-500",
                     Icon: ShoppingCart,
                   },
                   {
                     container:
-                      "bg-orange-50 border-orange-100 hover:border-orange-200",
+                      "bg-orange-50 dark:bg-slate-800 border-orange-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-slate-600",
                     iconColor: "text-accent",
                     Icon: Heart,
                   },
@@ -484,14 +484,14 @@ export const HomePage = () => {
                     style={{ animationDelay: `${100 + index * 100}ms` }}
                   >
                     <div
-                      className={`w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm mb-8 ${palette.iconColor}`}
+                      className={`w-14 h-14 bg-white dark:bg-slate-700 rounded-xl flex items-center justify-center shadow-sm mb-8 ${palette.iconColor}`}
                     >
                       <palette.Icon className="w-7 h-7" />
                     </div>
-                    <h3 className="text-2xl font-bold font-display text-gray-900 mb-4">
+                    <h3 className="text-2xl font-bold font-display text-gray-900 dark:text-white mb-4">
                       {card.title}
                     </h3>
-                    <p className="text-gray-600 leading-relaxed">
+                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                       {card.description}
                     </p>
                   </div>
@@ -559,7 +559,7 @@ export const HomePage = () => {
         {/* 7. Testimonials */}
         <section
           id="testimonials"
-          className="py-5 md:py-8 bg-warm-50 relative overflow-hidden"
+          className="py-5 md:py-8 bg-warm-50 dark:bg-slate-950 relative overflow-hidden"
         >
           {/* Decorative SVG background */}
           <svg
@@ -575,10 +575,10 @@ export const HomePage = () => {
 
           <div className="max-w-[100vw] mx-auto relative z-10">
             <div className="text-center mb-16 reveal-on-scroll opacity-0 px-6">
-              <h2 className="text-3xl md:text-5xl font-bold font-display text-gray-900 mb-6">
+              <h2 className="text-3xl md:text-5xl font-bold font-display text-gray-900 dark:text-white mb-6">
                 {copy.testimonials.title}
               </h2>
-              <p className="text-xl text-gray-500 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
                 {copy.testimonials.description}
               </p>
             </div>
@@ -598,7 +598,7 @@ export const HomePage = () => {
                 {[...reviews, ...reviews].map((review, idx) => (
                   <div
                     key={idx}
-                    className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 w-[350px] shrink-0 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                    className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] shadow-sm border border-gray-100 dark:border-slate-700 w-[350px] shrink-0 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                   >
                     <div>
                       <div className="flex text-accent mb-4">
@@ -609,7 +609,7 @@ export const HomePage = () => {
                         <Star className="w-5 h-5 fill-current" />
                       </div>
                       <Quote className="w-8 h-8 text-primary/20 mb-4" />
-                      <p className="text-gray-700 text-lg mb-8 leading-relaxed font-medium">
+                      <p className="text-gray-700 dark:text-gray-300 text-lg mb-8 leading-relaxed font-medium">
                         "{review.quote}"
                       </p>
                     </div>
@@ -622,10 +622,10 @@ export const HomePage = () => {
                         />
                       </div>
                       <div>
-                        <div className="font-bold font-display text-gray-900">
+                        <div className="font-bold font-display text-gray-900 dark:text-white">
                           {review.name}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           {review.role}
                         </div>
                       </div>

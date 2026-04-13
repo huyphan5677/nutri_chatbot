@@ -185,23 +185,23 @@ export const Navbar = () => {
     if (active) {
       return `${baseClass} text-[#FF5C5C] font-bold after:scale-x-100`;
     }
-    return `${baseClass} text-gray-800 font-medium hover:text-[#FF5C5C] after:origin-bottom-right after:scale-x-0 hover:after:origin-bottom-left hover:after:scale-x-100`;
+    return `${baseClass} text-gray-800 dark:text-gray-300 font-medium hover:text-[#FF5C5C] after:origin-bottom-right after:scale-x-0 hover:after:origin-bottom-left hover:after:scale-x-100`;
   };
 
   const getMobileNavClass = (path: string) => {
     return location.pathname === path
       ? "text-[#FF5C5C] font-bold"
-      : "text-gray-800 font-medium hover:text-[#FF5C5C]";
+      : "text-gray-800 dark:text-gray-300 font-medium hover:text-[#FF5C5C]";
   };
 
   return (
-    <div className="h-16 bg-white border-b border-gray-50 flex items-center justify-between px-4 sm:px-6 relative z-50">
+    <div className="h-16 bg-white dark:bg-slate-950 border-b border-gray-50 dark:border-slate-900 flex items-center justify-between px-4 sm:px-6 relative z-50 transition-colors duration-300">
       {/* Left: Navigation & Mobile Toggle */}
       <div className="flex items-center gap-4 sm:gap-8">
         {/* Mobile Menu Button */}
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-50 rounded-lg mobile-menu-btn"
+          className="lg:hidden p-2 -ml-2 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-900 rounded-lg mobile-menu-btn"
         >
           {isMobileMenuOpen ? (
             <X className="w-6 h-6" />
@@ -237,14 +237,14 @@ export const Navbar = () => {
       {isMobileMenuOpen && (
         <div
           ref={mobileMenuRef}
-          className="absolute top-16 left-0 w-full min-h-[150px] bg-white border-b border-gray-100 shadow-lg lg:hidden flex flex-col p-4 gap-2 animate-in slide-in-from-top-2"
+          className="absolute top-16 left-0 w-full min-h-[150px] bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 shadow-lg lg:hidden flex flex-col p-4 gap-2 animate-in slide-in-from-top-2"
         >
           <button
             onClick={() => {
               setIsMobileMenuOpen(false);
               navigate("/dashboard");
             }}
-            className={`p-3 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 ${getMobileNavClass("/dashboard")}`}
+            className={`p-3 text-left rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-3 ${getMobileNavClass("/dashboard")}`}
           >
             <ShoppingBag
               className={`w-5 h-5 ${location.pathname === "/dashboard" ? "text-[#FF5C5C]" : "text-gray-500"}`}
@@ -256,21 +256,21 @@ export const Navbar = () => {
               setIsMobileMenuOpen(false);
               navigate("/cooking");
             }}
-            className={`p-3 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 ${getMobileNavClass("/cooking")}`}
+            className={`p-3 text-left rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-3 ${getMobileNavClass("/cooking")}`}
           >
             <Settings
-              className={`w-5 h-5 ${location.pathname === "/cooking" ? "text-[#FF5C5C]" : "text-gray-500"}`}
+              className={`w-5 h-5 ${location.pathname === "/cooking" ? "text-[#FF5C5C]" : "text-gray-500 dark:text-gray-400"}`}
             />{" "}
             {text.nav.cooking}
           </button>
-          <div className="h-px bg-gray-100 my-2"></div>
+          <div className="h-px bg-gray-100 dark:bg-slate-800 my-2"></div>
 
           <button
             onClick={() => {
               setIsMobileMenuOpen(false);
               navigate("/chat");
             }}
-            className={`p-3 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 relative ${getMobileNavClass("/chat")}`}
+            className={`p-3 text-left rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-3 relative ${getMobileNavClass("/chat")}`}
           >
             <div className="relative">
               <MessageCircle
@@ -287,7 +287,7 @@ export const Navbar = () => {
               setIsMobileMenuOpen(false);
               navigate("/menus");
             }}
-            className={`p-3 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 ${getMobileNavClass("/blog")}`}
+            className={`p-3 text-left rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-3 ${getMobileNavClass("/blog")}`}
           >
             <div className="relative">
               <UtensilsCrossed
@@ -307,7 +307,7 @@ export const Navbar = () => {
               setIsMobileMenuOpen(false);
               navigate("/inventory");
             }}
-            className={`p-3 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 ${getMobileNavClass("/inventory")}`}
+            className={`p-3 text-left rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-3 ${getMobileNavClass("/inventory")}`}
           >
             <div className="relative">
               <Archive
@@ -326,7 +326,7 @@ export const Navbar = () => {
               setIsMobileMenuOpen(false);
               navigate("/grocery");
             }}
-            className={`p-3 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 ${getMobileNavClass("/grocery")}`}
+            className={`p-3 text-left rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-3 ${getMobileNavClass("/grocery")}`}
           >
             <div className="relative">
               <ShoppingBag
@@ -343,10 +343,10 @@ export const Navbar = () => {
           <div className="relative">
             <button
               onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="w-full p-3 text-left rounded-lg hover:bg-gray-50 flex items-center justify-between text-gray-800 font-medium"
-          >
-            <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-gray-500" /> {text.nav.notifications}
+              className="w-full p-3 text-left rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center justify-between text-gray-800 dark:text-gray-300 font-medium"
+            >
+              <div className="flex items-center gap-3">
+                <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" /> {text.nav.notifications}
               </div>
               {unreadCount + shoppingNotifications.length > 0 && (
                 <span className="bg-[#FF5C5C] text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -355,7 +355,7 @@ export const Navbar = () => {
               )}
             </button>
             {isNotificationsOpen && (
-              <div className="bg-gray-50 rounded-lg mt-1 p-2 space-y-1 mx-2 mb-2">
+              <div className="bg-gray-50 dark:bg-slate-950 rounded-lg mt-1 p-2 space-y-1 mx-2 mb-2">
                 {/* Shopping Notifications */}
                 {shoppingNotifications.map((notif) => (
                   <button
@@ -377,7 +377,7 @@ export const Navbar = () => {
                         prev.filter((n) => n.order_id !== notif.order_id),
                       );
                     }}
-                    className="w-full text-left p-2 rounded-md hover:bg-white flex items-center gap-2"
+                    className="w-full text-left p-2 rounded-md hover:bg-white dark:hover:bg-slate-800 flex items-center gap-2"
                   >
                     <div className="relative flex-shrink-0">
                       {notif.status === "completed" ? (
@@ -387,7 +387,7 @@ export const Navbar = () => {
                       )}
                       <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[#FF5C5C] rounded-full"></span>
                     </div>
-                      <span className="text-xs font-medium text-gray-700 truncate">
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                       {notif.status === "completed"
                         ? text.notifications.completedShopping
                         : text.notifications.shoppingFailed}{" "}
@@ -417,16 +417,16 @@ export const Navbar = () => {
                           }),
                         );
                       }}
-                      className="w-full text-left p-2 rounded-md hover:bg-white flex items-center gap-2"
+                      className="w-full text-left p-2 rounded-md hover:bg-white dark:hover:bg-slate-800 flex items-center gap-2"
                     >
                       <div className="w-1.5 h-1.5 rounded-full bg-[#FF5C5C] flex-shrink-0"></div>
-                      <span className="text-xs font-medium text-gray-700 truncate">
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                         {session.title}
                       </span>
                     </button>
                   ))
                 ) : shoppingNotifications.length === 0 ? (
-                  <div className="text-center text-xs text-gray-500 py-2">
+                  <div className="text-center text-xs text-gray-500 dark:text-gray-400 py-2">
                     {text.notifications.noNewNotifications}
                   </div>
                 ) : null}
@@ -521,9 +521,9 @@ export const Navbar = () => {
           </button>
 
           {isNotificationsOpen && (
-            <div className="absolute right-0 mt-3 w-72 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] py-2 animate-in fade-in zoom-in-95 duration-200 border border-gray-100 hidden lg:block">
-              <div className="px-4 py-2 border-b border-gray-100">
-                <h3 className="font-semibold text-gray-900 text-sm">
+            <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-slate-900 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] py-2 animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-slate-800 hidden lg:block">
+              <div className="px-4 py-2 border-b border-gray-100 dark:border-slate-800">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                   {text.notifications.title}
                 </h3>
               </div>
@@ -548,7 +548,7 @@ export const Navbar = () => {
                         prev.filter((n) => n.order_id !== notif.order_id),
                       );
                     }}
-                    className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-start gap-3 transition-colors border-b border-gray-50 last:border-0"
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-start gap-3 transition-colors border-b border-gray-50 dark:border-slate-800/50 last:border-0"
                   >
                     <div className="mt-0.5 w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0 relative">
                       {notif.status === "completed" ? (
@@ -560,12 +560,12 @@ export const Navbar = () => {
                       <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#FF5C5C] rounded-full border border-white"></span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900 line-clamp-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">
                         {notif.status === "completed"
                           ? text.notifications.completedShopping
                           : text.notifications.shoppingFailed}{" "}
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {notif.meal_plan_name || text.notifications.menuFallback}
                       </p>
                     </div>
@@ -592,14 +592,14 @@ export const Navbar = () => {
                           }),
                         );
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-start gap-3 transition-colors border-b border-gray-50 last:border-0"
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-start gap-3 transition-colors border-b border-gray-50 dark:border-slate-800/50 last:border-0"
                     >
                       <div className="mt-1 w-2 h-2 rounded-full bg-[#FF5C5C] flex-shrink-0"></div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900 line-clamp-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">
                           {session.title}
                         </p>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                           {text.notifications.newMessageReady}
                         </p>
                       </div>
@@ -630,13 +630,13 @@ export const Navbar = () => {
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] py-2 animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
+            <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] py-2 animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-slate-800">
               <button
                 onClick={() => {
                   setIsDropdownOpen(false);
                   navigate("/profile");
                 }}
-                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
               >
                 <Settings className="w-4 h-4 text-gray-400" /> {text.account.accountSettings}
               </button>
@@ -645,11 +645,11 @@ export const Navbar = () => {
                   setIsDropdownOpen(false);
                   navigate("/logs");
                 }}
-                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-3 transition-colors"
               >
                 <Terminal className="w-4 h-4 text-gray-400" /> {text.account.systemLogs}
               </button>
-              <div className="h-px bg-gray-100 my-1"></div>
+              <div className="h-px bg-gray-100 dark:bg-slate-800 my-1"></div>
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-2.5 text-sm text-[#FF5C5C] hover:bg-red-50 flex items-center gap-3 transition-colors"

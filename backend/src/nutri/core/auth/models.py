@@ -25,6 +25,7 @@ class User(Base):
     auth_provider = Column(String, nullable=True)
     auth_provider_id = Column(String, nullable=True)
     preferred_language = Column(String, nullable=False, default="en")
+    preferred_theme = Column(String, nullable=False, default="light")
 
     diet_mode = Column(String, nullable=True)
     budget_level = Column(String, nullable=True)

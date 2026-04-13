@@ -281,10 +281,10 @@ export default function GroceryListDashboard() {
     <div className="p-4 sm:p-6 md:p-8 lg:p-12 max-w-7xl mx-auto">
       <div className="mb-6 md:mb-8 border-b pb-4 md:pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-serif text-gray-900">
+          <h1 className="text-2xl md:text-3xl font-bold font-serif text-gray-900 dark:text-white">
             {copy.page.title}
           </h1>
-          <p className="text-sm md:text-base text-gray-500 mt-1">
+          <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">
             {copy.page.subtitle}
           </p>
         </div>
@@ -321,20 +321,20 @@ export default function GroceryListDashboard() {
             return (
               <div
                 key={groupKey}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden"
               >
                 <div
                   onClick={() => toggleMenuGroup(groupKey)}
-                  className="w-full bg-gray-50 px-4 py-3 sm:px-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between sm:items-center gap-y-3 gap-x-4 text-left cursor-pointer transition-colors hover:bg-gray-100/50"
+                  className="w-full bg-gray-50 dark:bg-slate-800/50 px-4 py-3 sm:px-5 border-b border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-y-3 gap-x-4 text-left cursor-pointer transition-colors hover:bg-gray-100/50 dark:hover:bg-slate-800"
                   aria-expanded={isExpanded}
                 >
                   <div className="flex justify-between items-start w-full sm:w-auto">
                     <div>
-                      <h2 className="font-semibold text-gray-900 text-sm">
+                      <h2 className="font-semibold text-gray-900 dark:text-white text-sm">
                         {group.meal_plan_name}
                       </h2>
                       {group.start_date && (
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                           {group.start_date}
                         </p>
                       )}
@@ -354,10 +354,10 @@ export default function GroceryListDashboard() {
                           }}
                           className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 sm:px-2.5 sm:py-1 text-[11px] font-semibold transition-colors shrink-0 ${
                             orderStatus?.status === "processing"
-                              ? "border-orange-200 bg-orange-50/60 text-orange-700"
+                              ? "border-orange-200 bg-orange-50/60 text-orange-700 dark:border-orange-900/40 dark:bg-orange-900/30 dark:text-orange-400"
                               : orderStatus?.status === "completed"
-                                ? "border-green-200 bg-green-50/60 text-green-700 hover:bg-green-100"
-                                : "border-primary/30 bg-primary/5 text-primary hover:bg-primary/15"
+                                ? "border-green-200 bg-green-50/60 text-green-700 hover:bg-green-100 dark:border-green-900/40 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+                                : "border-primary/30 bg-primary/5 text-primary hover:bg-primary/15 dark:border-primary/40 dark:bg-primary/10 dark:hover:bg-primary/20"
                           }`}
                           title={
                             orderStatus?.status === "processing"
@@ -385,14 +385,14 @@ export default function GroceryListDashboard() {
                         <button
                           type="button"
                           onClick={(e) => handleDeleteGroup(e, group)}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50/60 px-3 py-1.5 sm:px-2.5 sm:py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 transition-colors shrink-0"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50/60 px-3 py-1.5 sm:px-2.5 sm:py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-900/40 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors shrink-0"
                           title={copy.actions.deleteShoppingList}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </>
                     )}
-                    <span className="text-xs font-medium text-primary bg-white px-2.5 py-1.5 sm:py-1 rounded-full shadow-sm shrink-0">
+                    <span className="text-xs font-medium text-primary dark:text-rose-400 bg-white dark:bg-slate-800 px-2.5 py-1.5 sm:py-1 rounded-full shadow-sm shrink-0">
                       {group.items.filter((i) => i.is_purchased).length} /{" "}
                       {group.items.length}
                     </span>
@@ -415,23 +415,23 @@ export default function GroceryListDashboard() {
                       .map(([category, catItems]) => (
                         <div
                           key={`${groupKey}-${category}`}
-                          className="border-t border-gray-100 first:border-t-0"
+                          className="border-t border-gray-100 dark:border-slate-800 first:border-t-0"
                         >
-                          <div className="bg-primary/5 px-5 py-2 border-b border-gray-100 flex justify-between items-center">
-                            <h3 className="font-semibold text-gray-900 uppercase tracking-wider text-xs">
+                          <div className="bg-primary/5 dark:bg-slate-800/80 px-5 py-2 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
+                            <h3 className="font-semibold text-gray-900 dark:text-slate-100 uppercase tracking-wider text-xs">
                               {getGroceryCategoryLabel(category, locale)}
                             </h3>
-                            <span className="text-[11px] font-medium text-primary bg-white px-2 py-0.5 rounded-full shadow-sm">
+                            <span className="text-[11px] font-medium text-primary dark:text-rose-400 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full shadow-sm">
                               {catItems.filter((i) => i.is_purchased).length} /{" "}
                               {catItems.length}
                             </span>
                           </div>
 
-                          <ul className="divide-y divide-gray-100">
+                          <ul className="divide-y divide-gray-100 dark:divide-slate-800">
                             {catItems.map((item) => (
                               <li
                                 key={item.id}
-                                className={`px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors ${
+                                className={`px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors ${
                                   item.is_purchased ? "opacity-50" : ""
                                 }`}
                                 onClick={() => toggleItem(item.id)}
@@ -440,12 +440,12 @@ export default function GroceryListDashboard() {
                                   {item.is_purchased ? (
                                     <CheckCircle2 className="h-6 w-6 text-primary shrink-0" />
                                   ) : (
-                                    <Circle className="h-6 w-6 text-gray-300 shrink-0" />
+                                    <Circle className="h-6 w-6 text-gray-300 dark:text-slate-700 shrink-0" />
                                   )}
                                   <span
-                                    className={`text-gray-900 font-medium truncate ${
+                                    className={`text-gray-900 dark:text-white font-medium truncate ${
                                       item.is_purchased
-                                        ? "line-through text-gray-400"
+                                        ? "line-through text-gray-400 dark:text-gray-600"
                                         : ""
                                     }`}
                                   >
@@ -453,19 +453,19 @@ export default function GroceryListDashboard() {
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full shrink-0 mr-2">
+                                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-slate-800 px-3 py-1 rounded-full shrink-0 mr-2">
                                     {item.quantity}
                                   </span>
                                   <button
                                     onClick={(e) => handleOpenEdit(e, item)}
-                                    className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+                                    className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
                                     title={copy.actions.editItem}
                                   >
                                     <Pencil className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={(e) => handleDelete(e, item.id)}
-                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
                                     title={copy.actions.removeItem}
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -492,14 +492,14 @@ export default function GroceryListDashboard() {
       >
         <div className="flex flex-col">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <Pencil className="w-5 h-5 text-blue-500" />
+            <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+              <Pencil className="w-5 h-5 text-blue-500 dark:text-blue-400" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                 {copy.editModal.title}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {copy.editModal.description}
               </p>
             </div>
@@ -507,7 +507,7 @@ export default function GroceryListDashboard() {
 
           <form onSubmit={handleEditSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {copy.editModal.itemName}
               </label>
               <input
@@ -515,19 +515,19 @@ export default function GroceryListDashboard() {
                 required
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-900 dark:text-white"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {copy.editModal.category}
                 </label>
                 <select
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-900 dark:text-white"
                 >
                   {GROCERY_CATEGORY_OPTIONS.map((category) => (
                     <option key={category} value={category}>
@@ -537,14 +537,14 @@ export default function GroceryListDashboard() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {copy.editModal.quantity}
                 </label>
                 <input
                   type="text"
                   value={editQuantity}
                   onChange={(e) => setEditQuantity(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-900 dark:text-white"
                 />
               </div>
             </div>
@@ -553,7 +553,7 @@ export default function GroceryListDashboard() {
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors text-sm"
+                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-colors text-sm"
               >
                 {copy.actions.cancel}
               </button>
@@ -581,16 +581,16 @@ export default function GroceryListDashboard() {
       >
         <div className="flex flex-col">
           <div className="flex items-start gap-3 mb-4">
-            <div className="mt-0.5 w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
+            <div className="mt-0.5 w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                 {copy.deleteModal.title}
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 {deleteTargetGroup ? (
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-gray-900 dark:text-white">
                     {copy.deleteModal.description(
                       deleteTargetGroup.meal_plan_name,
                     )}
@@ -604,7 +604,7 @@ export default function GroceryListDashboard() {
             <Button
               type="button"
               variant="secondary"
-              className="flex-1"
+              className="flex-1 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-300"
               disabled={isDeleteGroupSubmitting}
               onClick={() => setDeleteTargetGroup(null)}
             >

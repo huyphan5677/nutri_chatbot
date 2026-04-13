@@ -150,33 +150,33 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-2xl font-bold text-center">{text.title}</h2>
-      <p className="text-gray-400 text-center text-sm -mt-2">
+      <h2 className="text-2xl font-bold text-center dark:text-white">{text.title}</h2>
+      <p className="text-gray-400 dark:text-gray-500 text-center text-sm -mt-2">
         {text.description}
       </p>
 
       {data.map((member, idx) => (
         <div
           key={idx}
-          className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm"
+          className="bg-white dark:bg-slate-800/60 dark:backdrop-blur-sm border border-gray-200 dark:border-slate-700/50 rounded-2xl overflow-hidden shadow-sm"
         >
           {/* Card Header */}
           <button
             onClick={() => setExpandedIdx(expandedIdx === idx ? -1 : idx)}
-            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold
-                ${idx === 0 ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-500"}`}
+                ${idx === 0 ? "bg-primary/10 text-primary" : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400"}`}
               >
                 {member.name ? member.name[0].toUpperCase() : idx + 1}
               </div>
               <div className="text-left">
-                <p className="font-semibold text-gray-900 text-sm">
+                <p className="font-semibold text-gray-900 dark:text-white text-sm">
                   {member.name || text.memberLabel(idx + 1)}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-400 dark:text-gray-500">
                   {text.relationships.find((item) => item.id === member.relationship)
                     ?.label || text.noRelationshipSet}
                   {member.gender
@@ -192,7 +192,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                     e.stopPropagation();
                     removeMember(idx);
                   }}
-                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   title={text.removeMember}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -208,11 +208,11 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
 
           {/* Card Body (Expandable) */}
           {expandedIdx === idx && (
-            <div className="border-t border-gray-100 p-4 space-y-4">
+            <div className="border-t border-gray-100 dark:border-slate-700 p-4 space-y-4">
               {/* Name & Relationship */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     {text.labels.name}<span className="text-[#FF5C5C]">*</span>
                   </label>
                   <input
@@ -220,15 +220,15 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                     placeholder={text.placeholders.memberName}
                     value={member.name}
                     onChange={(e) => updateMember(idx, "name", e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-slate-900/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder:text-gray-300 dark:placeholder:text-gray-600 ${
                       idx === 0 && requiredFieldErrors.name
                         ? "border-red-400"
-                        : "border-gray-200"
+                        : "border-gray-200 dark:border-slate-700/80"
                     }`}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     {text.labels.relationship}
                     <span className="text-[#FF5C5C]">*</span>
                   </label>
@@ -237,10 +237,10 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                     onChange={(e) =>
                       updateMember(idx, "relationship", e.target.value)
                     }
-                    className={`w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-slate-900/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all ${
                       idx === 0 && requiredFieldErrors.relationship
                         ? "border-red-400"
-                        : "border-gray-200"
+                        : "border-gray-200 dark:border-slate-700/80"
                     }`}
                   >
                     <option value="">{text.placeholders.select}</option>
@@ -256,7 +256,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
               {/* Gender & Age */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     {text.labels.gender}<span className="text-[#FF5C5C]">*</span>
                   </label>
                   <div className="flex gap-1">
@@ -273,10 +273,10 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                         className={`flex-1 py-2 rounded-lg border text-xs font-medium transition-all
                           ${
                             member.gender === gender.id
-                              ? "border-primary bg-primary/5 text-primary"
+                              ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary"
                               : idx === 0 && requiredFieldErrors.gender
                                 ? "border-red-400 text-red-500 hover:border-red-500"
-                                : "border-gray-200 text-gray-500 hover:border-gray-300"
+                                : "border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800"
                           }`}
                       >
                         {gender.label}
@@ -285,7 +285,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     {text.labels.age}<span className="text-[#FF5C5C]">*</span>
                   </label>
                   <input
@@ -294,10 +294,10 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                     placeholder={text.placeholders.age}
                     value={member.age}
                     onChange={(e) => updateMember(idx, "age", e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-slate-900/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all ${
                       idx === 0 && requiredFieldErrors.age
                         ? "border-red-400"
-                        : "border-gray-200"
+                        : "border-gray-200 dark:border-slate-700/80"
                     }`}
                   />
                 </div>
@@ -306,7 +306,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
               {/* Current Weight & Height */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     {text.labels.currentWeight}
                     <span className="text-[#FF5C5C]">*</span>
                   </label>
@@ -317,15 +317,15 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                     onChange={(e) =>
                       updateMember(idx, "weight_kg", e.target.value)
                     }
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-slate-900/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all ${
                       idx === 0 && requiredFieldErrors.weight_kg
                         ? "border-red-400"
-                        : "border-gray-200"
+                        : "border-gray-200 dark:border-slate-700/80"
                     }`}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     {text.labels.height}<span className="text-[#FF5C5C]">*</span>
                   </label>
                   <input
@@ -335,10 +335,10 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                     onChange={(e) =>
                       updateMember(idx, "height_cm", e.target.value)
                     }
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    className={`w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-slate-900/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all ${
                       idx === 0 && requiredFieldErrors.height_cm
                         ? "border-red-400"
-                        : "border-gray-200"
+                        : "border-gray-200 dark:border-slate-700/80"
                     }`}
                   />
                 </div>
@@ -346,7 +346,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
 
               {/* Goal */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                   {text.labels.primaryGoal}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -363,8 +363,8 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all
                         ${
                           member.primary_goal === goal.id
-                            ? "border-primary bg-primary/5 text-primary"
-                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                            ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary"
+                            : "border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800"
                         }`}
                     >
                       {goal.label}
@@ -381,8 +381,8 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                     className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all
                         ${
                           member.primary_goal === "other"
-                            ? "border-primary bg-primary/5 text-primary"
-                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                            ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary"
+                            : "border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800"
                         }`}
                   >
                     {text.other}
@@ -396,14 +396,14 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                       updateMember(idx, "primary_goal_other", e.target.value)
                     }
                     placeholder={text.placeholders.goalOther}
-                    className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="mt-2 w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                   />
                 )}
               </div>
 
               {/* Favorite Dishes */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                   {text.labels.favoriteDishes}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -414,8 +414,8 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors
                         ${
                           member.favorite_dishes.includes(dish.id)
-                            ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                            : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                            ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/20"
+                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700"
                         }`}
                     >
                       {dish.label}
@@ -433,7 +433,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                       }))
                     }
                     placeholder={text.placeholders.favoriteDishOther}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-700/80 rounded-lg text-sm bg-white dark:bg-slate-900/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder:text-gray-300 dark:placeholder:text-gray-600"
                   />
                   <button
                     type="button"
@@ -448,7 +448,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                         [idx]: "",
                       }));
                     }}
-                    className="px-3 py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:border-primary hover:text-primary"
+                    className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 text-xs font-medium text-gray-600 dark:text-gray-400 hover:border-primary hover:text-primary transition-all shadow-sm"
                   >
                     {text.add}
                   </button>
@@ -468,7 +468,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                           key={dish}
                           type="button"
                           onClick={() => toggleFavoriteDish(idx, dish)}
-                          className="px-3 py-1.5 rounded-full text-xs font-medium border bg-emerald-50 border-emerald-200 text-emerald-700"
+                          className="px-3 py-1.5 rounded-full text-xs font-medium border bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400"
                         >
                           {dish} ×
                         </button>
@@ -479,7 +479,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
 
               {/* Activity Level */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                   {text.labels.activityLevel}
                   <span className="text-[#FF5C5C]">*</span>
                 </label>
@@ -497,14 +497,14 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                       className={`px-2 py-2.5 rounded-lg border text-left transition-all
                         ${
                           member.activity_level === level.id
-                            ? "border-primary bg-primary/5 text-primary"
+                            ? "border-primary bg-primary/5 dark:bg-primary/10 text-primary"
                             : idx === 0 && requiredFieldErrors.activity_level
                               ? "border-red-400 text-red-500 hover:border-red-500"
-                              : "border-gray-200 text-gray-500 hover:border-gray-300"
+                              : "border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800"
                         }`}
                     >
                       <div className="text-xs font-semibold">{level.label}</div>
-                      <div className="text-[11px] mt-0.5 opacity-80 leading-snug">
+                      <div className="text-[11px] mt-0.5 opacity-80 dark:opacity-70 leading-snug">
                         {level.description}
                       </div>
                     </button>
@@ -514,7 +514,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
 
               {/* Allergies */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                   {text.labels.allergies}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -525,8 +525,8 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors
                         ${
                           member.allergies.includes(allergy.id)
-                            ? "bg-red-50 border-red-200 text-red-600"
-                            : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                            ? "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 ring-1 ring-red-500/20"
+                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700"
                         }`}
                     >
                       {allergy.label}
@@ -544,7 +544,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                       }))
                     }
                     placeholder={text.placeholders.allergyOther}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                   />
                   <button
                     type="button"
@@ -556,7 +556,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                       );
                       setAllergyOtherInput((prev) => ({ ...prev, [idx]: "" }));
                     }}
-                    className="px-3 py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:border-primary hover:text-primary"
+                    className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 text-xs font-medium text-gray-600 dark:text-gray-400 hover:border-primary hover:text-primary transition-all shadow-sm"
                   >
                     {text.add}
                   </button>
@@ -576,7 +576,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                           key={alg}
                           type="button"
                           onClick={() => toggleAllergy(idx, alg)}
-                          className="px-3 py-1.5 rounded-full text-xs font-medium border bg-purple-50 border-purple-200 text-purple-700"
+                          className="px-3 py-1.5 rounded-full text-xs font-medium border bg-purple-50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400"
                         >
                           {alg} ×
                         </button>
@@ -587,7 +587,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
 
               {/* Health Conditions */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                   {text.labels.healthConditions}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -598,8 +598,8 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors
                         ${
                           member.health_conditions.includes(condition.id)
-                            ? "bg-orange-50 border-orange-200 text-orange-600"
-                            : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                            ? "bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20 text-orange-600 dark:text-orange-400 ring-1 ring-orange-500/20"
+                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700"
                         }`}
                     >
                       {condition.label}
@@ -617,7 +617,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                       }))
                     }
                     placeholder={text.placeholders.conditionOther}
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder:text-gray-300 dark:placeholder:text-gray-600"
                   />
                   <button
                     type="button"
@@ -632,7 +632,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                         [idx]: "",
                       }));
                     }}
-                    className="px-3 py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:border-primary hover:text-primary"
+                    className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 text-xs font-medium text-gray-600 dark:text-gray-400 hover:border-primary hover:text-primary transition-all shadow-sm"
                   >
                     {text.add}
                   </button>
@@ -652,7 +652,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
                           key={cond}
                           type="button"
                           onClick={() => toggleCondition(idx, cond)}
-                          className="px-3 py-1.5 rounded-full text-xs font-medium border bg-purple-50 border-purple-200 text-purple-700"
+                          className="px-3 py-1.5 rounded-full text-xs font-medium border bg-purple-50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400"
                         >
                           {cond} ×
                         </button>
@@ -668,7 +668,7 @@ export const QuizStep2: React.FC<QuizStep2Props> = ({
       {/* Add Member Button */}
       <button
         onClick={addMember}
-        className="w-full py-3 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 text-sm font-medium"
+        className="w-full py-3 border-2 border-dashed border-gray-200 dark:border-slate-800/80 rounded-2xl text-gray-400 dark:text-slate-500 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-all flex items-center justify-center gap-2 text-sm font-bold bg-white/50 dark:bg-slate-900/40"
       >
         <UserPlus className="w-4 h-4" /> {text.addFamilyMember}
       </button>

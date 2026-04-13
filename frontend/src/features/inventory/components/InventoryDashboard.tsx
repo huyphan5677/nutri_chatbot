@@ -181,10 +181,10 @@ export default function InventoryDashboard() {
     <div className="p-4 sm:p-6 md:p-8 lg:p-12 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-serif text-gray-900">
+          <h1 className="text-2xl md:text-3xl font-bold font-serif text-gray-900 dark:text-white">
             {copy.page.title}
           </h1>
-          <p className="text-sm md:text-base text-gray-500 mt-1">
+          <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">
             {copy.page.subtitle}
           </p>
         </div>
@@ -201,14 +201,14 @@ export default function InventoryDashboard() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-white border text-center border-gray-100 rounded-2xl md:rounded-3xl p-8 md:p-16 flex flex-col items-center justify-center">
-          <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-50 rounded-full flex flex-col items-center justify-center text-gray-300 mb-4 md:mb-6">
+        <div className="bg-white dark:bg-slate-900 border text-center border-gray-100 dark:border-slate-800 rounded-2xl md:rounded-3xl p-8 md:p-16 flex flex-col items-center justify-center">
+          <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-50 dark:bg-slate-800 rounded-full flex flex-col items-center justify-center text-gray-300 dark:text-slate-700 mb-4 md:mb-6">
             <Package className="w-10 h-10 md:w-12 md:h-12" />
           </div>
-          <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
+          <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-2">
             {copy.page.emptyTitle}
           </h2>
-          <p className="text-sm md:text-base text-gray-500 max-w-sm mb-6 md:mb-8 px-4">
+          <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 max-w-sm mb-6 md:mb-8 px-4">
             {copy.page.emptyDescription}
           </p>
         </div>
@@ -217,16 +217,16 @@ export default function InventoryDashboard() {
           {Object.entries(groupedItems).map(([cat, catItems]) => (
             <div
               key={cat}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col"
+              className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden flex flex-col"
             >
-              <div className="bg-primary/5 px-5 py-3 border-b border-gray-100 flex justify-between items-center group/header">
+              <div className="bg-primary/5 dark:bg-slate-800/80 px-5 py-3 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center group/header">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   {renamingCategory === cat ? (
                     <div className="flex items-center gap-1 w-full mr-2">
                        <input 
                          autoFocus
                          disabled={isRenamingLoading}
-                         className="bg-white border border-primary/30 rounded-lg px-3 py-1 text-sm w-full outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                         className="bg-white dark:bg-slate-800 border border-primary/30 dark:border-primary/50 rounded-lg px-3 py-1 text-sm w-full outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-gray-900 dark:text-white"
                          value={newCategoryName}
                          onChange={e => setNewCategoryName(e.target.value)}
                          onKeyDown={e => {
@@ -237,21 +237,21 @@ export default function InventoryDashboard() {
                        <button 
                          disabled={isRenamingLoading}
                          onClick={() => handleRenameConfirm(cat)} 
-                         className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                         className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                        >
                          {isRenamingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                        </button>
                        <button 
                          disabled={isRenamingLoading}
                          onClick={() => setRenamingCategory(null)} 
-                         className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                         className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                        >
                          <X className="w-4 h-4" />
                        </button>
                     </div>
                   ) : (
                     <>
-                      <h3 className="font-semibold text-gray-900 uppercase tracking-wider text-sm truncate">
+                      <h3 className="font-semibold text-gray-900 dark:text-slate-100 uppercase tracking-wider text-sm truncate">
                         {getInventoryCategoryLabel(cat, locale)}
                       </h3>
                       <button 
@@ -259,7 +259,7 @@ export default function InventoryDashboard() {
                           setRenamingCategory(cat);
                           setNewCategoryName(cat);
                         }}
-                        className="opacity-0 group-hover/header:opacity-100 p-1.5 text-gray-400 hover:text-primary transition-all rounded-lg hover:bg-white/50"
+                        className="opacity-0 group-hover/header:opacity-100 p-1.5 text-gray-400 hover:text-primary transition-all rounded-lg hover:bg-white/50 dark:hover:bg-slate-800"
                         title={copy.actions.renameCategory}
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -267,8 +267,8 @@ export default function InventoryDashboard() {
                     </>
                   )}
                 </div>
-                {renamingCategory !== cat && (
-                  <span className="text-xs font-medium text-primary bg-white px-2 py-1 rounded-full shadow-sm shrink-0">
+                 {renamingCategory !== cat && (
+                  <span className="text-xs font-medium text-primary dark:text-rose-400 bg-white dark:bg-slate-900 px-2 py-1 rounded-full shadow-sm shrink-0">
                     {copy.page.itemsCount(catItems.length)}
                   </span>
                 )}
@@ -278,11 +278,11 @@ export default function InventoryDashboard() {
                   <li key={item.id} className="px-5 py-4 flex flex-col gap-1">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col flex-1 min-w-0 mr-4">
-                        <span className="text-gray-900 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                        <span className="text-gray-900 dark:text-white font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                           {item.name}
                         </span>
                         {item.expiration_date && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
+                          <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                             <Calendar className="w-3.5 h-3.5" />
                             {copy.page.expiresLabel}{" "}
                             {new Date(
@@ -292,23 +292,23 @@ export default function InventoryDashboard() {
                         )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full mr-2">
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-slate-800 px-3 py-1 rounded-full mr-2">
                           {item.quantity}
                         </span>
-                        <button
-                          onClick={() => handleOpenEdit(item)}
-                          className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
-                          title={copy.actions.editItem}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                          title={copy.actions.removeItem}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                         <button
+                           onClick={() => handleOpenEdit(item)}
+                           className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/40 rounded-md transition-colors"
+                           title={copy.actions.editItem}
+                         >
+                           <Pencil className="w-4 h-4" />
+                         </button>
+                         <button
+                           onClick={() => handleDelete(item.id)}
+                           className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 rounded-md transition-colors"
+                           title={copy.actions.removeItem}
+                         >
+                           <Trash2 className="w-4 h-4" />
+                         </button>
                       </div>
                     </div>
                   </li>
@@ -327,20 +327,20 @@ export default function InventoryDashboard() {
       >
         <div className="flex flex-col">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
               <Package className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                 {copy.addModal.title}
               </h2>
-              <p className="text-sm text-gray-500">{copy.addModal.subtitle}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{copy.addModal.subtitle}</p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {copy.form.itemName}
               </label>
               <input
@@ -349,13 +349,13 @@ export default function InventoryDashboard() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={copy.form.itemNamePlaceholder}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-900 dark:text-white"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {copy.form.category}
                 </label>
                 <input
@@ -363,7 +363,7 @@ export default function InventoryDashboard() {
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   placeholder={copy.form.categoryPlaceholder}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-900 dark:text-white"
                 />
                 <datalist id="category-options">
                   {allCategories.map((cat) => (
@@ -376,7 +376,7 @@ export default function InventoryDashboard() {
                 </datalist>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {copy.form.quantity}
                 </label>
                 <input
@@ -385,7 +385,7 @@ export default function InventoryDashboard() {
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   placeholder={copy.form.quantityPlaceholder}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-900 dark:text-white"
                 />
                 <datalist id="quantity-options">
                   {commonQuantities.map((q) => (
@@ -396,9 +396,9 @@ export default function InventoryDashboard() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {copy.form.expirationDate}{" "}
-                <span className="text-gray-400 focus:outline-none font-normal">
+                <span className="text-gray-400 dark:text-gray-500 focus:outline-none font-normal">
                   {copy.form.optional}
                 </span>
               </label>
@@ -406,7 +406,7 @@ export default function InventoryDashboard() {
                 type="date"
                 value={expirationDate}
                 onChange={(e) => setExpirationDate(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-600"
+                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-600 dark:text-gray-300"
               />
             </div>
 
@@ -414,7 +414,7 @@ export default function InventoryDashboard() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors text-sm"
+                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-colors text-sm"
               >
                 {copy.actions.cancel}
               </button>
@@ -442,20 +442,20 @@ export default function InventoryDashboard() {
       >
         <div className="flex flex-col">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <Pencil className="w-5 h-5 text-blue-500" />
+            <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+              <Pencil className="w-5 h-5 text-blue-500 dark:text-blue-400" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                 {copy.editModal.title}
               </h2>
-              <p className="text-sm text-gray-500">{copy.editModal.subtitle}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{copy.editModal.subtitle}</p>
             </div>
           </div>
 
           <form onSubmit={handleEditSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {copy.form.itemName}
               </label>
               <input
@@ -463,13 +463,13 @@ export default function InventoryDashboard() {
                 required
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-900 dark:text-white"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {copy.form.category}
                 </label>
                 <input
@@ -477,7 +477,7 @@ export default function InventoryDashboard() {
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
                   placeholder={copy.form.categoryPlaceholder}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-900 dark:text-white"
                 />
                 <datalist id="edit-category-options">
                   {allCategories.map((cat) => (
@@ -490,7 +490,7 @@ export default function InventoryDashboard() {
                 </datalist>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {copy.form.quantity}
                 </label>
                 <input
@@ -499,7 +499,7 @@ export default function InventoryDashboard() {
                   value={editQuantity}
                   onChange={(e) => setEditQuantity(e.target.value)}
                   placeholder={copy.form.quantityPlaceholder}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-900 dark:text-white"
                 />
                 <datalist id="edit-quantity-options">
                   {commonQuantities.map((q) => (
@@ -510,9 +510,9 @@ export default function InventoryDashboard() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {copy.form.expirationDate}{" "}
-                <span className="text-gray-400 focus:outline-none font-normal">
+                <span className="text-gray-400 dark:text-gray-500 focus:outline-none font-normal">
                   {copy.form.optional}
                 </span>
               </label>
@@ -520,7 +520,7 @@ export default function InventoryDashboard() {
                 type="date"
                 value={editExpirationDate}
                 onChange={(e) => setEditExpirationDate(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-600"
+                className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-600 dark:text-gray-300"
               />
             </div>
 
@@ -528,7 +528,7 @@ export default function InventoryDashboard() {
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors text-sm"
+                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-colors text-sm"
               >
                 {copy.actions.cancel}
               </button>

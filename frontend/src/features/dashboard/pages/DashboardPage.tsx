@@ -33,15 +33,15 @@ export const DashboardPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FFFBF6]">
+    <div className="min-h-screen bg-background transition-colors duration-300">
       {" "}
-      {/* Warm beige background */}
+      {/* Warm beige background handled by tailwind config natively */}
       {/* Header Section */}
       <DashboardHeader userName={user?.full_name || headerText.defaultChef} />
       {/* Discovery / Marketing Section */}
       <div className="max-w-7xl mx-auto px-6 pb-20">
         <div className="text-center mb-12">
-          <p className="text-gray-500 font-medium">
+          <p className="text-gray-500 dark:text-gray-400 font-medium">
             {text.tagline}
           </p>
         </div>

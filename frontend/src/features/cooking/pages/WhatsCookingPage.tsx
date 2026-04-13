@@ -322,7 +322,7 @@ export const WhatsCookingPage = () => {
   const totalPages = Math.max(1, Math.ceil(totalRecipes / recipesPerPage));
 
   return (
-    <div className="min-h-screen bg-[#FFFBF6]">
+    <div className="min-h-screen bg-background transition-colors duration-300">
       {/* Filter Modal */}
       <FilterModal
         isOpen={isFilterModalOpen}
@@ -491,7 +491,7 @@ export const WhatsCookingPage = () => {
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="relative overflow-hidden bg-[#F2ECE4] pb-12 pt-12 px-6 border-b border-[#E8DFC] transition-colors duration-500"
+        className="relative overflow-hidden bg-warm-50 dark:bg-slate-950 pb-12 pt-12 px-6 border-b border-gray-200 dark:border-slate-800 transition-colors duration-500"
       >
         {/* Interactive Spotlight Effect */}
         <div
@@ -506,17 +506,17 @@ export const WhatsCookingPage = () => {
         <div className="max-w-7xl mx-auto relative z-10">
           {/* Header Section */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4 font-serif">
+            <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4 font-serif">
               {messages.listPage.title}
             </h1>
-            <p className="text-gray-700 text-lg font-medium">
+            <p className="text-gray-700 dark:text-gray-300 text-lg font-medium">
               {messages.listPage.subtitle}
             </p>
           </div>
 
           {/* Search Bar */}
           <div className="max-w-3xl mx-auto mb-2 relative z-10">
-            <div className="bg-white rounded-full shadow-lg p-2 flex flex-wrap sm:flex-nowrap items-center border border-gray-100">
+            <div className="bg-white dark:bg-slate-900 rounded-full shadow-lg p-2 flex flex-wrap sm:flex-nowrap items-center border border-gray-100 dark:border-slate-800">
               {/* Label Badge */}
               <div className="px-6 py-3 bg-[#FF5C5C] text-white rounded-full font-bold flex items-center gap-2 mb-2 sm:mb-0">
                 {messages.listPage.badge}
@@ -528,7 +528,7 @@ export const WhatsCookingPage = () => {
                 <input
                   type="text"
                   placeholder={messages.listPage.searchPlaceholder}
-                  className="w-full outline-none text-gray-700 bg-transparent placeholder-gray-400"
+                  className="w-full outline-none text-gray-700 dark:text-slate-200 bg-transparent placeholder-gray-400 dark:placeholder:text-gray-500"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleSearchKeyDown}
@@ -541,7 +541,7 @@ export const WhatsCookingPage = () => {
               {/* Filters */}
               <button
                 onClick={() => setIsFilterModalOpen(true)}
-                className="px-6 py-3 text-gray-600 font-medium hover:text-gray-900 flex items-center gap-2 border-l border-gray-100 relative"
+                className="px-6 py-3 text-gray-600 dark:text-gray-400 font-medium hover:text-gray-900 dark:hover:text-white flex items-center gap-2 border-l border-gray-100 dark:border-slate-800 relative"
               >
                 {messages.listPage.filters} <Filter className="w-4 h-4" />
                 {(filters.type || filters.maxTime) && (
@@ -581,7 +581,7 @@ export const WhatsCookingPage = () => {
         {/* Collections Section */}
         <div className="mb-16">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               {messages.listPage.collections}
             </h2>
             <button className="text-sm font-medium text-gray-500 hover:text-primary transition-colors">
@@ -601,18 +601,18 @@ export const WhatsCookingPage = () => {
                 <div
                   key={col.id}
                   onClick={() => navigate(`/collections/${col.id}`)}
-                  className="min-w-[160px] bg-white rounded-3xl p-6 flex flex-col items-center justify-center gap-4 border border-gray-100 hover:shadow-md transition-shadow cursor-pointer aspect-square"
+                  className="min-w-[160px] bg-white dark:bg-slate-900 rounded-3xl p-6 flex flex-col items-center justify-center gap-4 border border-gray-100 dark:border-slate-800 hover:shadow-md transition-shadow cursor-pointer aspect-square"
                 >
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
+                  <div className="w-16 h-16 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-gray-300">
                     <Icon
                       className={`w-8 h-8 ${isFavoritesCollection(col.name) ? "text-red-500 fill-current" : ""}`}
                     />
                   </div>
                   <div className="text-center">
-                    <h3 className="font-bold text-gray-900 line-clamp-1">
+                    <h3 className="font-bold text-gray-900 dark:text-white line-clamp-1">
                       {getCollectionDisplayName(col.name, locale)}
                     </h3>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {messages.shared.recipeCount(col.recipe_count)}
                     </p>
                   </div>
@@ -636,7 +636,7 @@ export const WhatsCookingPage = () => {
         {/* Discover Section */}
         <div id="discover-recipes" className="scroll-mt-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               {messages.listPage.discoverRecipes}
             </h2>
           </div>
@@ -651,8 +651,8 @@ export const WhatsCookingPage = () => {
                     onClick={() => setSelectedRecipe(recipe)}
                   >
                     <div className="relative aspect-square mb-4">
-                      <div className="absolute inset-0 rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow border-4 border-white bg-gray-50">
-                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-300">
+                      <div className="absolute inset-0 rounded-full overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow border-4 border-white dark:border-slate-800 bg-gray-50 dark:bg-slate-900">
+                        <div className="absolute inset-0 bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-300 dark:text-gray-500">
                           <span>{messages.shared.noImage}</span>
                         </div>
                         {recipe.image_url && (
@@ -668,14 +668,14 @@ export const WhatsCookingPage = () => {
                         )}
                       </div>
                       {recipe.prep_time_minutes && (
-                        <div className="absolute bottom-2 right-2 bg-white px-3 py-1.5 rounded-full text-xs font-bold text-gray-900 shadow-md flex items-center gap-1 z-10 pointer-events-none border border-gray-100">
+                        <div className="absolute bottom-2 right-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-full text-xs font-bold text-gray-900 dark:text-white shadow-md flex items-center gap-1 z-10 pointer-events-none border border-gray-100 dark:border-slate-700">
                           ⏱️ {recipe.prep_time_minutes}{" "}
                           {messages.shared.minuteUnit}
                         </div>
                       )}
                       <button
                         onClick={(e) => toggleFavorite(e, recipe.id)}
-                        className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-md hover:scale-110 transition-transform z-10 border border-gray-100 group-hover:bg-white"
+                        className="absolute top-2 right-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm p-3 rounded-full shadow-md hover:scale-110 transition-transform z-10 border border-gray-100 dark:border-slate-700 group-hover:bg-white dark:group-hover:bg-slate-700"
                       >
                         <Heart
                           className={`w-5 h-5 transition-colors duration-300 ${favoriteRecipeIds.has(recipe.id) ? "text-red-500 fill-current" : "text-blue-400"}`}
@@ -685,7 +685,7 @@ export const WhatsCookingPage = () => {
                       <div className="absolute left-2 right-2 bottom-2 z-10 flex items-center justify-between gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => openEditRecipe(e, recipe)}
-                          className="inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-700 border border-gray-100 shadow-sm hover:bg-white"
+                          className="inline-flex items-center gap-1 rounded-full bg-white/95 dark:bg-slate-800/95 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700 shadow-sm hover:bg-white dark:hover:bg-slate-700"
                         >
                           <Edit3 className="w-3.5 h-3.5" />{" "}
                           {messages.listPage.edit}
@@ -699,11 +699,11 @@ export const WhatsCookingPage = () => {
                         </button>
                       </div>
                     </div>
-                    <h3 className="font-bold text-gray-900 text-center group-hover:text-primary transition-colors leading-tight px-2">
+                    <h3 className="font-bold text-gray-900 dark:text-white text-center group-hover:text-primary transition-colors leading-tight px-2">
                       {recipe.name}
                     </h3>
                     {recipe.type && (
-                      <p className="text-center text-xs text-gray-500 mt-1">
+                      <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {getRecipeTypeDisplayName(recipe.type, locale)}
                       </p>
                     )}
@@ -718,7 +718,7 @@ export const WhatsCookingPage = () => {
                 >
                   {messages.listPage.previous}
                 </Button>
-                <span className="px-3 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl">
+                <span className="px-3 py-2 text-sm font-semibold text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl">
                   {messages.shared.pageIndicator(currentPage, totalPages)}
                 </span>
                 <Button
@@ -733,9 +733,9 @@ export const WhatsCookingPage = () => {
               </div>
             </>
           ) : (
-            <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
-              <Globe className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
+            <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
+              <Globe className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                 {messages.listPage.noRecipesTitle}
               </h3>
               {query ? (
@@ -759,7 +759,7 @@ export const WhatsCookingPage = () => {
                   </Button>
                 </>
               ) : (
-                <p className="text-gray-500">
+                <p className="text-gray-500 dark:text-gray-400">
                   {messages.listPage.noRecipesHint}
                 </p>
               )}

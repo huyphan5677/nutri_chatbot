@@ -296,7 +296,7 @@ export default function MealPlannerDashboard() {
             <button
               key={plan.id}
               onClick={() => handleSelectMenu(plan.id)}
-              className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${selectedMenuId === plan.id ? "bg-primary text-white border-primary" : "bg-white text-gray-700 border-gray-300 hover:border-primary/50"}`}
+              className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${selectedMenuId === plan.id ? "bg-primary text-white border-primary" : "bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-slate-700 hover:border-primary/50"}`}
             >
               {plan.name || copy.page.unnamedMenu} ({plan.start_date})
             </button>
@@ -315,11 +315,11 @@ export default function MealPlannerDashboard() {
                 placeholder={copy.page.menuNamePlaceholder}
               />
             ) : (
-              <h1 className="text-3xl font-bold text-gray-900 capitalize">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white capitalize">
                 {mealPlan.name}
               </h1>
             )}
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300">
               {copy.page.menuCount(menuPlans.length)}
             </span>
           </div>
@@ -383,7 +383,7 @@ export default function MealPlannerDashboard() {
         </div>
 
         {isEditing && (
-          <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+          <div className="mt-5 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 sm:p-5">
             <h3 className="text-sm font-semibold text-gray-900 mb-4">
               {copy.page.editMenuDetails}
             </h3>
@@ -586,7 +586,7 @@ export default function MealPlannerDashboard() {
       <div className="space-y-10">
         {dates.map((date) => (
           <div key={date}>
-            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-4 border-b dark:border-slate-800 pb-2">
               {new Date(date).toLocaleDateString(
                 locale === "vi" ? "vi-VN" : "en-US",
                 {
@@ -602,39 +602,40 @@ export default function MealPlannerDashboard() {
                   key={meal.id}
                   type="button"
                   onClick={() => setSelectedMeal(meal)}
-                  className="group text-left bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  className="group text-left bg-white dark:bg-slate-900/60 dark:backdrop-blur-xl rounded-3xl shadow-sm dark:shadow-none border border-gray-100 dark:border-slate-800 overflow-hidden hover:shadow-lg dark:hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/40"
                 >
                   <div className="p-5 sm:p-6">
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="text-[11px] font-bold tracking-[0.12em] text-primary uppercase bg-primary/10 px-2.5 py-1 rounded-full">
+                      <div className="text-[11px] font-bold tracking-[0.12em] text-primary uppercase bg-primary/10 dark:bg-primary/20 px-2.5 py-1 rounded-full">
                         {getMealTypeLabel(meal.meal_type, locale)}
                       </div>
                       <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-primary transition-colors" />
                     </div>
-                    <h4 className="text-xl font-semibold text-gray-900 mb-3 leading-snug">
+                    <h4 className="text-xl font-bold text-gray-900 dark:text-slate-50 mb-3 leading-snug group-hover:text-primary dark:group-hover:text-primary transition-colors">
                       {meal.recipe.name}
                     </h4>
                     {meal.recipe.description && (
-                      <p className="text-sm text-gray-500 line-clamp-2 mb-5">
+                      <p className="text-sm text-gray-500 dark:text-slate-400 line-clamp-2 mb-5 leading-relaxed">
                         {meal.recipe.description}
                       </p>
                     )}
                     <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                       {meal.recipe.prep_time_minutes && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 border border-gray-100">
-                          <Clock className="h-3.5 w-3.5" />
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-700/50 dark:text-slate-300">
+                          <Clock className="h-3.5 w-3.5 text-primary/70" />
                           {meal.recipe.prep_time_minutes}m
                         </span>
                       )}
                       {meal.recipe.total_calories && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50 border border-orange-100 text-orange-700 font-medium">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 text-orange-700 dark:text-orange-400 font-semibold">
                           <Flame className="h-3.5 w-3.5" />
                           {meal.recipe.total_calories} kcal
                         </span>
                       )}
                     </div>
-                    <div className="mt-5 text-xs text-primary/90 font-semibold">
+                    <div className="mt-5 text-xs text-primary dark:text-primary/90 font-bold uppercase tracking-wider flex items-center gap-1">
                       {copy.page.viewDetailRecipe}
+                      <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
                 </button>
@@ -696,18 +697,18 @@ export default function MealPlannerDashboard() {
       >
         {selectedMeal && (
           <div>
-            <div className="px-6 sm:px-8 pt-8 pb-6 bg-gradient-to-br from-primary/10 via-rose-50 to-white border-b border-gray-100">
+            <div className="px-6 sm:px-8 pt-8 pb-6 bg-gradient-to-br from-primary/10 via-rose-50 to-white border-b border-gray-100 dark:from-primary/20 dark:via-slate-800 dark:to-slate-800 dark:border-slate-700/50">
               <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                 <div>
-                  <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-white text-primary border border-primary/20 mb-3">
+                  <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-white text-primary border border-primary/20 mb-3 dark:bg-slate-900 dark:border-primary/30">
                     {getMealTypeLabel(selectedMeal.meal_type, locale)}
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight max-w-2xl">
+                  <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight max-w-2xl dark:text-white">
                     {selectedMeal.recipe.name}
                   </h3>
                 </div>
                 {selectedMeal.recipe.total_calories ? (
-                  <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-50 border border-orange-100 text-orange-700 text-sm font-semibold">
+                  <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-50 border border-orange-100 text-orange-700 text-sm font-semibold dark:bg-orange-900/30 dark:border-orange-900/40 dark:text-orange-400">
                     <Flame className="h-4 w-4" />
                     {selectedMeal.recipe.total_calories} kcal
                   </div>
@@ -715,11 +716,11 @@ export default function MealPlannerDashboard() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                <div className="rounded-xl border border-white/70 bg-white/70 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-wider text-gray-500 mb-1">
+                <div className="rounded-xl border border-white/70 bg-white/70 px-4 py-3 dark:bg-slate-900/70 dark:border-slate-700/50">
+                  <div className="text-[11px] uppercase tracking-wider text-gray-500 mb-1 dark:text-gray-400">
                     {copy.detailModal.prepTime}
                   </div>
-                  <div className="font-semibold text-gray-900 flex items-center gap-2">
+                  <div className="font-semibold text-gray-900 flex items-center gap-2 dark:text-gray-200">
                     <Clock className="h-4 w-4 text-primary" />
                     {selectedMeal.recipe.prep_time_minutes
                       ? copy.detailModal.minutes(
@@ -728,11 +729,11 @@ export default function MealPlannerDashboard() {
                       : copy.detailModal.notAvailable}
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/70 bg-white/70 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-wider text-gray-500 mb-1">
+                <div className="rounded-xl border border-white/70 bg-white/70 px-4 py-3 dark:bg-slate-900/70 dark:border-slate-700/50">
+                  <div className="text-[11px] uppercase tracking-wider text-gray-500 mb-1 dark:text-gray-400">
                     {copy.detailModal.cookTime}
                   </div>
-                  <div className="font-semibold text-gray-900 flex items-center gap-2">
+                  <div className="font-semibold text-gray-900 flex items-center gap-2 dark:text-gray-200">
                     <ChefHat className="h-4 w-4 text-primary" />
                     {selectedMeal.recipe.cook_time_minutes
                       ? copy.detailModal.minutes(
@@ -741,11 +742,11 @@ export default function MealPlannerDashboard() {
                       : copy.detailModal.notAvailable}
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/70 bg-white/70 px-4 py-3">
-                  <div className="text-[11px] uppercase tracking-wider text-gray-500 mb-1">
+                <div className="rounded-xl border border-white/70 bg-white/70 px-4 py-3 dark:bg-slate-900/70 dark:border-slate-700/50">
+                  <div className="text-[11px] uppercase tracking-wider text-gray-500 mb-1 dark:text-gray-400">
                     {copy.detailModal.serving}
                   </div>
-                  <div className="font-semibold text-gray-900 flex items-center gap-2">
+                  <div className="font-semibold text-gray-900 flex items-center gap-2 dark:text-gray-200">
                     <Soup className="h-4 w-4 text-primary" />
                     {copy.page.ingredientsCount(
                       selectedMeal.recipe.ingredients?.length || 0,
@@ -758,10 +759,10 @@ export default function MealPlannerDashboard() {
             <div className="px-6 sm:px-8 py-6 space-y-6">
               {selectedMeal.recipe.description && (
                 <section>
-                  <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2">
+                  <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2 dark:text-slate-400">
                     {copy.detailModal.description}
                   </h4>
-                  <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
+                  <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 dark:bg-slate-800/50 dark:border-slate-700/50 dark:text-slate-200">
                     {selectedMeal.recipe.description}
                   </p>
                 </section>
@@ -770,7 +771,7 @@ export default function MealPlannerDashboard() {
               {selectedMeal.recipe.macros &&
               Object.keys(selectedMeal.recipe.macros).length > 0 ? (
                 <section>
-                  <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2">
+                  <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2 dark:text-slate-400">
                     {copy.detailModal.macros}
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -778,12 +779,12 @@ export default function MealPlannerDashboard() {
                       ([key, value]) => (
                         <div
                           key={key}
-                          className="rounded-xl bg-white border border-gray-100 px-3 py-3"
+                          className="rounded-xl bg-white border border-gray-100 px-3 py-3 dark:bg-slate-800 dark:border-slate-700/50"
                         >
-                          <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                          <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-slate-400">
                             {getMacroLabel(key, locale)}
                           </div>
-                          <div className="text-base font-semibold text-gray-900 mt-0.5">
+                          <div className="text-base font-semibold text-gray-900 mt-0.5 dark:text-slate-100">
                             {value}
                           </div>
                         </div>
@@ -795,14 +796,14 @@ export default function MealPlannerDashboard() {
 
               {(selectedMeal.recipe.dietary_tags || []).length > 0 && (
                 <section>
-                  <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2">
+                  <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2 dark:text-slate-400">
                     {copy.detailModal.dietaryTags}
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {(selectedMeal.recipe.dietary_tags || []).map((tag) => (
                       <div
                         key={tag}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-100"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/40"
                       >
                         <Leaf className="h-3.5 w-3.5" />
                         {tag}
@@ -813,24 +814,24 @@ export default function MealPlannerDashboard() {
               )}
 
               <section>
-                <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2">
+                <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2 dark:text-slate-400">
                   {copy.detailModal.ingredients}
                 </h4>
                 {selectedMeal.recipe.ingredients &&
                 selectedMeal.recipe.ingredients.length > 0 ? (
-                  <div className="rounded-2xl border border-gray-100 overflow-hidden">
+                  <div className="rounded-2xl border border-gray-100 overflow-hidden dark:border-slate-700/50">
                     {selectedMeal.recipe.ingredients.map(
                       (ingredient, index) => (
                         <div
                           key={`${ingredient.name}-${index}`}
-                          className="px-4 py-3 border-b border-gray-100 last:border-b-0 flex items-start justify-between gap-3 bg-white"
+                          className="px-4 py-3 border-b border-gray-100 last:border-b-0 flex items-start justify-between gap-3 bg-white dark:border-slate-700/30 dark:bg-slate-800/60"
                         >
-                          <span className="text-sm text-gray-800 flex items-center gap-2">
+                          <span className="text-sm text-gray-800 flex items-center gap-2 dark:text-gray-200">
                             <Soup className="h-4 w-4 text-primary/70" />
                             {ingredient.name}
                           </span>
                           {ingredient.quantity != null && (
-                            <span className="text-sm font-semibold text-gray-700 whitespace-nowrap bg-gray-50 border border-gray-100 rounded-lg px-2 py-1">
+                            <span className="text-sm font-semibold text-gray-700 whitespace-nowrap bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-300">
                               {ingredient.quantity}g
                             </span>
                           )}
@@ -839,37 +840,37 @@ export default function MealPlannerDashboard() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {copy.detailModal.noIngredientData}
                   </p>
                 )}
               </section>
 
               <section>
-                <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2">
+                <h4 className="text-xs font-bold tracking-[0.12em] text-gray-500 uppercase mb-2 dark:text-slate-400">
                   {copy.detailModal.instructions}
                 </h4>
                 {instructionSteps.length > 0 ? (
-                  <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 space-y-2">
+                  <div className="rounded-2xl border border-gray-100 bg-white px-4 py-3 space-y-2 dark:bg-slate-800/60 dark:border-slate-700/50">
                     {instructionSteps.map((step, index) => (
                       <div key={`${index}-${step}`} className="flex gap-3">
-                        <span className="mt-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[11px] font-bold">
+                        <span className="mt-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[11px] font-bold dark:bg-primary/20">
                           {index + 1}
                         </span>
-                        <p className="text-sm text-gray-700 leading-relaxed">
+                        <p className="text-sm text-gray-700 leading-relaxed dark:text-gray-300">
                           {step}
                         </p>
                       </div>
                     ))}
                   </div>
                 ) : selectedMeal.recipe.instructions ? (
-                  <div className="rounded-2xl bg-gray-50 border border-gray-100 px-4 py-3">
-                    <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                  <div className="rounded-2xl bg-gray-50 border border-gray-100 px-4 py-3 dark:bg-slate-800/50 dark:border-slate-700/50">
+                    <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed dark:text-gray-300">
                       {selectedMeal.recipe.instructions}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {copy.detailModal.noCookingInstructions}
                   </p>
                 )}

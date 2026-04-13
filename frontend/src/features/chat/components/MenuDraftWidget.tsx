@@ -43,8 +43,8 @@ function ShimmerLoader({ copy }: { copy: MenuDraftCopy }) {
   }, []);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-white p-5 shadow-sm">
-      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-primary/5 to-transparent border-t-2 border-primary/50" />
+    <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-white dark:bg-slate-800/40 dark:border-slate-700/50 p-5 shadow-sm">
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-primary/5 to-transparent border-t-2 border-primary/50 dark:via-primary/10" />
       <div className="flex items-center gap-3 mb-4">
         <Sparkles className="w-5 h-5 text-primary animate-pulse" />
         <span className="text-sm font-semibold text-primary/80">
@@ -52,12 +52,12 @@ function ShimmerLoader({ copy }: { copy: MenuDraftCopy }) {
         </span>
       </div>
       <div className="space-y-3">
-        <div className="h-4 bg-gray-100 rounded-md w-3/4 animate-pulse" />
-        <div className="h-4 bg-gray-100 rounded-md w-1/2 animate-pulse" />
-        <div className="flex gap-3 mt-4 pt-4 border-t border-gray-50">
-          <div className="h-8 bg-gray-100 rounded-lg w-16 animate-pulse" />
-          <div className="h-8 bg-gray-100 rounded-lg w-16 animate-pulse" />
-          <div className="h-8 bg-gray-100 rounded-lg w-16 animate-pulse" />
+        <div className="h-4 bg-gray-100 dark:bg-slate-700/50 rounded-md w-3/4 animate-pulse" />
+        <div className="h-4 bg-gray-100 dark:bg-slate-700/30 rounded-md w-1/2 animate-pulse" />
+        <div className="flex gap-3 mt-4 pt-4 border-t border-gray-50 dark:border-slate-800/50">
+          <div className="h-8 bg-gray-100 dark:bg-slate-700/50 rounded-lg w-16 animate-pulse" />
+          <div className="h-8 bg-gray-100 dark:bg-slate-700/50 rounded-lg w-16 animate-pulse" />
+          <div className="h-8 bg-gray-100 dark:bg-slate-700/50 rounded-lg w-16 animate-pulse" />
         </div>
       </div>
     </div>
@@ -87,17 +87,17 @@ function AIPromptPanel({
   };
 
   return (
-    <div className="relative overflow-hidden border border-primary/30 rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-white to-primary/[0.03] shadow-md animate-in fade-in slide-in-from-top-2 duration-300 z-10 my-2">
-      <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary/40 via-primary to-primary/40"></div>
+    <div className="relative overflow-hidden border border-primary/30 rounded-2xl p-4 sm:p-5 bg-gradient-to-br from-white to-primary/[0.03] dark:from-slate-800 dark:to-slate-800/80 shadow-md animate-in fade-in slide-in-from-top-2 duration-300 z-10 my-2">
+      <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary/40 via-primary to-primary/40 dark:from-primary/20 dark:via-primary/60 dark:to-primary/20"></div>
 
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-sm font-bold text-gray-800">{title}</span>
+          <span className="text-sm font-bold text-gray-800 dark:text-gray-200">{title}</span>
         </div>
         <button
           onClick={onCancel}
-          className="p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+          className="p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition dark:hover:bg-slate-700 dark:hover:text-gray-300"
         >
           <X className="w-4 h-4" />
         </button>
@@ -116,12 +116,12 @@ function AIPromptPanel({
           }}
           placeholder={placeholder}
           disabled={isLoading}
-          className="w-full text-sm py-3 pl-4 pr-12 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 disabled:opacity-60 transition-all shadow-sm placeholder:text-gray-400"
+          className="w-full text-sm py-3 pl-4 pr-12 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 disabled:opacity-60 transition-all shadow-sm placeholder:text-gray-400 dark:bg-slate-900 dark:border-slate-700 dark:text-gray-200 dark:focus:ring-primary/40"
         />
         <button
           onClick={handleSubmit}
           disabled={!text.trim() || isLoading}
-          className="absolute right-2 p-1.5 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:bg-gray-300 transition-colors"
+          className="absolute right-2 p-1.5 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:bg-gray-300 transition-colors dark:disabled:bg-slate-700"
         >
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -140,7 +140,7 @@ function AIPromptPanel({
               onSubmit(s.prompt);
             }}
             disabled={isLoading}
-            className="text-[11px] sm:text-xs font-medium px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-all disabled:opacity-50 shadow-sm"
+            className="text-[11px] sm:text-xs font-medium px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-all disabled:opacity-50 shadow-sm dark:bg-slate-700 dark:border-slate-600 dark:text-gray-300 dark:hover:border-primary/50 dark:hover:bg-slate-600"
           >
             {s.label}
           </button>
@@ -158,11 +158,11 @@ function MealDetailPanel({
   copy: MenuDraftCopy;
 }) {
   return (
-    <div className="px-4 pb-4 sm:px-5 sm:pb-5 pt-2 border-t border-gray-100 bg-gray-50/50 animate-in fade-in slide-in-from-top-2">
+    <div className="px-4 pb-4 sm:px-5 sm:pb-5 pt-2 border-t border-gray-100 bg-gray-50/50 animate-in fade-in slide-in-from-top-2 dark:bg-slate-950/40 dark:border-slate-800/60 backdrop-blur-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
         {/* Ingredients */}
         <div>
-          <h4 className="flex items-center gap-1.5 text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
+          <h4 className="flex items-center gap-1.5 text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 dark:text-gray-300">
             <ShoppingCart className="w-4 h-4 text-primary" />{" "}
             {copy.ingredientsTitle}
           </h4>
@@ -170,7 +170,7 @@ function MealDetailPanel({
             {(meal.ingredients || []).map((ing, idx) => (
               <li
                 key={idx}
-                className="flex items-start gap-2 text-sm text-gray-600"
+                className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300"
               >
                 <span className="text-primary mt-1">•</span>
                 <span className="leading-relaxed">{ing}</span>
@@ -181,7 +181,7 @@ function MealDetailPanel({
 
         {/* Instructions */}
         <div>
-          <h4 className="flex items-center gap-1.5 text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
+          <h4 className="flex items-center gap-1.5 text-xs font-bold text-gray-700 uppercase tracking-wider mb-3 dark:text-gray-300">
             <ChefHat className="w-4 h-4 text-primary" />{" "}
             {copy.instructionsTitle}
           </h4>
@@ -190,9 +190,9 @@ function MealDetailPanel({
               {meal.instructions.map((step, idx) => (
                 <li
                   key={idx}
-                  className="flex items-start gap-2.5 text-sm text-gray-600"
+                  className="flex items-start gap-2.5 text-sm text-gray-600 dark:text-gray-300"
                 >
-                  <span className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold mt-0.5">
+                  <span className="flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold mt-0.5 dark:bg-primary/20">
                     {idx + 1}
                   </span>
                   <span className="leading-relaxed">{step}</span>
@@ -200,7 +200,7 @@ function MealDetailPanel({
               ))}
             </ol>
           ) : (
-            <p className="text-sm text-gray-500 italic">
+            <p className="text-sm text-gray-500 italic dark:text-gray-400">
               {copy.noInstructions}
             </p>
           )}
@@ -208,15 +208,15 @@ function MealDetailPanel({
       </div>
 
       {meal.adjustment_tips && meal.adjustment_tips.length > 0 && (
-        <div className="mt-5 p-3 sm:p-4 rounded-xl bg-amber-50/50 border border-amber-100">
-          <h4 className="flex items-center gap-1.5 text-xs font-bold text-amber-700 uppercase tracking-wider mb-2">
+        <div className="mt-5 p-3 sm:p-4 rounded-xl bg-amber-50/50 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30">
+          <h4 className="flex items-center gap-1.5 text-xs font-bold text-amber-700 uppercase tracking-wider mb-2 dark:text-amber-500">
             <Info className="w-4 h-4" /> {copy.tipsTitle}
           </h4>
           <ul className="space-y-1.5">
             {meal.adjustment_tips.map((tip, idx) => (
               <li
                 key={idx}
-                className="text-xs sm:text-sm text-amber-800 leading-relaxed"
+                className="text-xs sm:text-sm text-amber-800 leading-relaxed dark:text-amber-400/90"
               >
                 • {tip}
               </li>
@@ -257,19 +257,19 @@ function MealCard({
 
   return (
     <div
-      className={`relative group bg-white rounded-2xl border transition-all duration-300 overflow-hidden ${isExpanded ? "border-primary/30 shadow-md" : "border-gray-100 shadow-sm hover:shadow-md hover:border-primary/20"}`}
+      className={`relative group bg-white dark:bg-slate-800/30 backdrop-blur-md rounded-2xl border transition-all duration-300 overflow-hidden ${isExpanded ? "border-primary/30 shadow-md ring-1 ring-primary/10" : "border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md hover:border-primary/20"} `}
     >
       <div className="p-4 sm:p-5">
         {/* Header: Type & Badges */}
         <div className="flex justify-between items-start mb-3">
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${typeInfo.color}`}
+              className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border dark:bg-slate-900/50 ${typeInfo.color}`}
             >
               <span>{typeInfo.icon}</span> {typeInfo.label}
             </span>
             {totalTime > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded-md dark:bg-slate-800 dark:text-gray-400">
                 <Clock className="w-3 h-3" /> {totalTime} {copy.minutes}
               </span>
             )}
@@ -277,7 +277,7 @@ function MealCard({
               meal.dietary_tags.slice(0, 2).map((tag, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md"
+                  className="inline-flex items-center text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md dark:bg-emerald-900/30 dark:text-emerald-400"
                 >
                   {tag}
                 </span>
@@ -306,13 +306,13 @@ function MealCard({
         </div>
 
         {/* Title */}
-        <h3 className="text-[17px] sm:text-[19px] font-bold text-gray-900 leading-tight mb-2 pr-10">
+        <h3 className="text-[17px] sm:text-[19px] font-bold text-gray-900 dark:text-slate-100 leading-tight mb-2 pr-10">
           {meal.name}
         </h3>
 
         {/* Rationale / Description */}
         <p
-          className={`text-sm text-gray-500 mb-4 leading-relaxed ${isExpanded ? "" : "line-clamp-2"}`}
+          className={`text-sm text-gray-500 mb-4 leading-relaxed ${isExpanded ? "" : "line-clamp-2"} dark:text-gray-400`}
         >
           {meal.why ||
             meal.description ||
@@ -323,38 +323,38 @@ function MealCard({
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center gap-3 sm:gap-6">
             <div className="flex flex-col">
-              <span className="flex items-center gap-1 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+              <span className="flex items-center gap-1 text-[10px] text-gray-400 font-bold uppercase tracking-wider dark:text-gray-500">
                 <Flame className="w-3 h-3 text-orange-400" />{" "}
                 {copy.macros.calories}
               </span>
-              <span className="text-[15px] font-bold text-gray-800">
+              <span className="text-[15px] font-bold text-gray-800 dark:text-gray-200">
                 {meal.calories}
               </span>
             </div>
-            <div className="h-7 w-[1px] bg-gray-100"></div>
+            <div className="h-7 w-[1px] bg-gray-100 dark:bg-slate-700/50"></div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider dark:text-gray-500">
                 {copy.macros.protein}
               </span>
-              <span className="text-[15px] font-bold text-blue-600">
+              <span className="text-[15px] font-bold text-blue-600 dark:text-blue-400">
                 {meal.protein_grams}g
               </span>
             </div>
-            <div className="h-7 w-[1px] bg-gray-100"></div>
+            <div className="h-7 w-[1px] bg-gray-100 dark:bg-slate-700/50"></div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider dark:text-gray-500">
                 {copy.macros.carbs}
               </span>
-              <span className="text-[15px] font-bold text-amber-600">
+              <span className="text-[15px] font-bold text-amber-600 dark:text-amber-500">
                 {meal.carbs_grams}g
               </span>
             </div>
-            <div className="h-7 w-[1px] bg-gray-100"></div>
+            <div className="h-7 w-[1px] bg-gray-100 dark:bg-slate-700/50"></div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider dark:text-gray-500">
                 {copy.macros.fat}
               </span>
-              <span className="text-[15px] font-bold text-emerald-600">
+              <span className="text-[15px] font-bold text-emerald-600 dark:text-emerald-400">
                 {meal.fat_grams}g
               </span>
             </div>
@@ -362,7 +362,7 @@ function MealCard({
 
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors bg-primary/5 px-3 py-1.5 rounded-full"
+            className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors bg-primary/5 dark:bg-primary/10 px-3 py-1.5 rounded-full"
           >
             {isExpanded ? (
               <>
@@ -445,27 +445,27 @@ function DaySection({
         className="w-full flex items-center justify-between mb-4 group"
       >
         <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-full bg-[#FF5A5F] text-white flex items-center justify-center font-bold text-[17px] shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-primary/90 dark:bg-primary/80 text-white flex items-center justify-center font-bold text-[17px] shadow-sm">
             {day.day_number}
           </div>
           <div className="text-left">
-            <h2 className="text-[17px] font-bold text-gray-800 tracking-tight leading-tight group-hover:text-primary transition-colors">
+            <h2 className="text-[17px] font-bold text-gray-800 tracking-tight leading-tight group-hover:text-primary transition-colors dark:text-gray-200">
               {day.day_header || copy.dayHeader(day.day_number)}
             </h2>
-            <p className="text-[13px] text-gray-400 font-medium mt-0.5">
+            <p className="text-[13px] text-gray-400 font-medium mt-0.5 dark:text-gray-500">
               {day.eat_date || copy.dayDateFallback}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 text-[12px] font-bold px-3 py-1.5 rounded-full bg-orange-50 text-[#f97316]">
+          <span className="flex items-center gap-1.5 text-[12px] font-bold px-3 py-1.5 rounded-full bg-orange-50 text-[#f97316] dark:bg-orange-500/10 dark:text-orange-400">
             <Flame className="w-3.5 h-3.5" /> {totalCalories} kcal
           </span>
-          <div className="w-8 h-8 rounded-full bg-gray-50/80 border border-gray-100 flex items-center justify-center group-hover:bg-gray-100 transition-colors">
+          <div className="w-8 h-8 rounded-full bg-gray-50/80 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-700/50 flex items-center justify-center group-hover:bg-gray-100 dark:group-hover:bg-slate-700 transition-colors ">
             {isOpen ? (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-gray-500" />
+              <ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             )}
           </div>
         </div>
@@ -473,7 +473,7 @@ function DaySection({
 
       {/* Accordion Content */}
       {isOpen && (
-        <div className="pl-5 sm:pl-12 space-y-8 relative before:absolute before:left-[19px] sm:before:left-[47px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-100">
+        <div className="pl-5 sm:pl-12 space-y-8 relative before:absolute before:left-[19px] sm:before:left-[47px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-100 dark:before:bg-slate-700/50">
           {sortedTypes.map((mealType) => {
             const meals = mealsByType[mealType];
             const info =
@@ -483,7 +483,7 @@ function DaySection({
             return (
               <div key={mealType} className="relative">
                 {/* Timeline dot */}
-                <div className="absolute -left-[28px] sm:-left-[28px] top-2 w-3 h-3 rounded-full bg-white border-2 border-primary"></div>
+                <div className="absolute -left-[28px] sm:-left-[28px] top-2 w-3 h-3 rounded-full bg-white border-2 border-primary dark:bg-slate-900 dark:border-primary/80"></div>
 
                 <div className="space-y-4">
                   {meals.map((meal) => (
@@ -533,7 +533,7 @@ function DaySection({
                       ) : (
                         <button
                           onClick={() => onOpenAdd(day.day_number, mealType)}
-                          className="group flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-primary px-4 py-2 rounded-xl border border-dashed border-gray-300 hover:border-primary/50 hover:bg-primary/5 transition-all w-full justify-center sm:justify-start"
+                          className="group flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-primary px-4 py-2 rounded-xl border border-dashed border-gray-300 hover:border-primary/50 hover:bg-primary/5 transition-all w-full justify-center sm:justify-start dark:text-gray-400 dark:border-slate-600 dark:hover:border-primary/50"
                         >
                           <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
                           {copy.addAnother(info.label)}
@@ -777,7 +777,7 @@ export default function MenuDraftWidget({
   };
 
   return (
-    <div className={`w-full my-4 bg-gray-50/50 p-4 sm:p-6 rounded-3xl border shadow-sm relative font-sans transition-colors duration-500 ${isSaved ? "border-emerald-200/60 bg-emerald-50/10 shadow-emerald-500/5 ring-1 ring-emerald-100/50" : "border-gray-100"}`}>
+    <div className={`w-full my-4 p-4 sm:p-6 rounded-3xl border shadow-sm relative font-sans transition-all duration-500 ${isSaved ? "bg-emerald-50/10 border-emerald-200/60 shadow-emerald-500/5 ring-1 ring-emerald-100/50 dark:bg-emerald-950/20 dark:border-emerald-900/40 dark:shadow-none dark:ring-emerald-900/30 backdrop-blur-md" : "bg-gray-50/50 border-gray-100 dark:bg-slate-900/40 dark:backdrop-blur-xl dark:border-slate-800 shadow-xl dark:shadow-none"}`}>
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-[100] animate-in fade-in slide-in-from-bottom-8 duration-400 ease-out">
@@ -799,17 +799,17 @@ export default function MenuDraftWidget({
       )}
 
       {/* Main Header */}
-      <div className={`flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b pb-5 mb-6 ${isSaved ? "border-emerald-100/50" : "border-gray-200"}`}>
+      <div className={`flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b pb-5 mb-6 ${isSaved ? "border-emerald-100/50 dark:border-emerald-900/40" : "border-gray-200 dark:border-slate-700/50"}`}>
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
             ✨ {menuState.name || copy.headerTitleFallback}
             {isSaved && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100 shadow-sm whitespace-nowrap ml-2">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100 shadow-sm whitespace-nowrap ml-2 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50">
                 <CheckCircle2 className="w-3.5 h-3.5" /> {copy.savedBadge}
               </span>
             )}
           </h1>
-          <p className="text-sm text-gray-500 mt-1.5 font-medium">
+          <p className="text-sm text-gray-500 mt-1.5 font-medium dark:text-gray-400">
             {isSaved ? copy.savedDescription : copy.draftDescription}
           </p>
         </div>

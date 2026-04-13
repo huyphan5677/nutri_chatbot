@@ -53,7 +53,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="relative overflow-hidden bg-[#F2ECE4] pb-20 pt-16 px-6 text-center border-b border-[#E8DFC] transition-colors duration-500"
+      className="relative overflow-hidden bg-warm-50 dark:bg-slate-900/50 pb-20 pt-16 px-6 text-center border-b border-gray-200 dark:border-slate-800 transition-colors duration-500"
     >
       {/* Interactive Spotlight Effect */}
       <div
@@ -65,7 +65,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       />
 
       {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-orange-200/40 to-transparent rounded-full blur-[100px] -z-10 opacity-60 pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-orange-200/40 dark:from-orange-900/20 to-transparent rounded-full blur-[100px] -z-10 opacity-60 pointer-events-none" />
 
       <div className="max-w-4xl mx-auto relative z-10">
         {/* <div className="flex justify-center mb-8">
@@ -77,7 +77,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </Button>
         </div> */}
 
-        <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 mb-5 tracking-tight font-serif drop-shadow-sm">
+        <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-5 tracking-tight font-serif drop-shadow-sm">
           {getGreeting()},{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500 drop-shadow-sm">
             {userName}
@@ -85,29 +85,29 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           !
         </h1>
 
-        <p className="text-gray-700 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-medium leading-relaxed drop-shadow-sm">
+        <p className="text-gray-700 dark:text-gray-300 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-medium leading-relaxed drop-shadow-sm">
           {text.prompt}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
           {/* Premium Counter */}
-          <div className="bg-white p-2 rounded-full flex items-center shadow-xl shadow-orange-900/5 border border-orange-100/80 relative overflow-hidden group hover:border-orange-200 transition-colors">
+          <div className="bg-white dark:bg-slate-800 p-2 rounded-full flex items-center shadow-xl shadow-orange-900/5 border border-orange-100/80 dark:border-slate-700 relative overflow-hidden group hover:border-orange-200 transition-colors">
             <div className="absolute inset-0 bg-gradient-to-r from-orange-50/30 to-red-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
             <button
               onClick={handleDecrement}
-              className="w-14 h-14 flex items-center justify-center text-orange-600 hover:bg-orange-50 hover:text-orange-700 rounded-full transition-all active:scale-90 z-10"
+              className="w-14 h-14 flex items-center justify-center text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-700 dark:hover:text-orange-400 rounded-full transition-all active:scale-90 z-10"
             >
               <Minus className="w-6 h-6 stroke-[2.5]" />
             </button>
 
-            <div className="w-20 text-center font-serif text-4xl font-bold text-gray-800 z-10 select-none tracking-tight">
+            <div className="w-20 text-center font-serif text-4xl font-bold text-gray-800 dark:text-white z-10 select-none tracking-tight">
               {mealCount}
             </div>
 
             <button
               onClick={handleIncrement}
-              className="w-14 h-14 flex items-center justify-center text-orange-600 hover:bg-orange-50 hover:text-orange-700 rounded-full transition-all active:scale-90 z-10"
+              className="w-14 h-14 flex items-center justify-center text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-700 dark:hover:text-orange-400 rounded-full transition-all active:scale-90 z-10"
             >
               <Plus className="w-6 h-6 stroke-[2.5]" />
             </button>

@@ -60,7 +60,7 @@ export const OnboardingPage = () => {
 
       {/* Header / Progress */}
       <div className="mb-8">
-        <div className="flex justify-between text-sm font-medium mb-2 text-gray-500">
+        <div className="flex justify-between text-sm font-medium mb-2 text-gray-500 dark:text-gray-400">
           <span>
             {text.stepCounter(step, totalSteps)}
           </span>
@@ -73,7 +73,7 @@ export const OnboardingPage = () => {
             </button>
           )}
         </div>
-        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+        <div className="w-full bg-gray-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
           <div
             className="bg-primary h-2 rounded-full transition-all duration-500 ease-out"
             style={{ width: `${(step / totalSteps) * 100}%` }}

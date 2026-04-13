@@ -220,13 +220,13 @@ export const QuizWizard: React.FC<QuizWizardProps> = ({
     <div className="p-6 flex flex-col h-full">
       {/* Header / Progress */}
       <div className="mb-6 flex-none">
-        <h2 className="text-2xl font-bold text-center mb-1 font-serif text-gray-900">
+        <h2 className="text-2xl font-bold text-center mb-1 font-serif text-gray-900 dark:text-white">
           {pageText.wizardTitle}
         </h2>
-        <p className="text-center text-gray-400 text-sm mb-6">
+        <p className="text-center text-gray-400 dark:text-gray-500 text-sm mb-6">
           {stepTitles[step - 1]}
         </p>
-        <div className="flex justify-between text-sm font-medium mb-2 text-gray-500">
+        <div className="flex justify-between text-sm font-medium mb-2 text-gray-500 dark:text-gray-400">
           <span>{pageText.stepCounter(step, totalSteps)}</span>
           {step > 1 && (
             <button
@@ -237,14 +237,14 @@ export const QuizWizard: React.FC<QuizWizardProps> = ({
             </button>
           )}
         </div>
-        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+        <div className="w-full bg-gray-100 dark:bg-slate-800/80 h-2 rounded-full overflow-hidden">
           <div
-            className="bg-primary h-2 rounded-full transition-all duration-500 ease-out"
+            className="bg-primary h-2 rounded-full transition-all duration-500 ease-out shadow-[0_0_8px_rgba(255,92,92,0.4)]"
             style={{ width: `${(step / totalSteps) * 100}%` }}
           />
         </div>
         {stepError && (
-          <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-lg px-3 py-2">
             {stepError}
           </p>
         )}

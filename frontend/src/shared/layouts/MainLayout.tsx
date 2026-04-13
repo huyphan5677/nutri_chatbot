@@ -57,8 +57,8 @@ export default function MainLayout() {
 
   if (isLoading || !isLocaleReady) {
     return (
-      <div className="h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5C5C]"></div>
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -66,11 +66,11 @@ export default function MainLayout() {
   const isChatPage = location.pathname === "/chat";
 
   return (
-    <div className="flex h-screen bg-[#FFFBF6] flex-col">
+    <div className="flex h-screen bg-background flex-col transition-colors duration-300">
       <Navbar />
       <main 
         id="scroll-root"
-        className="flex-1 overflow-y-auto bg-[#FFFBF6] relative flex flex-col"
+        className="flex-1 overflow-y-auto bg-background relative flex flex-col transition-colors duration-300"
       >
         <div className="flex-1">
           <Outlet />
