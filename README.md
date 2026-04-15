@@ -13,6 +13,7 @@ conversational interface that adapts to each family member's health profile.
 
 ## Table of Contents
 
+- [Demo Video](#demo-video)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Technology Stack](#technology-stack)
@@ -21,6 +22,25 @@ conversational interface that adapts to each family member's health profile.
 - [Deployment](#deployment)
 - [Documentation](#documentation)
 - [License](#license)
+
+---
+
+## Demo Video
+
+<p align="center">
+  <a href="https://youtu.be/ilNqJFyep2c" title="Watch the Nutri demo on YouTube">
+    <img
+      src="https://img.youtube.com/vi/ilNqJFyep2c/hqdefault.jpg"
+      alt="Nutri product demo video"
+      width="720"
+    />
+  </a>
+</p>
+
+<p align="center">
+  <strong>Watch the product demo:</strong>
+  <a href="https://youtu.be/ilNqJFyep2c">https://youtu.be/ilNqJFyep2c</a>
+</p>
 
 ---
 
