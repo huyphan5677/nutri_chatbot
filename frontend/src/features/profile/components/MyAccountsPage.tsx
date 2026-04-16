@@ -1,16 +1,22 @@
+import { Modal } from "@/components/ui/Modal";
 import { profileMessages } from "@/features/profile/profile.messages";
+import { getApiUrl } from "@/shared/api/client";
 import { useLocale } from "@/shared/i18n/LocaleContext";
-import { AlertTriangle, KeyRound, LogOut, Shield, Smartphone } from "lucide-react";
+import {
+  AlertTriangle,
+  KeyRound,
+  LogOut,
+  Shield,
+  Smartphone,
+} from "lucide-react";
 import { useState } from "react";
 import ChangePasswordModal from "./ChangePasswordModal";
-import { Modal } from "@/components/ui/Modal";
-import { getApiUrl } from "@/shared/api/client";
 
 export default function MyAccountsPage() {
   const { locale } = useLocale();
   const text = profileMessages[locale].myAccounts;
   const tDelete = text.deleteAccountModal;
-  
+
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -46,7 +52,7 @@ export default function MyAccountsPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-8 md:gap-12 max-w-3xl">
+      <div className="flex flex-col gap-4 md:gap-12 pt-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-slate-50 mb-2">
             {text.title}
@@ -193,7 +199,7 @@ export default function MyAccountsPage() {
           <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-600 dark:text-red-400 mb-4 mx-auto">
             <AlertTriangle className="w-6 h-6" />
           </div>
-          
+
           <h3 className="text-lg font-bold text-gray-900 dark:text-white text-center mb-2">
             {tDelete.title}
           </h3>

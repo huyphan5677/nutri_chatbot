@@ -21,11 +21,13 @@ export const QuizStep3: React.FC<QuizStep3Props> = ({ data, onChange }) => {
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="text-2xl font-bold text-center dark:text-white">{text.title}</h2>
+      <h2 className="text-2xl font-bold text-center dark:text-white">
+        {text.title}
+      </h2>
       <p className="text-gray-500 dark:text-gray-400 text-center text-sm -mt-3">
         {text.description}
       </p>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 p-2">
         {text.appliances.map((app) => (
           <button
             key={app.id}
@@ -38,7 +40,9 @@ export const QuizStep3: React.FC<QuizStep3Props> = ({ data, onChange }) => {
                              }`}
           >
             <span className="text-3xl">{app.icon}</span>
-            <span className="font-medium text-sm dark:text-slate-200">{app.label}</span>
+            <span className="font-medium text-sm dark:text-slate-200">
+              {app.label}
+            </span>
           </button>
         ))}
       </div>

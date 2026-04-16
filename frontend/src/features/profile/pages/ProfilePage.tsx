@@ -1,7 +1,18 @@
-import { getApiUrl } from "@/shared/api/client";
 import { profileMessages } from "@/features/profile/profile.messages";
+import { getApiUrl } from "@/shared/api/client";
 import { useLocale } from "@/shared/i18n/LocaleContext";
-import { ArrowRight, Plus, Globe, Heart, Clock, Loader2, Trash2, Edit3, Save, AlertTriangle } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Clock,
+  Edit3,
+  Globe,
+  Heart,
+  Loader2,
+  Plus,
+  Save,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import HouseholdSetupPage from "../components/HouseholdSetupPage";
@@ -15,11 +26,15 @@ import RewardsPage from "../components/RewardsPage";
 import ShoppingListHistoryPage from "../components/ShoppingListHistoryPage";
 
 import {
-  Collection, Recipe,
-  getCollections, searchRecipes,
-  deleteRecipe, updateRecipe,
-  addRecipeToCollection, removeRecipeFromCollection,
-  getCollectionRecipes
+  Collection,
+  Recipe,
+  addRecipeToCollection,
+  deleteRecipe,
+  getCollectionRecipes,
+  getCollections,
+  removeRecipeFromCollection,
+  searchRecipes,
+  updateRecipe,
 } from "../../cooking/api/recipesApi";
 
 import {
@@ -30,10 +45,10 @@ import {
   isTryLaterCollection,
 } from "../../cooking/cooking.messages";
 
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { CreateCollectionModal } from "../../cooking/components/CreateCollectionModal";
 import { RecipeDetailModal } from "../../cooking/components/RecipeDetailModal";
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
 
 export const ProfilePage = () => {
   const { locale } = useLocale();
@@ -46,14 +61,20 @@ export const ProfilePage = () => {
 
   const [collections, setCollections] = useState<Collection[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [favoritesCollectionId, setFavoritesCollectionId] = useState<string | null>(null);
-  const [favoriteRecipeIds, setFavoriteRecipeIds] = useState<Set<string>>(new Set());
+  const [favoritesCollectionId, setFavoritesCollectionId] = useState<
+    string | null
+  >(null);
+  const [favoriteRecipeIds, setFavoriteRecipeIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   const [isCreateCollectionOpen, setIsCreateCollectionOpen] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [editRecipe, setEditRecipe] = useState<Recipe | null>(null);
   const [isUpdatingRecipe, setIsUpdatingRecipe] = useState(false);
-  const [deleteTargetRecipe, setDeleteTargetRecipe] = useState<Recipe | null>(null);
+  const [deleteTargetRecipe, setDeleteTargetRecipe] = useState<Recipe | null>(
+    null,
+  );
   const [isDeletingRecipe, setIsDeletingRecipe] = useState(false);
 
   const [editName, setEditName] = useState("");
@@ -174,8 +195,12 @@ export const ProfilePage = () => {
         instructions: editInstructions.trim() || null,
       });
 
-      setRecipes((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
-      setSelectedRecipe((prev) => prev && prev.id === updated.id ? updated : prev);
+      setRecipes((prev) =>
+        prev.map((r) => (r.id === updated.id ? updated : r)),
+      );
+      setSelectedRecipe((prev) =>
+        prev && prev.id === updated.id ? updated : prev,
+      );
       setEditRecipe(null);
     } catch (err: any) {
       console.error(err);
@@ -195,7 +220,9 @@ export const ProfilePage = () => {
       setIsDeletingRecipe(true);
       await deleteRecipe(deleteTargetRecipe.id);
       setRecipes((prev) => prev.filter((r) => r.id !== deleteTargetRecipe.id));
-      setSelectedRecipe((prev) => prev && prev.id === deleteTargetRecipe.id ? null : prev);
+      setSelectedRecipe((prev) =>
+        prev && prev.id === deleteTargetRecipe.id ? null : prev,
+      );
       setDeleteTargetRecipe(null);
     } catch (err: any) {
       console.error(err);
@@ -206,7 +233,6 @@ export const ProfilePage = () => {
 
   return (
     <div className="min-h-screen flex flex-col relative">
-
       {/* Recipe Details Modal */}
       <RecipeDetailModal
         isOpen={!!selectedRecipe}
@@ -239,19 +265,25 @@ export const ProfilePage = () => {
             />
             <input
               value={editPrepTime}
-              onChange={(e) => setEditPrepTime(e.target.value.replace(/[^0-9]/g, ""))}
+              onChange={(e) =>
+                setEditPrepTime(e.target.value.replace(/[^0-9]/g, ""))
+              }
               placeholder={cookingText.editModal.prepTimePlaceholder}
               className="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 dark:text-white dark:placeholder:text-gray-500"
             />
             <input
               value={editCookTime}
-              onChange={(e) => setEditCookTime(e.target.value.replace(/[^0-9]/g, ""))}
+              onChange={(e) =>
+                setEditCookTime(e.target.value.replace(/[^0-9]/g, ""))
+              }
               placeholder={cookingText.editModal.cookTimePlaceholder}
               className="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 dark:text-white dark:placeholder:text-gray-500"
             />
             <input
               value={editCalories}
-              onChange={(e) => setEditCalories(e.target.value.replace(/[^0-9]/g, ""))}
+              onChange={(e) =>
+                setEditCalories(e.target.value.replace(/[^0-9]/g, ""))
+              }
               placeholder={cookingText.editModal.caloriesPlaceholder}
               className="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 dark:text-white dark:placeholder:text-gray-500 sm:col-span-2"
             />
@@ -314,7 +346,9 @@ export const ProfilePage = () => {
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 {deleteTargetRecipe ? (
                   <span className="font-semibold text-gray-900 dark:text-white">
-                    {cookingText.deleteModal.description(deleteTargetRecipe.name)}
+                    {cookingText.deleteModal.description(
+                      deleteTargetRecipe.name,
+                    )}
                   </span>
                 ) : null}
               </p>
@@ -338,7 +372,8 @@ export const ProfilePage = () => {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  <Trash2 className="w-4 h-4" /> {cookingText.deleteModal.confirm}
+                  <Trash2 className="w-4 h-4" />{" "}
+                  {cookingText.deleteModal.confirm}
                 </>
               )}
             </Button>
@@ -366,20 +401,28 @@ export const ProfilePage = () => {
         <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-12 overflow-y-auto bg-white dark:bg-slate-950 rounded-t-3xl md:rounded-none -mt-4 md:mt-0 relative z-0 md:bg-transparent shadow-[0_-4px_20px_rgba(0,0,0,0.02)] md:shadow-none dark:shadow-none transition-colors duration-300">
           {/* Tab 0: My Profile */}
           {activeTab === 0 && (
-            <div className="flex flex-col gap-8 md:gap-12">
+            <div className="flex flex-col gap-8 md:gap-12 pt-4">
               {/* Collections Section */}
               <div>
                 <div className="flex justify-between items-center mb-4 md:mb-6">
-                  <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-slate-50 mb-2">
                     {text.collections}
                   </h2>
-                  <button onClick={() => navigate('/cooking')} className="text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary flex items-center gap-1">
-                    {text.seeAll} <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
+                  <button
+                    onClick={() => navigate("/cooking")}
+                    className="text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary flex items-center gap-1"
+                  >
+                    {text.seeAll}{" "}
+                    <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                   {collections.map((col) => {
-                    const Icon = isFavoritesCollection(col.name) ? Heart : isTryLaterCollection(col.name) ? Clock : Globe;
+                    const Icon = isFavoritesCollection(col.name)
+                      ? Heart
+                      : isTryLaterCollection(col.name)
+                        ? Clock
+                        : Globe;
                     return (
                       <div
                         key={col.id}
@@ -387,7 +430,9 @@ export const ProfilePage = () => {
                         className="bg-white dark:bg-slate-900 rounded-3xl p-6 flex flex-col items-center justify-center gap-4 border border-gray-100 dark:border-slate-800 hover:shadow-md transition-shadow cursor-pointer aspect-square"
                       >
                         <div className="w-16 h-16 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-gray-300">
-                          <Icon className={`w-8 h-8 ${isFavoritesCollection(col.name) ? "text-red-500 fill-current" : ""}`} />
+                          <Icon
+                            className={`w-8 h-8 ${isFavoritesCollection(col.name) ? "text-red-500 fill-current" : ""}`}
+                          />
                         </div>
                         <div className="text-center w-full">
                           <h3 className="font-bold text-gray-900 dark:text-white line-clamp-1">
@@ -400,7 +445,7 @@ export const ProfilePage = () => {
                       </div>
                     );
                   })}
-                  <div 
+                  <div
                     onClick={() => setIsCreateCollectionOpen(true)}
                     className="border border-dashed border-red-200 bg-red-50/30 rounded-3xl p-6 flex flex-col items-center justify-center gap-4 hover:bg-red-50 transition-colors cursor-pointer aspect-square text-red-500"
                   >
@@ -415,17 +460,21 @@ export const ProfilePage = () => {
               {/* Personal Recipes Section */}
               <div>
                 <div className="flex justify-between items-center mb-4 md:mb-6">
-                  <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-slate-50 mb-2">
                     {text.myRecipes}
                   </h2>
-                  <button onClick={() => navigate('/cooking')} className="text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary flex items-center gap-1">
-                    {text.seeAll} <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
+                  <button
+                    onClick={() => navigate("/cooking")}
+                    className="text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary flex items-center gap-1"
+                  >
+                    {text.seeAll}{" "}
+                    <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
                 </div>
                 {isLoadingRecipes ? (
-                   <div className="flex justify-center items-center h-32">
-                     <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
-                   </div>
+                  <div className="flex justify-center items-center h-32">
+                    <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+                  </div>
                 ) : (
                   <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-6 md:gap-y-10">
                     {recipes.map((recipe) => (
@@ -453,7 +502,8 @@ export const ProfilePage = () => {
                           </div>
                           {recipe.prep_time_minutes && (
                             <div className="absolute bottom-2 right-2 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-full text-xs font-bold text-gray-900 dark:text-white shadow-md flex items-center gap-1 z-10 pointer-events-none border border-gray-100 dark:border-slate-700">
-                              ⏱️ {recipe.prep_time_minutes} {cookingText.shared.minuteUnit}
+                              ⏱️ {recipe.prep_time_minutes}{" "}
+                              {cookingText.shared.minuteUnit}
                             </div>
                           )}
                           <button
@@ -471,14 +521,18 @@ export const ProfilePage = () => {
                               className="inline-flex items-center justify-center w-full gap-1 rounded-full bg-white/95 dark:bg-slate-800/95 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-slate-200 border border-gray-100 dark:border-slate-700 shadow-sm hover:bg-white dark:hover:bg-slate-700"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
-                              <span className="hidden xl:inline">{cookingText.listPage.edit}</span>
+                              <span className="hidden xl:inline">
+                                {cookingText.listPage.edit}
+                              </span>
                             </button>
                             <button
                               onClick={(e) => requestDeleteRecipe(e, recipe)}
                               className="inline-flex items-center justify-center w-full gap-1 rounded-full bg-red-600/95 px-3 py-1.5 text-xs font-semibold text-white border border-red-600 shadow-sm hover:bg-red-700"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                              <span className="hidden xl:inline">{cookingText.listPage.delete}</span>
+                              <span className="hidden xl:inline">
+                                {cookingText.listPage.delete}
+                              </span>
                             </button>
                           </div>
                         </div>
@@ -492,7 +546,7 @@ export const ProfilePage = () => {
                         )}
                       </div>
                     ))}
-                    
+
                     <div className="border border-dashed border-red-200 bg-red-50/30 rounded-[2rem] flex flex-col items-center justify-center hover:bg-red-50 transition-colors cursor-pointer aspect-square text-red-500">
                       <Plus className="w-8 h-8 mb-2 md:mb-4" />
                       <span className="font-bold text-xs md:text-sm">

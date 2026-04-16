@@ -1,16 +1,16 @@
 import { profileMessages } from "@/features/profile/profile.messages";
-import { useLocale } from "@/shared/i18n/LocaleContext";
 import { getApiUrl } from "@/shared/api/client";
-import { useEffect, useState } from "react";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import {
   Award,
   CheckCircle2,
   ChevronRight,
   Gift,
+  Loader2,
   Star,
   Zap,
-  Loader2,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface AchievementDTO {
   id: string;
@@ -29,7 +29,7 @@ interface RewardsDTO {
 export default function RewardsPage() {
   const { locale } = useLocale();
   const text = profileMessages[locale].rewards;
-  
+
   const [data, setData] = useState<RewardsDTO | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -67,11 +67,11 @@ export default function RewardsPage() {
   const progress = data?.progress || 0;
 
   return (
-    <div className="flex flex-col gap-8 md:gap-12 max-w-4xl relative">
+    <div className="flex flex-col gap-8 md:gap-12 pt-4 relative">
       {loading && (
-         <div className="absolute inset-0 z-50 bg-white/50 flex items-start pt-32 justify-center">
-            <Loader2 className="w-10 h-10 animate-spin text-primary" />
-         </div>
+        <div className="absolute inset-0 z-50 bg-white/50 flex items-start pt-32 justify-center">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        </div>
       )}
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-slate-50 mb-2">
@@ -147,35 +147,35 @@ export default function RewardsPage() {
             {data?.achievements.map((achieve, i) => {
               const details = getAchievementDetails(achieve.id);
               return (
-                 <div
-                   key={i}
-                   className={`p-4 rounded-xl border ${achieve.unlocked ? "bg-orange-50 dark:bg-orange-500/10 border-orange-100 dark:border-orange-500/20" : "bg-gray-50 dark:bg-slate-800/40 border-gray-100 dark:border-slate-800 opacity-60"} transition-all`}
-                 >
-                   <div className="flex justify-between items-start mb-2">
-                     <div
-                       className={`w-10 h-10 rounded-full flex items-center justify-center ${achieve.unlocked ? "bg-orange-500 text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500"}`}
-                     >
-                       {achieve.unlocked ? (
-                         <CheckCircle2 className="w-5 h-5" />
-                       ) : (
-                         <Award className="w-5 h-5" />
-                       )}
-                     </div>
-                     <span
-                       className={`text-xs font-bold px-2 py-1 rounded-full ${achieve.unlocked ? "bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400" : "bg-gray-200 dark:bg-slate-700 text-gray-500"}`}
-                     >
-                       {achieve.points}
-                     </span>
-                   </div>
-                   <h4
-                     className={`font-bold mt-3 mb-1 ${achieve.unlocked ? "text-orange-900 dark:text-orange-100" : "text-gray-900 dark:text-slate-400"}`}
-                   >
-                     {details.name}
-                   </h4>
-                   <p className="text-xs text-gray-500 dark:text-slate-500 line-clamp-2">
-                     {details.description}
-                   </p>
-                 </div>
+                <div
+                  key={i}
+                  className={`p-4 rounded-xl border ${achieve.unlocked ? "bg-orange-50 dark:bg-orange-500/10 border-orange-100 dark:border-orange-500/20" : "bg-gray-50 dark:bg-slate-800/40 border-gray-100 dark:border-slate-800 opacity-60"} transition-all`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${achieve.unlocked ? "bg-orange-500 text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500"}`}
+                    >
+                      {achieve.unlocked ? (
+                        <CheckCircle2 className="w-5 h-5" />
+                      ) : (
+                        <Award className="w-5 h-5" />
+                      )}
+                    </div>
+                    <span
+                      className={`text-xs font-bold px-2 py-1 rounded-full ${achieve.unlocked ? "bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400" : "bg-gray-200 dark:bg-slate-700 text-gray-500"}`}
+                    >
+                      {achieve.points}
+                    </span>
+                  </div>
+                  <h4
+                    className={`font-bold mt-3 mb-1 ${achieve.unlocked ? "text-orange-900 dark:text-orange-100" : "text-gray-900 dark:text-slate-400"}`}
+                  >
+                    {details.name}
+                  </h4>
+                  <p className="text-xs text-gray-500 dark:text-slate-500 line-clamp-2">
+                    {details.description}
+                  </p>
+                </div>
               );
             })}
           </div>

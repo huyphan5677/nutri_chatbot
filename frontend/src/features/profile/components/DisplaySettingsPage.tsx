@@ -1,6 +1,6 @@
+import { profileMessages } from "@/features/profile/profile.messages";
 import { useLocale } from "@/shared/i18n/LocaleContext";
 import { useTheme } from "@/shared/theme/ThemeContext";
-import { profileMessages } from "@/features/profile/profile.messages";
 import { Check, Globe, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 
@@ -12,7 +12,7 @@ export default function DisplaySettingsPage() {
   const language = locale === "vi" ? "Tiếng Việt" : "English";
 
   return (
-    <div className="flex flex-col gap-8 md:gap-12 max-w-3xl">
+    <div className="flex flex-col gap-4 md:gap-12 pt-4">
       <div>
         <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-slate-50 mb-2">
           {text.title}
@@ -29,7 +29,9 @@ export default function DisplaySettingsPage() {
                 <Globe className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 dark:text-slate-100">{text.languageTitle}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-slate-100">
+                  {text.languageTitle}
+                </h3>
                 <p className="text-sm text-gray-500 dark:text-slate-400">
                   {text.languageDescription}
                 </p>
@@ -63,7 +65,9 @@ export default function DisplaySettingsPage() {
                 <Sun className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 dark:text-slate-100">{text.themeTitle}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-slate-100">
+                  {text.themeTitle}
+                </h3>
                 <p className="text-sm text-gray-500 dark:text-slate-400">
                   {text.themeDescription}
                 </p>
@@ -99,7 +103,9 @@ export default function DisplaySettingsPage() {
                 </div>
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 dark:text-slate-100">{text.unitsTitle}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-slate-100">
+                  {text.unitsTitle}
+                </h3>
                 <p className="text-sm text-gray-500 dark:text-slate-400">
                   {text.unitsDescription}
                 </p>
@@ -107,7 +113,11 @@ export default function DisplaySettingsPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
               {[
-                { key: "metric" as const, label: text.metric, detail: text.metricDetail },
+                {
+                  key: "metric" as const,
+                  label: text.metric,
+                  detail: text.metricDetail,
+                },
                 {
                   key: "imperial" as const,
                   label: text.imperial,

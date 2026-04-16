@@ -20,7 +20,7 @@ export default function ContactPreferencesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 md:gap-12 max-w-3xl">
+    <div className="flex flex-col gap-4 md:gap-12 pt-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-slate-50 mb-2">
@@ -89,10 +89,10 @@ export default function ContactPreferencesPage() {
 
             <label className="flex items-start justify-between cursor-pointer group">
               <div className="pr-4">
-                <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
+                <span className="block font-medium text-gray-900 dark:text-slate-100 group-hover:text-primary transition-colors">
                   {text.weeklyDigestTitle}
                 </span>
-                <span className="block text-sm text-gray-500 mt-1">
+                <span className="block text-sm text-gray-500 dark:text-slate-400 mt-1">
                   {text.weeklyDigestDescription}
                 </span>
               </div>
@@ -114,10 +114,10 @@ export default function ContactPreferencesPage() {
 
             <label className="flex items-start justify-between cursor-pointer group">
               <div className="pr-4">
-                <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
+                <span className="block font-medium text-gray-900 dark:text-slate-100 group-hover:text-primary transition-colors">
                   {text.marketingTitle}
                 </span>
-                <span className="block text-sm text-gray-500 mt-1">
+                <span className="block text-sm text-gray-500 dark:text-slate-400 mt-1">
                   {text.marketingDescription}
                 </span>
               </div>
@@ -157,10 +157,10 @@ export default function ContactPreferencesPage() {
 
           <label className="flex items-start justify-between cursor-pointer group">
             <div className="pr-4">
-              <span className="block font-medium text-gray-900 group-hover:text-primary transition-colors">
+              <span className="block font-medium text-gray-900 dark:text-slate-100 group-hover:text-primary transition-colors">
                 {text.enablePushTitle}
               </span>
-              <span className="block text-sm text-gray-500 mt-1">
+              <span className="block text-sm text-gray-500 dark:text-slate-400 mt-1">
                 {text.enablePushDescription}
               </span>
             </div>

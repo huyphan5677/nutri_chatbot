@@ -18,7 +18,9 @@ export const QuizStep1: React.FC<QuizStep1Props> = ({ data, onChange }) => {
 
   return (
     <div className="flex flex-col gap-8">
-      <h2 className="text-2xl font-bold text-center dark:text-white">{text.title}</h2>
+      <h2 className="text-2xl font-bold text-center dark:text-white">
+        {text.title}
+      </h2>
       <p className="text-gray-400 dark:text-gray-500 text-center text-sm -mt-5">
         {text.description}
       </p>
@@ -28,7 +30,7 @@ export const QuizStep1: React.FC<QuizStep1Props> = ({ data, onChange }) => {
         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
           {text.preferredDiet}
         </label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2">
           {text.diets.map((diet) => (
             <button
               key={diet.id}
