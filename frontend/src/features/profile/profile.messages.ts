@@ -75,6 +75,15 @@ export const profileMessages = {
         errorTooShort: "New password must be at least 6 characters.",
         errorWrong: "Incorrect current password. Please try again.",
       },
+      deleteAccountModal: {
+        title: "Delete Account Permanently?",
+        description: "This action cannot be undone. All your family data, recipes, inventories and chat history will be cleared forever.",
+        confirm: "Yes, delete my account",
+        cancel: "Cancel",
+        deleting: "Deleting...",
+        successToast: "Account deleted. Goodbye! 👋",
+        error: "Failed to delete account. Please try again.",
+      },
     },
     shoppingHistory: {
       title: "Shopping Lists History",
@@ -293,6 +302,15 @@ export const profileMessages = {
         errorMismatch: "Mật khẩu mới không khớp.",
         errorTooShort: "Mật khẩu mới phải có ít nhất 6 ký tự.",
         errorWrong: "Mật khẩu hiện tại không đúng. Vui lòng thử lại.",
+      },
+      deleteAccountModal: {
+        title: "Xóa tài khoản vĩnh viễn?",
+        description: "Hành động này không thể hoàn tác. Toàn bộ dữ liệu gia đình, công thức, kho hàng và lịch sử trò chơi của bạn sẽ bị xóa sạch mãi mãi.",
+        confirm: "Xác nhận xóa tài khoản",
+        cancel: "Hủy",
+        deleting: "Đang xóa...",
+        successToast: "Tài khoản đã bị xóa. Tạm biệt! 👋",
+        error: "Không thể xóa tài khoản. Vui lòng thử lại.",
       },
     },
     shoppingHistory: {

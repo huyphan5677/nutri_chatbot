@@ -130,6 +130,17 @@ async def update_password(
     return {"message": "Password updated successfully."}
 
 
+@router.delete("/me")
+async def delete_account(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Permanently delete the current user's account and all associated data."""
+    await db.delete(current_user)
+    await db.commit()
+    return {"message": "Account deleted successfully."}
+
+
 @router.post("/register", response_model=AuthResponse)
 async def register(
     user_in: UserCreate, request: Request, db: AsyncSession = Depends(get_db)

@@ -33,9 +33,24 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
-    family_members = relationship("FamilyMember", back_populates="user")
-    chat_sessions = relationship("ChatSession", back_populates="user")
-    meal_plans = relationship("MealPlan", back_populates="user")
-    inventories = relationship("UserInventory", back_populates="user")
-    grocery_items = relationship("GroceryItem", back_populates="user")
-    shopping_orders = relationship("ShoppingOrder", back_populates="user")
+    family_members = relationship(
+        "FamilyMember", back_populates="user", cascade="all, delete-orphan"
+    )
+    chat_sessions = relationship(
+        "ChatSession", back_populates="user", cascade="all, delete-orphan"
+    )
+    meal_plans = relationship(
+        "MealPlan", back_populates="user", cascade="all, delete-orphan"
+    )
+    inventories = relationship(
+        "UserInventory", back_populates="user", cascade="all, delete-orphan"
+    )
+    grocery_items = relationship(
+        "GroceryItem", back_populates="user", cascade="all, delete-orphan"
+    )
+    shopping_orders = relationship(
+        "ShoppingOrder", back_populates="user", cascade="all, delete-orphan"
+    )
+    recipe_collections = relationship(
+        "RecipeCollection", back_populates="user", cascade="all, delete-orphan"
+    )

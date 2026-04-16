@@ -37,7 +37,9 @@ class Recipe(Base):
     macros = Column(JSON, default=dict)
     dietary_tags = Column(JSON, default=list)
 
-    ingredients = relationship("RecipeIngredient", back_populates="recipe", lazy="selectin")
+    ingredients = relationship(
+        "RecipeIngredient", back_populates="recipe", lazy="selectin"
+    )
     meals = relationship("Meal", back_populates="recipe")
 
 
@@ -65,7 +67,9 @@ class RecipeIngredient(Base):
     quantity = Column(Numeric)
 
     recipe = relationship("Recipe", back_populates="ingredients")
-    ingredient = relationship("Ingredient", back_populates="recipe_links", lazy="joined")
+    ingredient = relationship(
+        "Ingredient", back_populates="recipe_links", lazy="joined"
+    )
 
 
 class MealPlan(Base):
@@ -118,6 +122,7 @@ class RecipeCollection(Base):
     collection_recipes = relationship(
         "CollectionRecipe", back_populates="collection", cascade="all, delete-orphan"
     )
+    user = relationship("User", back_populates="recipe_collections")
 
 
 class CollectionRecipe(Base):
