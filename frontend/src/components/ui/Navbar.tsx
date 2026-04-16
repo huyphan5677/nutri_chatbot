@@ -419,7 +419,10 @@ export const Navbar = () => {
                       }}
                       className="w-full text-left p-2 rounded-md hover:bg-white dark:hover:bg-slate-800 flex items-center gap-2"
                     >
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#FF5C5C] flex-shrink-0"></div>
+                      <div className="relative flex-shrink-0">
+                        <MessageCircle className="w-3.5 h-3.5 text-blue-500" />
+                        <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[#FF5C5C] rounded-full"></span>
+                      </div>
                       <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                         {session.title}
                       </span>
@@ -594,7 +597,10 @@ export const Navbar = () => {
                       }}
                       className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-start gap-3 transition-colors border-b border-gray-50 dark:border-slate-800/50 last:border-0"
                     >
-                      <div className="mt-1 w-2 h-2 rounded-full bg-[#FF5C5C] flex-shrink-0"></div>
+                      <div className="mt-0.5 w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 relative">
+                        <MessageCircle className="w-3.5 h-3.5 text-blue-600" />
+                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#FF5C5C] rounded-full border border-white"></span>
+                      </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">
                           {session.title}
