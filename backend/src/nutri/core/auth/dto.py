@@ -26,6 +26,11 @@ class LanguagePreferenceUpdate(BaseModel):
     preferred_language: str
 
 
+class PasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str
+
+
 class ThemePreferenceUpdate(BaseModel):
     preferred_theme: str
 

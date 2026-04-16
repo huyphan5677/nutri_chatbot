@@ -6,6 +6,7 @@ from nutri.common.i18n import get_request_language, normalize_language
 from nutri.core.auth.dto import (
     AuthResponse,
     LanguagePreferenceUpdate,
+    PasswordUpdate,
     ThemePreferenceUpdate,
     UserCreate,
     UserDTO,
@@ -100,6 +101,33 @@ async def update_theme_preference(
         await db.commit()
     await db.refresh(current_user)
     return current_user
+
+
+@router.patch("/password")
+async def update_password(
+    payload: PasswordUpdate,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Change the current user's password."""
+    language = get_request_language(request)
+
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=auth_message("incorrect_credentials", language),
+        )
+
+    if len(payload.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"en": "Password must be at least 6 characters.", "vi": "Mật khẩu phải có ít nhất 6 ký tự."}.get(language, "Password must be at least 6 characters."),
+        )
+
+    current_user.password_hash = get_password_hash(payload.new_password)
+    await db.commit()
+    return {"message": "Password updated successfully."}
 
 
 @router.post("/register", response_model=AuthResponse)
