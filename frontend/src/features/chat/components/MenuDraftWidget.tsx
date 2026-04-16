@@ -14,6 +14,7 @@ import {
   ShoppingCart,
   Sparkles,
   Trash2,
+  Users,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -206,6 +207,25 @@ function MealDetailPanel({
           )}
         </div>
       </div>
+
+      {meal.per_person_breakdown && meal.per_person_breakdown.length > 0 && (
+        <div className="mt-5 p-3 sm:p-4 rounded-xl bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-900/30">
+          <h4 className="flex items-center gap-1.5 text-xs font-bold text-blue-700 uppercase tracking-wider mb-2 dark:text-blue-400">
+            <Users className="w-4 h-4" /> {copy.portionTitle}
+          </h4>
+          <ul className="space-y-1.5">
+            {meal.per_person_breakdown.map((portion, idx) => (
+              <li
+                key={idx}
+                className="text-xs sm:text-sm text-blue-800 leading-relaxed dark:text-blue-300/90 flex items-start gap-2"
+              >
+                <span className="text-blue-400 mt-1">•</span>
+                <span>{portion}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {meal.adjustment_tips && meal.adjustment_tips.length > 0 && (
         <div className="mt-5 p-3 sm:p-4 rounded-xl bg-amber-50/50 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/30">
