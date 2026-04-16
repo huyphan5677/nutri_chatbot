@@ -1,12 +1,23 @@
-import logging
-import re
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
-from nutri.ai.agents.grocery_list_agent import GroceryListGeneratorAgent
-from nutri.core.db.session import async_session_maker
-from nutri.core.grocery.models import GroceryItem
-from nutri.core.menus.models import Ingredient, Meal, MealPlan, Recipe, RecipeIngredient
-from sqlalchemy.future import select
+import re
+import logging
+
 from sqlalchemy.orm import selectinload
+from sqlalchemy.future import select
+
+from nutri.core.db.session import async_session_maker
+from nutri.core.menus.models import (
+    Meal,
+    Recipe,
+    MealPlan,
+    Ingredient,
+    RecipeIngredient,
+)
+from nutri.core.grocery.models import GroceryItem
+from nutri.ai.agents.grocery_list_agent import GroceryListGeneratorAgent
+
 
 logger = logging.getLogger("nutri.ai.workflows.grocery_workflow")
 
@@ -29,8 +40,8 @@ def _parse_numeric_quantity(value) -> float | None:
 
 async def generate_grocery_list_background(meal_plan_id: str):
     """Background workflow to aggregate ingredients from a meal plan into a grocery list via parallel chunking."""
-
     import asyncio
+
     async with async_session_maker() as db:
         # 1. Fetch MealPlan and its relations
         result = await db.execute(
@@ -46,13 +57,18 @@ async def generate_grocery_list_background(meal_plan_id: str):
         meal_plan = result.scalars().first()
 
         if not meal_plan:
-            logger.error("Grocery Workflow Error: MealPlan %s not found.", meal_plan_id)
+            logger.error(
+                "Grocery Workflow Error: MealPlan %s not found.", meal_plan_id
+            )
             return
 
         # 2. Chunk meals for parallel processing
         meals_list = list(meal_plan.meals)
         chunk_size = 3  # approx 1 day
-        chunks = [meals_list[i:i + chunk_size] for i in range(0, len(meals_list), chunk_size)]
+        chunks = [
+            meals_list[i : i + chunk_size]
+            for i in range(0, len(meals_list), chunk_size)
+        ]
 
         agent = GroceryListGeneratorAgent()
         semaphore = asyncio.Semaphore(3)
@@ -77,7 +93,11 @@ async def generate_grocery_list_background(meal_plan_id: str):
                                 f"- name: {ri.ingredient.name} | meal_type: {meal.meal_type} | day: {meal.eat_date}"
                             )
                         else:
-                            grams_display = int(grams) if float(grams).is_integer() else grams
+                            grams_display = (
+                                int(grams)
+                                if float(grams).is_integer()
+                                else grams
+                            )
                             raw_ingredients_lines.append(
                                 f"- name: {ri.ingredient.name} | grams: {grams_display} | meal_type: {meal.meal_type} | day: {meal.eat_date}"
                             )
@@ -97,10 +117,17 @@ async def generate_grocery_list_background(meal_plan_id: str):
                     grocery_data = await agent.agenerate(raw_context)
                     return grocery_data.items
                 except Exception as e:
-                    logger.error("Grocery chunk processing failed | err=%s", str(e).splitlines()[0][:240])
+                    logger.error(
+                        "Grocery chunk processing failed | err=%s",
+                        str(e).splitlines()[0][:240],
+                    )
                     return []
 
-        logger.info("Generating Grocery List for MealPlan %s in %d chunks...", meal_plan_id, len(chunks))
+        logger.info(
+            "Generating Grocery List for MealPlan %s in %d chunks...",
+            meal_plan_id,
+            len(chunks),
+        )
 
         # 3. Invoke Agent in Parallel
         tasks = []
@@ -117,7 +144,9 @@ async def generate_grocery_list_background(meal_plan_id: str):
             all_items.extend(items)
 
         if not all_items:
-            logger.warning("No grocery items generated for MealPlan %s", meal_plan_id)
+            logger.warning(
+                "No grocery items generated for MealPlan %s", meal_plan_id
+            )
             return
 
         aggregated_items = {}
@@ -128,13 +157,16 @@ async def generate_grocery_list_background(meal_plan_id: str):
             if name_lower in aggregated_items:
                 aggregated_items[name_lower]["quantity"] += qty
                 # Update category if the previous one was generic
-                if item.category and aggregated_items[name_lower]["category"] == "Other":
+                if (
+                    item.category
+                    and aggregated_items[name_lower]["category"] == "Other"
+                ):
                     aggregated_items[name_lower]["category"] = item.category
             else:
                 aggregated_items[name_lower] = {
                     "name": (item.name or "Unknown").strip(),
                     "category": item.category or "Other",
-                    "quantity": qty
+                    "quantity": qty,
                 }
 
         # 5. Save to Database
@@ -158,8 +190,17 @@ async def generate_grocery_list_background(meal_plan_id: str):
             # Auto-check staples like oil and spices
             cat_lower = item_cat.lower()
             name_lower_val = item_name.lower()
-            staple_keywords = ["dầu ăn", "gia vị", "oil", "spices", "seasoning", "nước chấm"]
-            is_staple = any(k in cat_lower or k in name_lower_val for k in staple_keywords)
+            staple_keywords = [
+                "dầu ăn",
+                "gia vị",
+                "oil",
+                "spices",
+                "seasoning",
+                "nước chấm",
+            ]
+            is_staple = any(
+                k in cat_lower or k in name_lower_val for k in staple_keywords
+            )
 
             grocery_item = GroceryItem(
                 user_id=meal_plan.user_id,
@@ -171,4 +212,8 @@ async def generate_grocery_list_background(meal_plan_id: str):
             db.add(grocery_item)
 
         await db.commit()
-        logger.info("Grocery List generated safely for MealPlan %s | Unique Items: %d", meal_plan_id, len(aggregated_items))
+        logger.info(
+            "Grocery List generated safely for MealPlan %s | Unique Items: %d",
+            meal_plan_id,
+            len(aggregated_items),
+        )

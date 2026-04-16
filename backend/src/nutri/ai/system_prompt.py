@@ -3,9 +3,7 @@ from __future__ import annotations
 
 
 class SystemPrompt:
-    """A utility class to construct structured system prompts similar to the Neuorn-AI inspired
-    version in the Plate project.
-    """
+    """A utility class to construct structured system prompts."""
 
     def __init__(
         self,

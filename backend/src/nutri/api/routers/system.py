@@ -66,7 +66,7 @@ async def get_dashboard_status(
         .join(ChatMessage, ChatSession.id == ChatMessage.session_id)
         .where(ChatSession.user_id == current_user.id)
         .where(ChatMessage.message_type == "ai")
-        .where(not ChatMessage.is_read)
+        .where(ChatMessage.is_read == False)  # noqa: E712
         .distinct()
     )
     unread_sessions = unread_result.scalars().all()
@@ -74,7 +74,7 @@ async def get_dashboard_status(
     grocery_result = await db.execute(
         select(GroceryItem)
         .where(GroceryItem.user_id == current_user.id)
-        .where(not GroceryItem.is_purchased)
+        .where(GroceryItem.is_purchased == False)  # noqa: E712
     )
     unpurchased_items = grocery_result.scalars().all()
 
@@ -96,7 +96,7 @@ async def get_dashboard_status(
         .where(
             ShoppingOrder.user_id == current_user.id,
             ShoppingOrder.status.in_(["completed", "failed"]),
-            not ShoppingOrder.notification_read,
+            ShoppingOrder.notification_read == False,  # noqa: E712
             ShoppingOrder.ordered_at >= cutoff,
         )
         .order_by(ShoppingOrder.ordered_at.desc())

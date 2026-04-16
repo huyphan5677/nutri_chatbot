@@ -1,9 +1,9 @@
 # Copyright (c) 2026 Nutri. All rights reserved.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
-from jose import JWTError, jwt
+import jwt
 from fastapi import Depends, HTTPException, status
 from pydantic import ValidationError
 from fastapi.security import OAuth2PasswordBearer
@@ -25,7 +25,7 @@ oauth2_scheme = OAuth2PasswordBearer(
 
 
 async def get_current_user(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     token: str = Depends(oauth2_scheme),
 ) -> User:
     """Get the current user from the token."""
@@ -39,7 +39,7 @@ async def get_current_user(
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
-    except (JWTError, ValidationError):
+    except (jwt.exceptions.PyJWTError, ValidationError):
         raise credentials_exception
 
     result = await db.execute(select(User).where(User.email == email))
@@ -50,7 +50,7 @@ async def get_current_user(
 
 
 async def get_optional_user(
-    db: AsyncSession = Depends(get_db),
+    db: Annotated[AsyncSession, Depends(get_db)],
     token: str | None = Depends(
         OAuth2PasswordBearer(
             tokenUrl=f"{settings.API_V1_STR}/auth/login", auto_error=False
@@ -67,5 +67,5 @@ async def get_optional_user(
             return None
         result = await db.execute(select(User).where(User.email == email))
         return result.scalars().first()
-    except (JWTError, ValidationError):
+    except (jwt.exceptions.PyJWTError, ValidationError):
         return None

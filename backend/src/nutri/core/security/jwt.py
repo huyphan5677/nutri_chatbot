@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 from datetime import UTC, datetime, timedelta
 
-from jose import jwt
+import jwt
 from passlib.context import CryptContext
 
 from nutri.common.config.settings import settings
@@ -12,7 +12,7 @@ from nutri.common.config.settings import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-ALGORITHM = "HS256"
+ALGORITHM = "RS256"
 
 
 def create_access_token(
