@@ -1,15 +1,31 @@
-from langchain_core.runnables import RunnableConfig
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from langchain_core.tools import tool
-from nutri.ai.agents.spike_predictor_agent import SpikePredictorAgent
+
 from nutri.ai.language import get_language_from_config
+from nutri.ai.agents.spike_predictor_agent import SpikePredictorAgent
+
+
+if TYPE_CHECKING:
+    from langchain_core.runnables import RunnableConfig
 
 
 @tool
-def predict_glucose_spike(food_description: str, *, config: RunnableConfig) -> str:
-    """
-    Predict the likelihood of a glucose spike from a given food or meal.
+def predict_glucose_spike(
+    food_description: str, *, config: RunnableConfig
+) -> str:
+    """Predict the likelihood of a glucose spike from a given food or meal.
+
     Args:
-        food_description: Details of the food or meal (e.g., 'A bowl of white rice', 'Burger vs Salad').
+        food_description: Details of the food or meal (e.g., 'A bowl of white
+        rice', 'Burger vs Salad').
+        config: RunnableConfig containing user_id and language.
+
+    Returns:
+        str: Formatted string containing the glucose spike prediction.
     """
     language = get_language_from_config(config)
     agent = SpikePredictorAgent()
@@ -23,8 +39,8 @@ def predict_glucose_spike(food_description: str, *, config: RunnableConfig) -> s
 
 @tool
 def calculate_bmr(weight: float, height: float, age: int, gender: str) -> float:
-    """
-    Calculate Basal Metabolic Rate (BMR) using Harris-Benedict equation.
+    """Calculate Basal Metabolic Rate (BMR) using Harris-Benedict equation.
+
     Args:
         weight: Weight in kilograms.
         height: Height in centimeters.
@@ -33,5 +49,4 @@ def calculate_bmr(weight: float, height: float, age: int, gender: str) -> float:
     """
     if gender == "male":
         return 10 * weight + 6.25 * height - 5 * age + 5
-    else:
-        return 10 * weight + 6.25 * height - 5 * age - 161
+    return 10 * weight + 6.25 * height - 5 * age - 161

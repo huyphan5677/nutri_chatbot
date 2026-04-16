@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
 """LLM-based product validation for grocery shopping results.
 
 Uses LLM to verify that search results actually match the ingredient
@@ -6,10 +7,12 @@ Now also considers required quantity vs product packaging/stock to decide
 how many units to buy.
 """
 
-import logging
-from typing import Optional
+from __future__ import annotations
 
-from pydantic import BaseModel, Field
+import logging
+
+from pydantic import Field, BaseModel
+
 
 logger = logging.getLogger("nutri.core.grocery.product_validator")
 
@@ -66,7 +69,7 @@ async def pick_best_product(
     ingredient: str,
     candidates: list,
     required_quantity: str = "",
-) -> Optional[object]:
+) -> object | None:
     """Use LLM to validate which candidate (if any) actually matches the ingredient.
 
     Args:
@@ -166,9 +169,9 @@ async def pick_cost_optimized(
     ingredient: str,
     candidates: list,
     required_quantity: str = "",
-) -> Optional[object]:
-    import asyncio
+) -> object | None:
     import re
+    import asyncio
 
     if not candidates:
         return None
@@ -177,7 +180,11 @@ async def pick_cost_optimized(
     from nutri.ai.llm_client import get_llm
 
     language = detect_user_language(candidates[0].product_name)
-    qty_context = f'\nSỐ LƯỢNG CẦN MUA THEO CÔNG THỨC: "{required_quantity}"' if required_quantity else ""
+    qty_context = (
+        f'\nSỐ LƯỢNG CẦN MUA THEO CÔNG THỨC: "{required_quantity}"'
+        if required_quantity
+        else ""
+    )
 
     product_list = "\n".join(
         f"[{i}] {p.product_name} | Giá: {p.price}₫ | Tồn kho: {p.stock} | Siêu thị: {p.source_mart} | Mô tả: {p.description[:100] if p.description else ''}"
@@ -252,7 +259,11 @@ COST OPTIMIZATION RULES:
             result = await llm.ainvoke(prompt)
 
             if result.best_index < 0 or result.best_index >= len(candidates):
-                logger.info("LLM cost-opt: no match for '%s' | reason=%s", ingredient, result.reason)
+                logger.info(
+                    "LLM cost-opt: no match for '%s' | reason=%s",
+                    ingredient,
+                    result.reason,
+                )
                 return None
 
             chosen = candidates[result.best_index]
@@ -267,33 +278,58 @@ COST OPTIMIZATION RULES:
 
             logger.info(
                 "LLM cost-opt: '%s' (need=%s) → '%s' (%s₫ × %d, %s) | reason=%s",
-                ingredient, required_quantity, chosen.product_name,
-                chosen.price, buy_qty, chosen.source_mart, result.reason,
+                ingredient,
+                required_quantity,
+                chosen.product_name,
+                chosen.price,
+                buy_qty,
+                chosen.source_mart,
+                result.reason,
             )
             return chosen
 
         except Exception as e:
             if attempt < max_retries - 1:
-                logger.warning("LLM cost-opt failed for '%s', retrying in 1s. Error: %s", ingredient, e)
+                logger.warning(
+                    "LLM cost-opt failed for '%s', retrying in 1s. Error: %s",
+                    ingredient,
+                    e,
+                )
                 await asyncio.sleep(1)
                 continue
 
-            logger.error("LLM cost-opt permanently failed for '%s': %s", ingredient, e)
+            logger.error(
+                "LLM cost-opt permanently failed for '%s': %s", ingredient, e
+            )
             break
 
     # Smart Fallback logic if LLM completely fails
     with_price = [p for p in candidates if p.price is not None]
-    best = min(with_price, key=lambda p: p.price) if with_price else candidates[0]
+    best = (
+        min(with_price, key=lambda p: p.price) if with_price else candidates[0]
+    )
     best.required_quantity = required_quantity
     best.buy_quantity = 1
 
     # Attempt to extract package_size using regex
-    m = re.search(r'(\d+(?:\.\d+)?)\s*(g|kg|ml|l|gam)(?!\w)', best.product_name, re.IGNORECASE)
+    m = re.search(
+        r"(\d+(?:\.\d+)?)\s*(g|kg|ml|l|gam)(?!\w)",
+        best.product_name,
+        re.IGNORECASE,
+    )
     if m:
         best.package_size = m.group(1) + m.group(2).lower()
-        req_m = re.search(r'(\d+(?:\.\d+)?)\s*(g|kg|ml|l|gam)(?!\w)', required_quantity, re.IGNORECASE)
+        req_m = re.search(
+            r"(\d+(?:\.\d+)?)\s*(g|kg|ml|l|gam)(?!\w)",
+            required_quantity,
+            re.IGNORECASE,
+        )
         if req_m and req_m.group(2).lower() == m.group(2).lower():
-            leftover = float(m.group(1)) * best.buy_quantity - float(req_m.group(1))
-            best.fridge_quantity = f"{leftover:g}{m.group(2).lower()}" if leftover > 0 else "0"
+            leftover = float(m.group(1)) * best.buy_quantity - float(
+                req_m.group(1)
+            )
+            best.fridge_quantity = (
+                f"{leftover:g}{m.group(2).lower()}" if leftover > 0 else "0"
+            )
 
     return best

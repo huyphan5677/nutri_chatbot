@@ -1,9 +1,14 @@
-from datetime import datetime, timedelta
-from typing import Any, Optional, Union
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
+from typing import Any
+from datetime import UTC, datetime, timedelta
 
 from jose import jwt
-from nutri.common.config.settings import settings
 from passlib.context import CryptContext
+
+from nutri.common.config.settings import settings
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -11,17 +16,19 @@ ALGORITHM = "HS256"
 
 
 def create_access_token(
-    subject: Union[str, Any], expires_delta: Optional[timedelta] = None
+    subject: str | Any, expires_delta: timedelta | None = None
 ) -> str:
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(UTC) + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
 
     to_encode = {"exp": expire, "sub": str(subject)}
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=ALGORITHM
+    )
     return encoded_jwt
 
 

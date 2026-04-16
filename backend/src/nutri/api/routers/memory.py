@@ -1,10 +1,15 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import Depends, APIRouter
+
 from nutri.ai.memory import delete_all_memories, delete_memories_by_user
+from nutri.core.memory.dto import MemoryDeleteResponse
 from nutri.api.dependencies import get_current_user
 from nutri.core.auth.models import User
-from nutri.core.memory.dto import MemoryDeleteResponse
+
 
 router = APIRouter()
 
@@ -13,7 +18,9 @@ CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 
 @router.delete("/me", response_model=MemoryDeleteResponse)
-async def delete_my_memories(current_user: CurrentUserDep) -> MemoryDeleteResponse:
+async def delete_my_memories(
+    current_user: CurrentUserDep,
+) -> MemoryDeleteResponse:
     """Delete all memory rows for the current user."""
     deleted_count = await delete_memories_by_user(str(current_user.id))
     return MemoryDeleteResponse(
@@ -25,7 +32,9 @@ async def delete_my_memories(current_user: CurrentUserDep) -> MemoryDeleteRespon
 
 
 @router.delete("/all", response_model=MemoryDeleteResponse)
-async def delete_every_memory(current_user: CurrentUserDep) -> MemoryDeleteResponse:
+async def delete_every_memory(
+    current_user: CurrentUserDep,
+) -> MemoryDeleteResponse:
     """Delete all rows from the memories table."""
     deleted_count = await delete_all_memories()
     return MemoryDeleteResponse(

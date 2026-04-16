@@ -1,21 +1,26 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+
 """Chat domain models."""
+
+from __future__ import annotations
 
 import uuid
 
-from nutri.core.db.session import Base
 from sqlalchemy import (
     JSON,
-    Boolean,
+    Text,
     Column,
+    String,
+    Boolean,
+    Integer,
     DateTime,
     ForeignKey,
-    Integer,
-    String,
-    Text,
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import UUID
+
+from nutri.core.db.session import Base
 
 
 class ChatSession(Base):
@@ -27,7 +32,9 @@ class ChatSession(Base):
     system_prompt_used = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
-        DateTime(timezone=True), server_default=func.now(), server_onupdate=func.now()
+        DateTime(timezone=True),
+        server_default=func.now(),
+        server_onupdate=func.now(),
     )
 
     user = relationship("User", back_populates="chat_sessions")

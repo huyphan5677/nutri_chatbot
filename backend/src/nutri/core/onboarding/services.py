@@ -1,10 +1,19 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, status
-from nutri.core.db.session import async_session_maker
-from nutri.core.onboarding.dto import OnboardingRequest
-from nutri.core.onboarding.models import FamilyMember
 from sqlalchemy.future import select
+
+from nutri.core.db.session import async_session_maker
+from nutri.core.onboarding.models import FamilyMember
+
+
+if TYPE_CHECKING:
+    from nutri.core.onboarding.dto import OnboardingRequest
+
 
 router = APIRouter()
 logger = logging.getLogger("nutri.api.routers.onboarding")
@@ -59,7 +68,9 @@ def activity_multiplier(activity_level: str | None) -> float:
     return mapping.get(activity_level.lower(), 1.2)
 
 
-def calculate_member_bmr_tdee(member: FamilyMember):
+def calculate_member_bmr_tdee(
+    member: FamilyMember,
+) -> tuple[float, float] | None:
     """Calculate BMR and TDEE for a family member if all required fields are present."""
     if (
         member.weight_kg is None
@@ -114,7 +125,7 @@ async def recompute_user_metabolism(user_id):
             await db.commit()
 
 
-async def enrich_user_health_profiles(user_id):
+async def enrich_user_health_profiles(user_id) -> None:
     """Background task: enrich all family members' health profiles with
     dietary metadata from the EnrichMetadataAgent.
 
@@ -151,9 +162,15 @@ async def enrich_user_health_profiles(user_id):
                 # Skip if already enriched (avoid re-running on update)
                 if hp.get("enriched_metadata"):
                     existing_meta = hp["enriched_metadata"]
-                    existing_conditions = set(existing_meta.get("conditions_metadata", {}).keys())
-                    existing_allergies = set(existing_meta.get("allergies_metadata", {}).keys())
-                    if existing_conditions == set(conditions) and existing_allergies == set(allergies):
+                    existing_conditions = set(
+                        existing_meta.get("conditions_metadata", {}).keys()
+                    )
+                    existing_allergies = set(
+                        existing_meta.get("allergies_metadata", {}).keys()
+                    )
+                    if existing_conditions == set(
+                        conditions
+                    ) and existing_allergies == set(allergies):
                         logger.debug(
                             "Member '%s' already enriched with same data, skipping",
                             member.name,
@@ -167,16 +184,20 @@ async def enrich_user_health_profiles(user_id):
                     allergies,
                 )
 
-                enriched = await agent.enrich_member_profile(conditions, allergies)
+                enriched = await agent.enrich_member_profile(
+                    conditions, allergies
+                )
 
                 # Merge enriched data into health_profile
                 updated_hp = dict(hp)
                 updated_hp["enriched_metadata"] = {
                     "conditions_metadata": {
-                        k: v.model_dump() for k, v in enriched.conditions_metadata.items()
+                        k: v.model_dump()
+                        for k, v in enriched.conditions_metadata.items()
                     },
                     "allergies_metadata": {
-                        k: v.model_dump() for k, v in enriched.allergies_metadata.items()
+                        k: v.model_dump()
+                        for k, v in enriched.allergies_metadata.items()
                     },
                 }
                 member.health_profile = updated_hp
@@ -195,7 +216,7 @@ async def enrich_user_health_profiles(user_id):
                 )
 
     except Exception as e:
-        logger.error(
+        logger.error(  # noqa: TRY400
             "enrich_user_health_profiles FAILED | user_id=%s | error=%s",
             user_id,
             e,

@@ -1,16 +1,20 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
 """Mart search service using direct Lotte Mart & WinMart product APIs.
 
 Searches product catalogs directly via HTTP POST, returning structured
 product data with real prices (no regex scraping).
 """
 
+from __future__ import annotations
+
+import re
 import asyncio
 import logging
-import re
 from typing import Literal
 
 import httpx
-from pydantic import BaseModel, Field
+from pydantic import Field, BaseModel
+
 
 logger = logging.getLogger("nutri.core.grocery.mart_search")
 
@@ -43,7 +47,9 @@ class OptimizedIngredient(BaseModel):
         description="The index of the ingredient in the input list.",
     )
     original: str = Field(description="The original name of the ingredient.")
-    optimized: str = Field(description="The simplified name of the ingredient for searching.")
+    optimized: str = Field(
+        description="The simplified name of the ingredient for searching."
+    )
 
 
 class OptimizedIngredients(BaseModel):
@@ -58,12 +64,13 @@ async def optimize_search_terms(items: list[str]) -> list[str]:
         return []
 
     try:
-        from nutri.ai.language import detect_user_language
         from nutri.ai.llm_client import get_llm
 
         llm = get_llm().with_structured_output(OptimizedIngredients)
 
-        numbered_list = "\n".join(f"[{i}] {item}" for i, item in enumerate(items))
+        numbered_list = "\n".join(
+            f"[{i}] {item}" for i, item in enumerate(items)
+        )
 
         # Hardcode language to Vietnamese because lottemart, winmart only support Vietnamese
         # language = detect_user_language(items[0])
@@ -107,7 +114,10 @@ REQUIREMENTS:
             optimized = optimized_map.get(i, original)
             if optimized != original:
                 logger.debug(
-                    "Optimize ingredient [%d]: '%s' → '%s'", i, original, optimized
+                    "Optimize ingredient [%d]: '%s' → '%s'",
+                    i,
+                    original,
+                    optimized,
                 )
             output.append(optimized)
 
@@ -128,7 +138,9 @@ async def search_lotte_api(
     query: str, branch_id: str = "nsg", top_n: int = 5
 ) -> list[ShoppingProduct]:
     """Search Lotte Mart product catalog via their internal API."""
-    url = f"https://www.lottemart.vn/v1/p/mart/es/vi_{branch_id}/products/search"
+    url = (
+        f"https://www.lottemart.vn/v1/p/mart/es/vi_{branch_id}/products/search"
+    )
     payload = {
         "limit": 10,
         "offset": 1,
@@ -248,7 +260,9 @@ async def search_winmart_api(
 
             price_data = item.get("price", {})
             price = price_data.get("salePrice", price_data.get("listPrice", 0))
-            name = item.get("description", item.get("name", "Unknown Winmart Item"))
+            name = item.get(
+                "description", item.get("name", "Unknown Winmart Item")
+            )
             uom = item.get("uomName", "")
             seoName = item.get("seoName", "")
             product_url = f"https://winmart.vn/products/{seoName}"
@@ -261,7 +275,7 @@ async def search_winmart_api(
                     stock=stock,
                     product_url=product_url,
                     source_mart="Winmart",
-                    description=uom if uom else "",
+                    description=uom or "",
                 )
             )
 
@@ -287,7 +301,9 @@ async def search_winmart_api(
 
 
 async def execute_strategy(
-    items: list[dict],  # [{name: str, quantity: str | None, search_name: str}, ...]
+    items: list[
+        dict
+    ],  # [{name: str, quantity: str | None, search_name: str}, ...]
     strategy: Literal["lotte_priority", "winmart_priority", "cost_optimized"],
     lotte_branch_id: str = "nsg",
     winmart_store_code: str = "1535",
@@ -299,8 +315,10 @@ async def execute_strategy(
       found: list[ShoppingProduct]
       not_found: list[str]
       total_estimated_cost: float
-    """
 
+    Raises:
+        ValueError: If the strategy is invalid.
+    """
     found: list[ShoppingProduct] = []
     not_found: list[str] = []
 
@@ -356,20 +374,32 @@ async def _strategy_priority(
 
     semaphore = asyncio.Semaphore(5)
 
-    async def _process_phase1(item: dict) -> tuple[dict, ShoppingProduct | None]:
+    async def _process_phase1(
+        item: dict,
+    ) -> tuple[dict, ShoppingProduct | None]:
         async with semaphore:
             name = item["name"]
             search_name = item.get("search_name", name)
             qty = item.get("quantity", "")
-            logger.info("[Phase 1] '%s' (qty=%s) → search='%s' on %s", name, qty, search_name, primary)
+            logger.info(
+                "[Phase 1] '%s' (qty=%s) → search='%s' on %s",
+                name,
+                qty,
+                search_name,
+                primary,
+            )
 
             if primary == "lotte":
-                candidates = await search_lotte_api(search_name, lotte_branch_id)
+                candidates = await search_lotte_api(
+                    search_name, lotte_branch_id
+                )
             else:
                 candidates = await search_winmart_api(
                     search_name, winmart_store_code, winmart_store_group_code
                 )
-            product = await pick_best_product(name, candidates, required_quantity=qty)
+            product = await pick_best_product(
+                name, candidates, required_quantity=qty
+            )
             if product:
                 product.ingredient_name = name
                 product.quantity = qty
@@ -389,21 +419,32 @@ async def _strategy_priority(
     # --- Phase 2: Fallback for missing items ---
     still_not_found: list[str] = []
 
-    async def _process_phase2(item: dict) -> tuple[dict, ShoppingProduct | None]:
+    async def _process_phase2(
+        item: dict,
+    ) -> tuple[dict, ShoppingProduct | None]:
         async with semaphore:
             name = item["name"]
             search_name = item.get("search_name", name)
             qty = item.get("quantity", "")
-            logger.info("[Phase 2] '%s' (qty=%s) → search='%s' (fallback)", name, qty, search_name)
+            logger.info(
+                "[Phase 2] '%s' (qty=%s) → search='%s' (fallback)",
+                name,
+                qty,
+                search_name,
+            )
 
             if primary == "lotte":
                 candidates = await search_winmart_api(
                     search_name, winmart_store_code, winmart_store_group_code
                 )
             else:
-                candidates = await search_lotte_api(search_name, lotte_branch_id)
+                candidates = await search_lotte_api(
+                    search_name, lotte_branch_id
+                )
 
-            product = await pick_best_product(name, candidates, required_quantity=qty)
+            product = await pick_best_product(
+                name, candidates, required_quantity=qty
+            )
             if product:
                 product.ingredient_name = name
                 product.quantity = qty
@@ -442,7 +483,12 @@ async def _strategy_cost_optimized(
             name = item["name"]
             search_name = item.get("search_name", name)
             qty = item.get("quantity", "")
-            logger.info("[CostOpt] '%s' (qty=%s) → search='%s' on both", name, qty, search_name)
+            logger.info(
+                "[CostOpt] '%s' (qty=%s) → search='%s' on both",
+                name,
+                qty,
+                search_name,
+            )
 
             lotte_results, winmart_results = await asyncio.gather(
                 search_lotte_api(search_name, lotte_branch_id),
@@ -455,7 +501,9 @@ async def _strategy_cost_optimized(
             if not all_candidates:
                 return name, None
 
-            product = await pick_cost_optimized(name, all_candidates, required_quantity=qty)
+            product = await pick_cost_optimized(
+                name, all_candidates, required_quantity=qty
+            )
             if product:
                 product.ingredient_name = name
                 product.quantity = qty

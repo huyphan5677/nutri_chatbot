@@ -1,26 +1,39 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
+import secrets
+from typing import TYPE_CHECKING, Annotated
+
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import Depends, Request, APIRouter, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from nutri.api.dependencies import get_current_user
-from nutri.common.i18n import get_request_language, normalize_language
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from nutri.common.i18n import normalize_language, get_request_language
 from nutri.core.auth.dto import (
-    AuthResponse,
-    LanguagePreferenceUpdate,
-    PasswordUpdate,
-    ThemePreferenceUpdate,
-    UserCreate,
     UserDTO,
+    UserCreate,
+    AuthResponse,
+)
+from nutri.core.db.session import get_db
+from nutri.api.dependencies import get_current_user
+from nutri.core.auth.models import User
+from nutri.core.security.jwt import (
+    verify_password,
+    get_password_hash,
+    create_access_token,
 )
 from nutri.core.auth.entities import GoogleToken
-from nutri.core.auth.models import User
-from nutri.core.db.session import get_db
-from nutri.core.security.jwt import (
-    create_access_token,
-    get_password_hash,
-    verify_password,
-)
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+
+
+if TYPE_CHECKING:
+    from nutri.core.auth.dto import (
+        PasswordUpdate,
+        ThemePreferenceUpdate,
+        LanguagePreferenceUpdate,
+    )
+
 
 router = APIRouter()
 
@@ -54,13 +67,19 @@ AUTH_MESSAGES = {
 
 
 def auth_message(key: str, language: str) -> str:
+    """Get auth message in the specified language."""
     translations = AUTH_MESSAGES.get(key, {})
     return translations.get(language) or translations.get("en") or key
 
 
 async def persist_user_language(
-    user: User, language: str, db: AsyncSession, commit: bool = True
-):
+    user: User,
+    language: str,
+    db: AsyncSession,
+    *,
+    commit: bool = True,
+) -> None:
+    """Persist user language preference."""
     normalized = normalize_language(language, default="en")
     if user.preferred_language == normalized:
         return
@@ -71,7 +90,9 @@ async def persist_user_language(
 
 
 @router.get("/me", response_model=UserDTO)
-async def read_users_me(current_user: User = Depends(get_current_user)):
+async def read_users_me(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> UserDTO:
     """Get the current user."""
     return current_user
 
@@ -79,9 +100,10 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 @router.patch("/preferences/language", response_model=UserDTO)
 async def update_language_preference(
     payload: LanguagePreferenceUpdate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> UserDTO:
+    """Update user language preference."""
     await persist_user_language(current_user, payload.preferred_language, db)
     await db.refresh(current_user)
     return current_user
@@ -90,11 +112,12 @@ async def update_language_preference(
 @router.patch("/preferences/theme", response_model=UserDTO)
 async def update_theme_preference(
     payload: ThemePreferenceUpdate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> UserDTO:
+    """Update user theme preference."""
     normalized = payload.preferred_theme.strip().lower()
-    if normalized not in ("light", "dark"):
+    if normalized not in {"light", "dark"}:
         normalized = "light"
     if current_user.preferred_theme != normalized:
         current_user.preferred_theme = normalized
@@ -107,13 +130,28 @@ async def update_theme_preference(
 async def update_password(
     payload: PasswordUpdate,
     request: Request,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Change the current user's password."""
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Change the current user's password.
+
+    Args:
+        payload (PasswordUpdate): Password update payload.
+        request (Request): HTTP request.
+        current_user (User): Current user.
+        db (AsyncSession): Database session.
+
+    Returns:
+        dict[str, str]: Message indicating successful password update.
+
+    Raises:
+        HTTPException: If password update fails.
+    """
     language = get_request_language(request)
 
-    if not verify_password(payload.current_password, current_user.password_hash):
+    if not verify_password(
+        payload.current_password, current_user.password_hash
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=auth_message("incorrect_credentials", language),
@@ -122,7 +160,10 @@ async def update_password(
     if len(payload.new_password) < 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"en": "Password must be at least 6 characters.", "vi": "Mật khẩu phải có ít nhất 6 ký tự."}.get(language, "Password must be at least 6 characters."),
+            detail={
+                "en": "Password must be at least 6 characters.",
+                "vi": "Mật khẩu phải có ít nhất 6 ký tự.",
+            }.get(language, "Password must be at least 6 characters."),
         )
 
     current_user.password_hash = get_password_hash(payload.new_password)
@@ -132,10 +173,18 @@ async def update_password(
 
 @router.delete("/me")
 async def delete_account(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Permanently delete the current user's account and all associated data."""
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Permanently delete the current user's account and all associated data.
+
+    Args:
+        current_user (User): Current user.
+        db (AsyncSession): Database session.
+
+    Returns:
+        dict[str, str]: Message indicating successful account deletion.
+    """
     await db.delete(current_user)
     await db.commit()
     return {"message": "Account deleted successfully."}
@@ -143,9 +192,23 @@ async def delete_account(
 
 @router.post("/register", response_model=AuthResponse)
 async def register(
-    user_in: UserCreate, request: Request, db: AsyncSession = Depends(get_db)
-):
-    """Register a new user."""
+    user_in: UserCreate,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> AuthResponse:
+    """Register a new user.
+
+    Args:
+        user_in (UserCreate): User creation payload.
+        request (Request): HTTP request.
+        db (AsyncSession): Database session.
+
+    Returns:
+        AuthResponse: Authentication response.
+
+    Raises:
+        HTTPException: If registration fails.
+    """
     language = get_request_language(request)
 
     # Check if user exists
@@ -177,14 +240,28 @@ async def register(
 @router.post("/login", response_model=AuthResponse)
 async def login(
     request: Request,
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db),
-):
-    """Login a user."""
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> AuthResponse:
+    """Login a user.
+
+    Args:
+        request (Request): HTTP request.
+        form_data (OAuth2PasswordRequestForm): Form data.
+        db (AsyncSession): Database session.
+
+    Returns:
+        AuthResponse: Authentication response.
+
+    Raises:
+        HTTPException: If login fails.
+    """
     language = get_request_language(request)
 
     # Authenticate User
-    result = await db.execute(select(User).where(User.email == form_data.username))
+    result = await db.execute(
+        select(User).where(User.email == form_data.username)
+    )
     user = result.scalars().first()
 
     # Check if user exists
@@ -219,9 +296,23 @@ async def login(
 
 @router.post("/google", response_model=AuthResponse)
 async def google_login(
-    token_data: GoogleToken, request: Request, db: AsyncSession = Depends(get_db)
-):
-    """Login a user with Google."""
+    token_data: GoogleToken,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> AuthResponse:
+    """Login a user with Google.
+
+    Args:
+        token_data (GoogleToken): Google token payload.
+        request (Request): HTTP request.
+        db (AsyncSession): Database session.
+
+    Returns:
+        AuthResponse: Authentication response.
+
+    Raises:
+        HTTPException: If login fails.
+    """
     language = get_request_language(request)
 
     # 1. Verify Token with Google
@@ -253,8 +344,8 @@ async def google_login(
 
     if not user:
         # 3. Auto-register if new
-        # Generate a random password (user should use Google to login, or reset pass later)
-        import secrets
+        # Generate a random password (user should use Google to login,
+        # or reset pass later)
 
         random_pass = secrets.token_urlsafe(16)
         hashed_password = get_password_hash(random_pass)

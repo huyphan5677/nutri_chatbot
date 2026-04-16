@@ -1,3 +1,7 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
+
 def format_quantity_grams(quantity) -> str:
     if quantity is None:
         return "1g"

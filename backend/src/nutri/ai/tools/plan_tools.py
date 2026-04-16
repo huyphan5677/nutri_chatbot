@@ -1,12 +1,26 @@
-from langchain_core.runnables import RunnableConfig
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
+import asyncio
+import logging
+from typing import TYPE_CHECKING
+
+from sqlalchemy.future import select
 from langchain_core.tools import tool
-from nutri.ai.workflows.meal_plan_workflow import generate_meal_plan_draft
+from langchain_core.callbacks import adispatch_custom_event
+
+from nutri.ai.memory import get_nutri_memory
 from nutri.core.db.session import async_session_maker
 from nutri.core.onboarding.models import FamilyMember
-from sqlalchemy.future import select
+from nutri.ai.workflows.meal_plan_workflow import generate_meal_plan_draft
+
+
+if TYPE_CHECKING:
+    from langchain_core.runnables import RunnableConfig
 
 
 def _fmt_num(v):
+    """Format a number to a string."""
     if v is None:
         return "N/A"
     try:
@@ -17,6 +31,7 @@ def _fmt_num(v):
 
 
 async def _build_metabolic_context(user_id: str, language: str) -> str:
+    """Build metabolic context for the user."""
     async with async_session_maker() as db:
         result = await db.execute(
             select(FamilyMember).where(FamilyMember.user_id == user_id)
@@ -57,10 +72,6 @@ async def _build_metabolic_context(user_id: str, language: str) -> str:
 
     # Inject Mem0 long-term memory
     try:
-        import asyncio
-
-        from nutri.ai.memory import get_nutri_memory
-
         nutri_memory = get_nutri_memory()
 
         # Search for general dining preferences
@@ -70,19 +81,17 @@ async def _build_metabolic_context(user_id: str, language: str) -> str:
         )
 
         memories = (
-            [m.get("memory") for m in results] if isinstance(results, list) else []
+            [m.get("memory") for m in results]
+            if isinstance(results, list)
+            else []
         )
         if memories:
-            lines.append("\n[USER LONG-TERM MEMORY & PREFERENCES]")
-            lines.append(
-                "CRITICAL: You MUST respect the following specific facts we learned about this user:"
-            )
-            for m in memories:
-                if m:
-                    lines.append(f"- {m}")
+            lines.extend((
+                "\n[USER LONG-TERM MEMORY & PREFERENCES]",
+                "CRITICAL: You MUST respect the following specific facts we learned about this user:",
+            ))
+            lines.extend(f"- {m}" for m in memories if m)
     except Exception as e:
-        import logging
-
         logging.getLogger("nutri.ai.plan_tools").warning(
             "Failed to inject mem0 into plan_tools: %s", e
         )
@@ -98,20 +107,25 @@ async def create_meal_plan(
     *,
     config: RunnableConfig,
 ) -> dict:
-    """
-    Activates the deep workflow to generate a meal plan draft for the user (1-7 days).
-    Use this whenever the user asks for a menu/thuc don, including single-day requests
-    like tonight/today (use total_days=1 and include constraints via custom_prompt).
+    """Activates the deep workflow to generate a meal plan draft.
+
+    Use this whenever the user asks for a menu/thuc don, including single-day
+    requests like tonight/today (use total_days=1 and include constraints via
+    custom_prompt).
     """
     user_id = config.get("configurable", {}).get("user_id")
-    from langchain_core.callbacks import adispatch_custom_event
 
     def _t(msg_en: str, msg_vi: str) -> str:
         return msg_vi if (language or "").lower().startswith("vi") else msg_en
 
     await adispatch_custom_event(
         "meal_plan_progress",
-        {"step": _t("Reading user profile...", "Đang đọc hồ sơ người dùng..."), "preview": ""},
+        {
+            "step": _t(
+                "Reading user profile...", "Đang đọc hồ sơ người dùng..."
+            ),
+            "preview": "",
+        },
         config=config,
     )
 

@@ -1,4 +1,6 @@
-from typing import Optional
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 import re
 
 
@@ -29,7 +31,7 @@ def is_meaningful_message(msg: str) -> bool:
     return True
 
 
-def extract_meal_plan_draft(tool_calls) -> Optional[dict]:
+def extract_meal_plan_draft(tool_calls) -> dict | None:
     if not isinstance(tool_calls, list):
         return None
 

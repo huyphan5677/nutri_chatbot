@@ -1,42 +1,57 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 import ast
 import json
-import logging
 import uuid
+import asyncio
+import logging
+from typing import TYPE_CHECKING, Any
 from datetime import datetime
-from typing import Any, Optional
 from zoneinfo import ZoneInfo
+from collections.abc import AsyncGenerator
 
-from langchain_core.messages import SystemMessage
 from langgraph.prebuilt import create_react_agent
-from nutri.ai.checkpoint import get_postgres_checkpointer, pre_model_trim_messages
-from nutri.ai.language import detect_user_language, normalize_language
+from langchain_core.messages import SystemMessage
+
+from nutri.ai.memory import get_nutri_memory
+from nutri.ai.language import normalize_language, detect_user_language
+from nutri.ai.checkpoint import (
+    pre_model_trim_messages,
+    get_postgres_checkpointer,
+)
 from nutri.ai.llm_client import get_llm
+from nutri.ai.tools.menu_tools import (
+    get_overview_menu_previous,
+    get_detail_menu_previous_by_id,
+)
+from nutri.ai.tools.plan_tools import create_meal_plan
 from nutri.ai.tools.health_tools import (
     get_health_goals,
 )
+from nutri.ai.tools.profile_tools import get_user_profile
 from nutri.ai.tools.knowledge_tools import (
-    enrich_attribute_metadata,
-    get_diet_reference,
     web_search_info,
-)
-from nutri.ai.tools.menu_tools import (
-    get_detail_menu_previous_by_id,
-    get_overview_menu_previous,
+    get_diet_reference,
+    enrich_attribute_metadata,
 )
 from nutri.ai.tools.nutrition_tools import (
     calculate_bmr,
     predict_glucose_spike,
 )
-from nutri.ai.tools.plan_tools import create_meal_plan
-from nutri.ai.tools.profile_tools import get_user_profile
+
+
+if TYPE_CHECKING:
+    from langchain_core.runnables import Runnable
+
 
 logger = logging.getLogger("nutri.ai.agents.assistant")
 
 
-def _extract_meal_plan_draft(tool_output: Any) -> Optional[dict]:
+def _extract_meal_plan_draft(tool_output: Any) -> dict | None:
     parsed_output: Any = tool_output
     if hasattr(parsed_output, "content"):
-        parsed_output = getattr(parsed_output, "content")
+        parsed_output = parsed_output.content
 
     if isinstance(parsed_output, str):
         text = parsed_output.strip()
@@ -65,16 +80,20 @@ def _extract_meal_plan_draft(tool_output: Any) -> Optional[dict]:
 
 
 class AssistantAgent:
-    """
-    The main conversational orchestrator for the Nutri App.
-    Uses LangGraph's prebuilt ReAct agent to decide which tools to call based on user input.
+    """The main conversational orchestrator for the Nutri App.
+
+    Uses LangGraph's prebuilt ReAct agent to decide which tools to
+    call based on user input.
     """
 
-    def __init__(self, user_id: str, timezone: str = "UTC", language: str = "en"):
+    def __init__(
+        self, user_id: str, timezone: str = "UTC", language: str = "en"
+    ) -> None:
         self.user_id = user_id
         self.timezone = timezone
         self.language = language
-        # Lower temperature improves deterministic tool selection for action-oriented requests.
+        # Lower temperature improves deterministic tool selection for
+        # action-oriented requests.
         self.llm = get_llm(temperature=0.2)
         logger.info(
             "AssistantAgent init | user_id=%s | language=%s | timezone=%s",
@@ -97,7 +116,11 @@ class AssistantAgent:
             get_detail_menu_previous_by_id,
         ]
 
-    async def _get_app(self, thread_id: str, memories_context: str = ""):
+    async def _get_app(
+        self,
+        thread_id: str,
+        memories_context: str = "",
+    ) -> Runnable:
         """Lazy load the agent with the postgres checkpointer."""
         checkpointer = await get_postgres_checkpointer()
         return create_react_agent(
@@ -116,30 +139,41 @@ class AssistantAgent:
         prompt = f"""
         # IDENTITY
         You are Corin, a professional, empathetic nutrition assistant.
-        You NEVER guess health recommendations. You ALWAYS use your tools to analyze data.
+        You NEVER guess health recommendations. You ALWAYS use your tools to
+        analyze data.
         You MUST respond in the user's language.
         User timezone: {self.timezone} and now: {now_str}.
         Detected user language code: {language_code}.
-        If a tool returns English text, rewrite and present it in language code {language_code}.
+        If a tool returns English text, rewrite and present it in language
+        code {language_code}.
         If language detection confidence is low, default to English.
 
         # USER MEMORY & PREFERENCES
         These are past facts and preferences learned about the user:
-        {memories_context if memories_context else "No past memory available."}
-        Use these explicitly to adapt your answering style, tone, and dietary constraints when appropriate.
+        {memories_context or "No past memory available."}
+        Use these explicitly to adapt your answering style, tone, and dietary
+        constraints when appropriate.
 
         # CORE BEHAVIOR
-        - **ACT IMMEDIATELY** on clear user requests. Never respond with confirmations like
-        "Sure! Let me do that for you" before calling a tool. Call the tool first, then present results.
-        - If a required tool call fails or returns insufficient data, ask the user ONLY for the
-        specific missing fields needed. Do not ask for information you can retrieve via tools.
+        - **ACT IMMEDIATELY** on clear user requests. Never respond with
+        confirmations like
+        "Sure! Let me do that for you" before calling a tool. Call the tool
+        first, then present results.
+        - If a required tool call fails or returns insufficient data, ask the
+        user ONLY for the specific missing fields needed. Do not ask for
+        information you can retrieve via tools.
 
         # NON-NEGOTIABLE EXECUTION CONTRACT
-        - If the user asks for an action that maps to tools, you MUST execute tools in the SAME turn.
-        - Do NOT stop at intent acknowledgment (e.g., "I will check your profile...").
-        - A turn is considered incomplete if you only promise an action but do not call tools.
-        - For action requests, natural-language content before first tool call must be minimal or empty.
-        - Forbidden behavior: confirmation-only reply without any tool call for actionable requests.
+        - If the user asks for an action that maps to tools, you MUST execute
+        tools in the SAME turn.
+        - Do NOT stop at intent acknowledgment (e.g., "I will check your
+        profile...").
+        - A turn is considered incomplete if you only promise an action but do
+         not call tools.
+        - For action requests, natural-language content before first tool call
+        must be minimal or empty.
+        - Forbidden behavior: confirmation-only reply without any tool call for
+         actionable requests.
 
         # RULES
 
@@ -147,68 +181,106 @@ class AssistantAgent:
         - Step 1: After receiving profile data, check for required fields:
         weight, height, age, gender, activity_level.
         - Step 2a: All fields present → call `calculate_bmr` immediately.
-        - Step 2b: Some fields missing → ask user ONLY for the specific missing fields,
+        - Step 2b: Some fields missing → ask user ONLY for the specific missing
+        fields,
         then call `calculate_bmr` once received.
         - Step 3: Present BMR results in detail structure and explain.
 
         ## 2, Meal Suggestions
-        - Step 1: Call `get_user_profile` first if user conditions/preferences are unknown.
-        - Step 2: Use `predict_glucose_spike` when user asks about a food's health impact.
+        - Step 1: Call `get_user_profile` first if user conditions/preferences
+        are unknown.
+        - Step 2: Use `predict_glucose_spike` when user asks about a food's
+        health impact.
 
         ## 3, Meal Plans (menu / thực đơn / lên menu / meal)
         - DO NOT CALL `get_user_profile`.
         - Step 1: Call `build_new_menu_plan`.
-            • Single meal request ("tối nay", "bữa trưa", "morning", "lunch", "sáng",...) → total_days=1, and custom_prompt MUST explicitly say `Generate ONLY <meal_type> for the requested time. Do NOT include other meal types.` and language={language_code}.
+            • Single meal request ("tối nay", "bữa trưa", "morning", "lunch",
+            "sáng",...) → total_days=1, and custom_prompt MUST explicitly say
+            `Generate ONLY <meal_type> for the requested time. Do NOT include
+            other meal types.` and language={language_code}.
             • Multi-day request → total_days = requested number
-            • If the user asks only for one meal slot, custom_prompt must explicitly forbid the other meal slots. Example for "lên menu tối nay cho tôi": `Generate ONLY dinner for tonight. Do NOT include breakfast, lunch, or snack.` and language={language_code}.
+            • If the user asks only for one meal slot, custom_prompt must
+            explicitly forbid the other meal slots. Example for "lên menu tối
+            nay cho tôi": `Generate ONLY dinner for tonight. Do NOT include
+            breakfast, lunch, or snack.` and language={language_code}.
 
-        - Step 2: NEVER ask for confirmation before acting. NEVER say "Let me prepare that" before calling.
+        - Step 2: NEVER ask for confirmation before acting. NEVER say "Let me
+        prepare that" before calling.
         - Step 3: Completion criteria for meal-plan turn:
             a) `build_new_menu_plan` has been called
-            b) final response includes clear outcome and next action (Review + Save menu + View details)
+            b) final response includes clear outcome and next action (Review +
+            Save menu + View details)
 
         ## Tool-Chaining Reliability Rule
-        - For multi-step tasks (like meal plans), continue chaining tools until completion criteria are met.
+        - For multi-step tasks (like meal plans), continue chaining tools until
+        completion criteria are met.
         - Do not terminate early after only the first prerequisite tool.
-        - If a tool returns partial data, continue with best valid next tool call instead of stopping.
+        - If a tool returns partial data, continue with best valid next tool call
+        instead of stopping.
 
         ## Behavior Examples:
         - User: "lên menu 2 ngày cho tôi"
-            Correct behavior in SAME turn: call `build_new_menu_plan(total_days=2, custom_prompt=..., language={language_code})` -> present result.
-            Incorrect behavior: only replying "I will check your profile" and stopping.
+            Correct behavior in SAME turn: call
+            `build_new_menu_plan(total_days=2, custom_prompt=...,
+            language={language_code})` -> present result.
+            Incorrect behavior: only replying "I will check your profile" and
+            stopping.
         - User: "lên menu tối nay cho tôi"
-            Correct behavior in SAME turn: call `build_new_menu_plan(total_days=1, custom_prompt="Generate ONLY dinner for tonight. Do NOT include breakfast, lunch, or snack.", language={language_code})` -> present result.
+            Correct behavior in SAME turn: call
+            `build_new_menu_plan(total_days=1,custom_prompt="Generate ONLY
+             dinner for tonight. Do NOT include
+            breakfast, lunch, or snack.", language={language_code})` -> present
+            result.
             Incorrect behavior: generating a full-day menu.
 
         ## 4, View historical diet log
-        - CRITICAL RULE: DO NOT use `view_historical_diet_log` when the user asks to "lên menu", "tạo menu", or create a new menu!!
-        - ONLY use this tool when the user explicitly asks about PAST, OLD, or HISTORY logs (e.g., "what did I eat last week?", "xem nhật ký cũ", "menu cũ").
-        When use tool view_historical_diet_log => final friendly response MUST include log id for next action (View detail by id).
+        - CRITICAL RULE: DO NOT use `view_historical_diet_log` when the user
+        asks to "lên menu", "tạo menu", or create a new menu!!
+        - ONLY use this tool when the user explicitly asks about PAST, OLD, or
+        HISTORY logs (e.g., "what did I eat last week?", "xem nhật ký cũ",
+        "menu cũ").
+        When use tool view_historical_diet_log => final friendly response MUST
+        include log id for next action (View detail by id).
 
         ## 5, Out-of-Domain Questions
-        - If the question is outside nutrition/health, first state that you are a nutrition and wellness assistant.
+        - If the question is outside nutrition/health, first state that you are
+        a nutrition and wellness assistant.
         - State this in language code {language_code}.
         - Then use `web_search_info` to find and provide the answer.
-        - When `web_search_info` returns sources, include 1-5 source URLs in your final reply.
-        - Synthesize the result briefly; do not dump raw snippets unless user asks for raw output.
-        - If web search has no usable result, clearly say so and suggest a refined query.
+        - When `web_search_info` returns sources, include 1-5 source URLs in
+        your final reply.
+        - Synthesize the result briefly; do not dump raw snippets unless user
+        asks for raw output.
+        - If web search has no usable result, clearly say so and suggest a
+        refined query.
 
         # DECISION FLOW
         User request received
-        → Is it actionable with available tools? YES → Call tool immediately, present results.
-        → Missing required data that tools can't provide? → Ask ONLY for those specific fields.
+        → Is it actionable with available tools? YES → Call tool immediately,
+         present results.
+        → Missing required data that tools can't provide? → Ask ONLY for those
+         specific fields.
         → Out of domain? → Disclaim, then search.
         """
         return SystemMessage(content=prompt)
 
     async def chat_stream(
-        self, user_message: str, thread_id: str = None, top_memories: int = 5
-    ):
-        """Process a user message and yield the assistant's reply as a stream of chunks."""
-        import asyncio
+        self,
+        user_message: str,
+        thread_id: str | None = None,
+        top_memories: int = 5,
+    ) -> AsyncGenerator[dict[str, Any], None]:
+        """Process a user message and yield the assistant's reply as a stream.
 
-        from nutri.ai.memory import get_nutri_memory
+        Args:
+            user_message: The user's message.
+            thread_id: The thread ID.
+            top_memories: The number of top memories to retrieve.
 
+        Yields:
+            The assistant's reply as a stream of chunks.
+        """
         if not thread_id:
             thread_id = str(uuid.uuid4())
 
@@ -238,7 +310,7 @@ class AssistantAgent:
             nutri_memory = get_nutri_memory()
 
             # 1. Fire-and-forget memory extraction
-            async def add_memory_task():
+            async def add_memory_task() -> None:
                 try:
                     await asyncio.to_thread(
                         nutri_memory.add,
@@ -274,21 +346,27 @@ class AssistantAgent:
             if memories_list:
                 # Deduplicate and filter empty
                 memories_list = list(
-                    dict.fromkeys([m.strip() for m in memories_list if m.strip()])
+                    dict.fromkeys([
+                        m.strip() for m in memories_list if m.strip()
+                    ])
                 )
                 memories_str = "\n".join(f"- {m}" for m in memories_list)
                 logger.info(
-                    "Found %d memories for user %s", len(memories_list), self.user_id
+                    "Found %d memories for user %s",
+                    len(memories_list),
+                    self.user_id,
                 )
         except Exception as e:
             logger.warning("Mem0 execution error: %s", e)
 
         # Notify UI about memory retrieval completion
-        logger.info("Memory retrieval completed | memories_str=%s", memories_str)
+        logger.info(
+            "Memory retrieval completed | memories_str=%s", memories_str
+        )
         yield {
             "type": "tool_end",
             "name": "memory_retrieval",
-            "result_snippet": memories_str if memories_str else " ",
+            "result_snippet": memories_str or " ",
         }
 
         app_with_prompt = await self._get_app(thread_id, memories_str)
@@ -312,7 +390,10 @@ class AssistantAgent:
                 is_tool_call = False
                 if hasattr(chunk, "tool_calls") and chunk.tool_calls:
                     is_tool_call = True
-                if hasattr(chunk, "tool_call_chunks") and chunk.tool_call_chunks:
+                if (
+                    hasattr(chunk, "tool_call_chunks")
+                    and chunk.tool_call_chunks
+                ):
                     is_tool_call = True
 
                 if not is_tool_call:
@@ -322,7 +403,10 @@ class AssistantAgent:
                         yield {"type": "chunk", "content": content}
                     elif isinstance(content, list):
                         for block in content:
-                            if isinstance(block, dict) and block.get("type") == "text":
+                            if (
+                                isinstance(block, dict)
+                                and block.get("type") == "text"
+                            ):
                                 total_chunks += 1
                                 yield {
                                     "type": "chunk",
@@ -337,7 +421,10 @@ class AssistantAgent:
                     total_chunks = 0
 
                 active_tools += 1
-                yield {"type": "tool_start", "name": event.get("name", "unknown")}
+                yield {
+                    "type": "tool_start",
+                    "name": event.get("name", "unknown"),
+                }
                 logger.debug(
                     "tool_call | user_id=%s | thread_id=%s | tool=%s | input=%r",
                     self.user_id,
@@ -356,12 +443,16 @@ class AssistantAgent:
                         try:
                             raw_out = getattr(output, "content", output)
                             if isinstance(raw_out, dict):
-                                out_str = json.dumps(raw_out, ensure_ascii=False)
+                                out_str = json.dumps(
+                                    raw_out, ensure_ascii=False
+                                )
                             else:
                                 out_str = str(raw_out)
                             out_str = " ".join(out_str.split())
                             snippet = (
-                                out_str[:200] + "..." if len(out_str) > 200 else out_str
+                                out_str[:200] + "..."
+                                if len(out_str) > 200
+                                else out_str
                             )
                         except Exception:
                             pass
@@ -370,7 +461,8 @@ class AssistantAgent:
                     if event.get("name") == "build_new_menu_plan":
                         meal_plan_draft = _extract_meal_plan_draft(output)
                         logger.debug(
-                            "create_meal_plan output parsed | user_id=%s | thread_id=%s | output_type=%s | draft_found=%s",
+                            "create_meal_plan output parsed | user_id=%s | "
+                            "thread_id=%s | output_type=%s | draft_found=%s",
                             self.user_id,
                             thread_id,
                             type(output).__name__,
@@ -402,11 +494,18 @@ class AssistantAgent:
                 if output and hasattr(output, "usage_metadata"):
                     usage = output.usage_metadata
                     if usage and "total_tokens" in usage:
-                        yield {"type": "token_usage", "value": usage["total_tokens"]}
+                        yield {
+                            "type": "token_usage",
+                            "value": usage["total_tokens"],
+                        }
 
                 if output and hasattr(output, "tool_calls"):
                     t_calls = output.tool_calls
-                    if t_calls and isinstance(t_calls, list) and len(t_calls) > 0:
+                    if (
+                        t_calls
+                        and isinstance(t_calls, list)
+                        and len(t_calls) > 0
+                    ):
                         yield {"type": "tool_calls", "calls": t_calls}
 
         logger.info(

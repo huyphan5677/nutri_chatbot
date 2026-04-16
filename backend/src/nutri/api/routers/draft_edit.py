@@ -1,22 +1,28 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
 """Router for draft menu editing (swap/add dishes via DishEditAgent)."""
 
-import logging
+from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
-from nutri.ai.agents.dish_edit_agent import DishEditAgent
-from nutri.ai.workflows.meal_plan_workflow import (
-    _load_user_profile_context,
-    _serialize_generated_meal,
-)
+import logging
+from typing import Annotated
+
+from fastapi import Depends, APIRouter, HTTPException
+
+from nutri.core.db.session import async_session_maker
 from nutri.api.dependencies import get_current_user
 from nutri.core.auth.models import User
-from nutri.core.db.session import async_session_maker
 from nutri.core.draft_edit.dto import (
-    EditDishMealResponse,
     EditDishRequest,
     EditDishResponse,
+    EditDishMealResponse,
 )
 from nutri.core.draft_edit.services import _parse_number
+from nutri.ai.agents.dish_edit_agent import DishEditAgent
+from nutri.ai.workflows.meal_plan_workflow import (
+    _serialize_generated_meal,
+    _load_user_profile_context,
+)
+
 
 router = APIRouter()
 logger = logging.getLogger("nutri.api.routers.draft_edit")
@@ -25,9 +31,21 @@ logger = logging.getLogger("nutri.api.routers.draft_edit")
 @router.post("/edit-dish", response_model=EditDishResponse)
 async def edit_dish(
     payload: EditDishRequest,
-    current_user: User = Depends(get_current_user),
-):
-    """Generate a single replacement or additional dish using the DishEditAgent."""
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> EditDishResponse:
+    """Generate a single replacement or additional dish using the DishEditAgent.
+
+    Args:
+        payload: Request containing the action, meal type, custom prompt,
+        current menu summary, and original dish name.
+        current_user: Current user.
+
+    Returns:
+        Dictionary with status and meal.
+
+    Raises:
+        HTTPException: If user profile not found.
+    """
     user_id = str(current_user.id)
 
     # Load user profile context

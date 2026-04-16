@@ -1,15 +1,20 @@
-import logging
-from typing import Literal, Optional
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
-from langchain_core.messages import HumanMessage, SystemMessage
+import logging
+from typing import Literal
+
 from mem0 import Memory
-from mem0.embeddings.openai import OpenAIEmbedding
+from sqlalchemy import text
 from mem0.llms.openai import OpenAILLM
 from mem0.memory.main import Memory as Mem0Main
+from mem0.embeddings.openai import OpenAIEmbedding
+from langchain_core.messages import HumanMessage, SystemMessage
+
 from nutri.ai.llm_client import get_llm
-from nutri.common.config.settings import settings
 from nutri.core.db.session import async_session_maker
-from sqlalchemy import text
+from nutri.common.config.settings import settings
+
 
 logger = logging.getLogger("nutri.ai.memory")
 
@@ -18,8 +23,11 @@ original_embed = OpenAIEmbedding.embed
 
 
 def patched_embed(
-    self, text: str, memory_action: Optional[Literal["add", "search", "update"]] = None
+    self,
+    text: str,
+    memory_action: Literal["add", "search", "update"] | None = None,
 ):
+    """Patch mem0 embed function."""
     text = text.replace("\n", " ")
     kwargs = {
         "input": [text],
@@ -37,7 +45,10 @@ def patched_embed(
     elif any(kw in model_lower for kw in ["nemotron", "nvidia", "bge"]):
         kwargs["extra_body"] = {"input_type": "query", "truncate": "NONE"}
 
-    if getattr(self, "_pass_dimensions_to_api", False) and self.config.embedding_dims:
+    if (
+        getattr(self, "_pass_dimensions_to_api", False)
+        and self.config.embedding_dims
+    ):
         kwargs["dimensions"] = self.config.embedding_dims
 
     return self.client.embeddings.create(**kwargs).data[0].embedding
@@ -50,6 +61,7 @@ original_generate_response = OpenAILLM.generate_response
 
 
 def patched_generate_response(self, messages: list, **kwargs):
+    """Patch mem0 generate response function."""
     max_retries = 5
     for attempt in range(max_retries + 1):
         try:
@@ -80,7 +92,7 @@ def patched_generate_response(self, messages: list, **kwargs):
                     f"Mem0 LLM retry {attempt + 1}/{max_retries} due to: {e}"
                 )
                 continue
-            logger.error(f"Mem0 LangChain Extension Final Error: {e}")
+            logger.error("Mem0 LangChain Extension Final Error: %s", e)
             return original_generate_response(self, messages, **kwargs)
 
 
@@ -92,12 +104,14 @@ original_add = Mem0Main.add
 
 
 def patched_add(self, data, user_id=None, **kwargs):
+    """Patch mem0 add function."""
     if user_id:
         user_id = str(user_id)
     return original_add(self, data, user_id=user_id, **kwargs)
 
 
-def patched_search(self, query: str, user_id: Optional[str] = None, **kwargs):
+def patched_search(self, query: str, user_id: str | None = None, **kwargs):
+    """Patch mem0 search function."""
     if user_id:
         user_id = str(user_id)
 
@@ -105,7 +119,9 @@ def patched_search(self, query: str, user_id: Optional[str] = None, **kwargs):
         kwargs["limit"] = 10
 
     logger.info(
-        f"Mem0 Search Attempt | query='{query}' | user_id='{user_id}' (string-normalized)"
+        "Mem0 Search Attempt | query='%s' | user_id='%s' (string-normalized)",
+        query,
+        user_id,
     )
 
     if user_id:
@@ -117,10 +133,14 @@ def patched_search(self, query: str, user_id: Optional[str] = None, **kwargs):
 
     if not results:
         logger.warning(
-            f"Mem0 Search result EMPTY for user_id='{user_id}'. This might be a vector score issue."
+            "Mem0 Search result EMPTY for user_id='%s'. This might be a vector"
+            " score issue.",
+            user_id,
         )
     else:
-        logger.info(f"Mem0 Search success | Found {len(results)} potential memories.")
+        logger.info(
+            "Mem0 Search success | Found %s potential memories.", len(results)
+        )
 
     return results
 
@@ -178,8 +198,8 @@ def get_nutri_memory() -> Memory:
         _memory_instance = Memory.from_config(config)
         logger.info("Initialized Mem0 Memory instance successfully.")
     except Exception as e:
-        logger.error("Failed to initialize Mem0 Memory: %s", e)
-        raise e
+        logger.error("Failed to initialize Mem0 Memory: %s", e)  # noqa: TRY400
+        raise
 
     return _memory_instance
 

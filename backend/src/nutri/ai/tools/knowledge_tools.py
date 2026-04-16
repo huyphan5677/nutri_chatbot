@@ -1,13 +1,22 @@
-import logging
-import os
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
-from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_core.messages import HumanMessage
-from langchain_core.runnables import RunnableConfig
+import os
+import logging
+from typing import TYPE_CHECKING
+
 from langchain_core.tools import tool
+from langchain_core.messages import HumanMessage
+from langchain_community.tools.tavily_search import TavilySearchResults
+
 from nutri.ai.language import get_language_from_config
 from nutri.ai.llm_client import get_llm
 from nutri.common.config.settings import settings
+
+
+if TYPE_CHECKING:
+    from langchain_core.runnables import RunnableConfig
+
 
 os.environ["TAVILY_API_KEY"] = settings.TAVILY_API_KEY
 
@@ -18,13 +27,14 @@ logger = logging.getLogger("nutri.ai.tools.knowledge")
 def get_diet_reference(
     diet_type: str, reference_name: str, *, config: RunnableConfig
 ) -> dict:
-    """
-    Retrieves authoritative diet reference materials from Markdown knowledge base.
+    """Retrieves authoritative diet reference materials.
+
     (E.g. lists of approved foods for Keto).
     """
     language = get_language_from_config(config)
     prompt = (
-        f"Provide a brief medical and dietary reference guide for {diet_type} specifically regarding {reference_name}. "
+        f"Provide a brief medical and dietary reference guide for {diet_type} "
+        f"specifically regarding {reference_name}. "
         f"Respond in language code: {language}."
     )
     llm = get_llm()
@@ -34,8 +44,7 @@ def get_diet_reference(
 
 @tool
 def enrich_attribute_metadata(category: str, value: str) -> dict:
-    """
-    Calls a background extraction agent to build medical rules for an allergy or diet condition.
+    """Calls a background extraction agent to build medical rules for an allergy or diet condition.
     Use this when the user mentions a new health condition or allergy.
     """
     from nutri.ai.agents.enrich_metadata_agent import EnrichMetadataAgent
@@ -47,8 +56,7 @@ def enrich_attribute_metadata(category: str, value: str) -> dict:
 
 @tool
 def web_search_info(query: str, *, config: RunnableConfig) -> str:
-    """
-    Search the web for general information, facts, news, or broad queries
+    """Search the web for general information, facts, news, or broad queries
     that are outside the scope of personal nutrition and health data.
     Use this to answer questions like "giá vàng hôm nay bao nhiêu?".
 
@@ -85,5 +93,5 @@ def web_search_info(query: str, *, config: RunnableConfig) -> str:
 
         return "\n\n".join(formatted_results)
     except Exception as e:
-        logger.error(f"web_search_info error: {e}")
-        return f"Error performing web search: {str(e)}"
+        logger.error("web_search_info error: %s", e)  # noqa: TRY400
+        return f"Error performing web search: {e!s}"

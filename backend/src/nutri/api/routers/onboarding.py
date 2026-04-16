@@ -1,25 +1,31 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 import asyncio
 import logging
+from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import Depends, APIRouter
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from nutri.core.db.session import get_db
 from nutri.api.dependencies import get_current_user
 from nutri.core.auth.models import User
-from nutri.core.db.session import get_db
 from nutri.core.onboarding.dto import (
-    HealthProfileResponse,
     MemberResponse,
-    MenuRecommendationResponse,
-    OnboardingDataResponse,
     OnboardingRequest,
+    HealthProfileResponse,
+    OnboardingDataResponse,
+    MenuRecommendationResponse,
 )
 from nutri.core.onboarding.models import FamilyMember
 from nutri.core.onboarding.services import (
-    enrich_user_health_profiles,
-    recompute_user_metabolism,
     validate_required_member,
+    recompute_user_metabolism,
+    enrich_user_health_profiles,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+
 
 router = APIRouter()
 logger = logging.getLogger("nutri.api.routers.onboarding")
@@ -27,10 +33,10 @@ logger = logging.getLogger("nutri.api.routers.onboarding")
 
 @router.get("", response_model=OnboardingDataResponse)
 async def get_onboarding_data(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Get the current user's onboarding data including diet mode, budget level, family members, and equipment (if any)."""
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> OnboardingDataResponse:
+    """Get the current user's onboarding data."""
     logger.info("get_onboarding_data | user_id=%s", current_user.id)
 
     result = await db.execute(
@@ -54,7 +60,9 @@ async def get_onboarding_data(
                 relationship=m.relationship_type,
                 age=m.age,
                 gender=m.gender,
-                weight_kg=float(m.weight_kg) if m.weight_kg is not None else None,
+                weight_kg=float(m.weight_kg)
+                if m.weight_kg is not None
+                else None,
                 height_cm=float(hp_raw.get("height_cm"))
                 if hp_raw.get("height_cm") is not None
                 else None,
@@ -81,10 +89,10 @@ async def get_onboarding_data(
 @router.put("", response_model=OnboardingDataResponse)
 async def update_onboarding_data(
     data: OnboardingRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Update the user's onboarding data including diet mode, budget level, and family members. This will replace all existing family members with the provided list."""
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> OnboardingDataResponse:
+    """Update the user's onboarding data."""
     logger.info(
         "update_onboarding_data | user_id=%s | diet_mode=%s | members=%d",
         current_user.id,
@@ -160,7 +168,9 @@ async def update_onboarding_data(
                 relationship=m.relationship_type,
                 age=m.age,
                 gender=m.gender,
-                weight_kg=float(m.weight_kg) if m.weight_kg is not None else None,
+                weight_kg=float(m.weight_kg)
+                if m.weight_kg is not None
+                else None,
                 height_cm=float(hp_raw.get("height_cm"))
                 if hp_raw.get("height_cm") is not None
                 else None,
@@ -187,9 +197,9 @@ async def update_onboarding_data(
 @router.post("", response_model=MenuRecommendationResponse)
 async def submit_onboarding_quiz(
     data: OnboardingRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> MenuRecommendationResponse:
     """Submit the onboarding quiz and generate a menu recommendation."""
     logger.info(
         "submit_onboarding_quiz | user_id=%s | diet_mode=%s | members=%d",
@@ -243,7 +253,11 @@ async def submit_onboarding_quiz(
     logger.info("submit_onboarding_quiz done | user_id=%s", current_user.id)
 
     menu_preview = [
-        {"day": "Monday", "lunch": "Chicken Salad", "dinner": "Pasta Carbonara"},
+        {
+            "day": "Monday",
+            "lunch": "Chicken Salad",
+            "dinner": "Pasta Carbonara",
+        },
         {"day": "Tuesday", "lunch": "Tuna Sandwich", "dinner": "Steak & Fries"},
     ]
     return {

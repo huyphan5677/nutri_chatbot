@@ -1,29 +1,35 @@
-import logging
-from typing import Any, Dict, List, Optional
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
-from langchain_core.prompts import PromptTemplate
-from nutri.ai.llm_client import get_llm
-from nutri.common.config.settings import settings
-from nutri.core.recipes.entities import RecipeList
+import logging
+from typing import Any
+
 from tavily import TavilyClient
+from langchain_core.prompts import PromptTemplate
+
+from nutri.ai.llm_client import get_llm
+from nutri.core.recipes.entities import RecipeList
+from nutri.common.config.settings import settings
+
 
 logger = logging.getLogger("nutri.ai.tools.recipe_tools")
 
 
-async def perform_recipe_web_search(query: str) -> Optional[List[Dict[str, Any]]]:
-    """
-    Uses Tavily to search the web for a recipe, and then an LLM to extract the structure.
+async def perform_recipe_web_search(query: str) -> list[dict[str, Any]] | None:
+    """Uses Tavily to search the web for a recipe, and then an LLM to extract the structure.
     Returns a list of dictionaries matching RecipeCreate schema.
     """
-    logger.info(f"Performing web search for: {query}")
+    logger.info("Performing web search for: %s", query)
 
     # Initialize Tavily
     tavily_api_key = settings.TAVILY_API_KEY
     if not tavily_api_key:
         logger.error("TAVILY_API_KEY environment variable not set.")
-        raise ValueError(
-            "TAVILY_API_KEY environment variable is not configured. Web search unavailable."
+        msg = (
+            "TAVILY_API_KEY environment variable is not configured. "
+            "Web search unavailable."
         )
+        raise ValueError(msg)
 
     client = TavilyClient(api_key=tavily_api_key)
 
@@ -38,16 +44,17 @@ async def perform_recipe_web_search(query: str) -> Optional[List[Dict[str, Any]]
             max_results=3,
         )
     except Exception as e:
-        logger.error(f"Tavily search failed: {e}")
+        logger.error("Tavily search failed: %s", e)  # noqa: TRY400
         return None
 
     # 2. Extract content from best results
     results = response.get("results", [])
     if not results:
-        logger.warning(f"No results found for query: {query}")
+        logger.warning("No results found for query: %s", query)
         return None
 
-    # We will combine the raw content from the top 2 results to give the LLM enough context
+    # We will combine the raw content from the top 2 results to give the
+    # LLM enough context
     context = ""
     source_url = ""
     for idx, res in enumerate(results[:2]):
@@ -72,9 +79,9 @@ async def perform_recipe_web_search(query: str) -> Optional[List[Dict[str, Any]]
     chain = prompt | llm_with_structure
 
     try:
-        extracted_recipes_wrapper: RecipeList = await chain.ainvoke(
-            {"context": context}
-        )
+        extracted_recipes_wrapper: RecipeList = await chain.ainvoke({
+            "context": context
+        })
 
         # Convert to dict and add source URL to each
         recipe_dicts = []
@@ -85,5 +92,5 @@ async def perform_recipe_web_search(query: str) -> Optional[List[Dict[str, Any]]
 
         return recipe_dicts
     except Exception as e:
-        logger.error(f"LLM extraction failed: {e}")
+        logger.error("LLM extraction failed: %s", e)  # noqa: TRY400
         return None

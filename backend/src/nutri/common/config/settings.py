@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict

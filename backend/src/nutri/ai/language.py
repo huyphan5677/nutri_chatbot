@@ -1,8 +1,12 @@
-import logging
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 import re
+import logging
 from typing import Any
 
 from langdetect import DetectorFactory, LangDetectException, detect_langs
+
 
 logger = logging.getLogger("nutri.ai.language")
 
@@ -135,11 +139,11 @@ EN_WORDS = {
     "need",
     "give",
     "show",
-    "some",
 }
 
 
 def normalize_language(language: str | None, default: str = "en") -> str:
+    """Normalize language code to standard format."""
     if not language:
         return default
     lang = str(language).strip().replace("_", "-").lower()
@@ -164,6 +168,7 @@ def heuristic_english_check(text: str) -> bool:
 
 
 def detect_user_language(text: str | None, default: str = "en") -> str:
+    """Detect user language from text."""
     if not text:
         return default
 
@@ -188,6 +193,7 @@ def detect_user_language(text: str | None, default: str = "en") -> str:
 
 
 def get_language_from_config(config: Any, default: str = "en") -> str:
+    """Get language from config."""
     try:
         cfg = config.get("configurable", {}) if config else {}
         return normalize_language(cfg.get("language"), default=default)

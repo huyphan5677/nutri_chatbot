@@ -1,4 +1,5 @@
-from typing import List, Optional
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
 from pydantic import BaseModel
 
@@ -6,33 +7,33 @@ from pydantic import BaseModel
 class GroceryItemDTO(BaseModel):
     id: str
     name: str
-    category: Optional[str]
-    quantity: Optional[str]
+    category: str | None
+    quantity: str | None
     is_purchased: bool
 
 
 class UpdateGroceryItemRequest(BaseModel):
-    name: Optional[str] = None
-    category: Optional[str] = None
-    quantity: Optional[str] = None
-    is_purchased: Optional[bool] = None
+    name: str | None = None
+    category: str | None = None
+    quantity: str | None = None
+    is_purchased: bool | None = None
 
 
 class GroceryListResponse(BaseModel):
-    items: List[GroceryItemDTO]
+    items: list[GroceryItemDTO]
 
 
 class GroceryMenuGroupDTO(BaseModel):
-    meal_plan_id: Optional[str] = None
+    meal_plan_id: str | None = None
     meal_plan_name: str
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    status: Optional[str] = None
-    items: List[GroceryItemDTO]
+    start_date: str | None = None
+    end_date: str | None = None
+    status: str | None = None
+    items: list[GroceryItemDTO]
 
 
 class GroceryByMenuResponse(BaseModel):
-    menus: List[GroceryMenuGroupDTO]
+    menus: list[GroceryMenuGroupDTO]
 
 
 class ShoppingRequest(BaseModel):
@@ -45,21 +46,21 @@ class ShoppingRequest(BaseModel):
 
 class FridgeCoveredDTO(BaseModel):
     name: str
-    fridge_quantity: Optional[str] = ""
-    required_quantity: Optional[str] = ""
+    fridge_quantity: str | None = ""
+    required_quantity: str | None = ""
 
 
 class ShoppingProductDTO(BaseModel):
     ingredient_name: str
-    quantity: Optional[str] = None
-    required_quantity: Optional[str] = None
-    package_size: Optional[str] = ""
-    fridge_quantity: Optional[str] = ""
-    fridge_deducted: Optional[str] = ""
-    original_quantity: Optional[str] = ""
-    buy_quantity: Optional[int] = 1
+    quantity: str | None = None
+    required_quantity: str | None = None
+    package_size: str | None = ""
+    fridge_quantity: str | None = ""
+    fridge_deducted: str | None = ""
+    original_quantity: str | None = ""
+    buy_quantity: int | None = 1
     product_name: str
-    price: Optional[float] = None
+    price: float | None = None
     stock: float = 0
     product_url: str
     source_mart: str  # "Lotte" | "Winmart"
@@ -67,9 +68,9 @@ class ShoppingProductDTO(BaseModel):
 
 
 class ShoppingResultDTO(BaseModel):
-    items: List[ShoppingProductDTO]
-    not_found: List[str]
-    fridge_covered: List[FridgeCoveredDTO] = []
+    items: list[ShoppingProductDTO]
+    not_found: list[str]
+    fridge_covered: list[FridgeCoveredDTO] = []
     total_estimated_cost: float
     strategy: str
     summary: str
@@ -78,7 +79,7 @@ class ShoppingResultDTO(BaseModel):
 class ShoppingOrderResponse(BaseModel):
     order_id: str
     status: str  # "processing", "completed", "failed"
-    result_data: Optional[ShoppingResultDTO] = None
+    result_data: ShoppingResultDTO | None = None
 
 
 class ShoppingOrderStartResponse(BaseModel):
@@ -91,8 +92,8 @@ class ShoppingHistoryItemDTO(BaseModel):
     id: str
     date: str
     items_count: int
-    cost: Optional[float] = None
-    currency: Optional[str] = "VND"
+    cost: float | None = None
+    currency: str | None = "VND"
     status: str
 
 
@@ -101,4 +102,4 @@ class ShoppingHistoryResponse(BaseModel):
     total_spent: float
     avg_items: int
     avg_cost: float
-    history: List[ShoppingHistoryItemDTO]
+    history: list[ShoppingHistoryItemDTO]

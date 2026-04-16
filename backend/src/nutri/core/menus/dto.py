@@ -1,24 +1,25 @@
-from typing import List, Optional
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
 from pydantic import BaseModel
 
 
 class RecipeIngredientDTO(BaseModel):
     name: str
-    quantity: Optional[float] = None
+    quantity: float | None = None
 
 
 class RecipeDTO(BaseModel):
     id: str
     name: str
-    description: Optional[str]
-    instructions: Optional[str] = None
-    prep_time_minutes: Optional[int]
-    cook_time_minutes: Optional[int] = None
-    total_calories: Optional[int]
-    dietary_tags: List[str] = []
+    description: str | None
+    instructions: str | None = None
+    prep_time_minutes: int | None
+    cook_time_minutes: int | None = None
+    total_calories: int | None
+    dietary_tags: list[str] = []
     macros: dict = {}
-    ingredients: List[RecipeIngredientDTO] = []
+    ingredients: list[RecipeIngredientDTO] = []
 
 
 class MealDTO(BaseModel):
@@ -34,33 +35,33 @@ class MealPlanResponse(BaseModel):
     start_date: str
     end_date: str
     status: str
-    meals: List[MealDTO]
+    meals: list[MealDTO]
 
 
 class SaveMenuFromChatRequest(BaseModel):
     chat_message_id: str
-    modified_draft: Optional[dict] = None
+    modified_draft: dict | None = None
 
 
 class SaveMenuShoppingItem(BaseModel):
     name: str
-    category: Optional[str] = None
+    category: str | None = None
     quantity: str
 
 
 class SaveMenuFromChatResponse(BaseModel):
     status: str
-    meal_plan_id: Optional[str] = None
+    meal_plan_id: str | None = None
     shopping_list: list[SaveMenuShoppingItem] = []
 
 
 class UpdateCurrentMenuRequest(BaseModel):
-    name: Optional[str] = None
-    status: Optional[str] = None
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    total_days: Optional[int] = None
-    total_meals: Optional[int] = None
+    name: str | None = None
+    status: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    total_days: int | None = None
+    total_meals: int | None = None
 
 
 class DeleteCurrentMenuResponse(BaseModel):
@@ -70,19 +71,19 @@ class DeleteCurrentMenuResponse(BaseModel):
 
 class MealPlanSummaryResponse(BaseModel):
     id: str
-    name: Optional[str] = None
+    name: str | None = None
     start_date: str
     end_date: str
-    status: Optional[str] = None
+    status: str | None = None
 
 
 class UpdateMenuRequest(BaseModel):
-    name: Optional[str] = None
-    status: Optional[str] = None
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
-    total_days: Optional[int] = None
-    total_meals: Optional[int] = None
+    name: str | None = None
+    status: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    total_days: int | None = None
+    total_meals: int | None = None
 
 
 class DeleteMenuResponse(BaseModel):

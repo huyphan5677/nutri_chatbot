@@ -1,33 +1,44 @@
-import asyncio
-import logging
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 import sys
 import time
+import asyncio
+import logging
+
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+from typing import TYPE_CHECKING
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from nutri.ai.checkpoint import close_checkpointer, init_checkpointer
+
 from nutri.api.routers import (
     auth,
     chat,
-    collections,
-    draft_edit,
-    grocery,
-    inventory,
-    memory,
     menus,
-    onboarding,
+    memory,
+    system,
+    grocery,
     profile,
     recipes,
-    system,
+    inventory,
+    draft_edit,
+    onboarding,
+    collections,
 )
-from nutri.common.config.logging_config import setup_logging
-from nutri.common.config.settings import settings
+from nutri.ai.checkpoint import init_checkpointer, close_checkpointer
 from nutri.core.db.session import Base, engine
-from starlette.middleware.base import RequestResponseEndpoint
+from nutri.common.config.settings import settings
+from nutri.common.config.logging_config import setup_logging
+
+
+if TYPE_CHECKING:
+    from fastapi import Request, Response
+    from starlette.middleware.base import RequestResponseEndpoint
+
 
 setup_logging()
 logger = logging.getLogger("nutri.api")
@@ -36,7 +47,9 @@ logger = logging.getLogger("nutri.api")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # STARTUP
-    logger.info("Starting %s (env=%s)", settings.PROJECT_NAME, settings.ENVIRONMENT)
+    logger.info(
+        "Starting %s (env=%s)", settings.PROJECT_NAME, settings.ENVIRONMENT
+    )
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all, checkfirst=True)
@@ -72,8 +85,7 @@ app.add_middleware(
 async def log_requests(
     request: Request, call_next: RequestResponseEndpoint
 ) -> Response:
-    """
-    Log incoming HTTP requests and outgoing responses, appending the extracted client IP.
+    """Log incoming HTTP requests and outgoing responses, appending the extracted client IP.
 
     Args:
         request: The incoming FastAPI HTTP request.
@@ -90,10 +102,10 @@ async def log_requests(
     # Priority extraction: Unverified X-Forwarded-For headers take precedence
     # only if the underlying infrastructure relies on application-level parsing.
     actual_ip = (
-        x_forwarded_for.split(",")[0].strip() if x_forwarded_for else client_host
+        x_forwarded_for.split(",")[0].strip()
+        if x_forwarded_for
+        else client_host
     )
-
-    # logger.debug("→ %s %s | ip=%s", request.method, request.url.path, actual_ip)
 
     try:
         response = await call_next(request)
@@ -121,14 +133,22 @@ async def log_requests(
 
 # Include Routers
 app.include_router(
-    onboarding.router, prefix=f"{settings.API_V1_STR}/onboarding", tags=["Onboarding"]
+    onboarding.router,
+    prefix=f"{settings.API_V1_STR}/onboarding",
+    tags=["Onboarding"],
 )
-app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
-app.include_router(menus.router, prefix=f"{settings.API_V1_STR}/menus", tags=["Menus"])
+app.include_router(
+    auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"]
+)
+app.include_router(
+    menus.router, prefix=f"{settings.API_V1_STR}/menus", tags=["Menus"]
+)
 app.include_router(
     profile.router, prefix=f"{settings.API_V1_STR}/profile", tags=["Profile"]
 )
-app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["Chat"])
+app.include_router(
+    chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["Chat"]
+)
 app.include_router(
     memory.router, prefix=f"{settings.API_V1_STR}/memory", tags=["Memory"]
 )
@@ -141,7 +161,9 @@ app.include_router(
     grocery.router, prefix=f"{settings.API_V1_STR}/grocery", tags=["Grocery"]
 )
 app.include_router(
-    inventory.router, prefix=f"{settings.API_V1_STR}/inventory", tags=["Inventory"]
+    inventory.router,
+    prefix=f"{settings.API_V1_STR}/inventory",
+    tags=["Inventory"],
 )
 app.include_router(
     recipes.router, prefix=f"{settings.API_V1_STR}/recipes", tags=["Recipes"]
@@ -150,7 +172,9 @@ app.include_router(
     system.router, prefix=f"{settings.API_V1_STR}/system", tags=["System"]
 )
 app.include_router(
-    draft_edit.router, prefix=f"{settings.API_V1_STR}/draft", tags=["Draft Edit"]
+    draft_edit.router,
+    prefix=f"{settings.API_V1_STR}/draft",
+    tags=["Draft Edit"],
 )
 
 

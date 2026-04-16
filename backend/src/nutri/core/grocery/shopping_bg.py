@@ -1,22 +1,27 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
 """Background processing for grocery shopping."""
 
-import logging
+from __future__ import annotations
+
 import uuid
-from typing import Any, Dict, List
+import logging
+from typing import Any
+
+from sqlalchemy.future import select
 
 from nutri.core.db.session import async_session_maker
-from nutri.core.grocery.mart_search import execute_strategy
 from nutri.core.grocery.models import ShoppingOrder
-from sqlalchemy.future import select
+from nutri.core.grocery.mart_search import execute_strategy
+
 
 logger = logging.getLogger("nutri.core.grocery.shopping_bg")
 
 
 async def process_shopping_background(
     order_id: uuid.UUID,
-    search_items: List[Dict[str, Any]],
+    search_items: list[dict[str, Any]],
     strategy: str,
-    fridge_covered: List[Dict[str, Any]] | None = None,
+    fridge_covered: list[dict[str, Any]] | None = None,
     lotte_branch_id: str = "nsg",
     winmart_store_code: str = "1535",
     winmart_store_group_code: str = "1998",
@@ -53,9 +58,7 @@ async def process_shopping_background(
 
         saved_count = len(fridge_covered) if fridge_covered else 0
         if total > 0:
-            summary = (
-                f"Found {found_count}/{total_count} items, {saved_count} saved from fridge, total ≈ {total:,.0f}₫"
-            )
+            summary = f"Found {found_count}/{total_count} items, {saved_count} saved from fridge, total ≈ {total:,.0f}₫"
         else:
             summary = f"Found {found_count}/{total_count} items, {saved_count} saved from fridge"
 
@@ -63,7 +66,7 @@ async def process_shopping_background(
             summary += f" ({len(not_found_list)} not found)"
 
         # Build per-item fridge_deducted lookup from search_items
-        fridge_deducted_map: Dict[str, str] = {}
+        fridge_deducted_map: dict[str, str] = {}
         for si in search_items:
             if si.get("fridge_deducted"):
                 fridge_deducted_map[si["name"]] = si["fridge_deducted"]
@@ -122,7 +125,9 @@ async def process_shopping_background(
                     order_id,
                 )
             else:
-                logger.error("ShoppingOrder %s not found upon completion", order_id)
+                logger.error(
+                    "ShoppingOrder %s not found upon completion", order_id
+                )
 
     except Exception as e:
         logger.exception("Error in background shopping for order %s", order_id)
@@ -134,7 +139,7 @@ async def process_shopping_background(
             if order:
                 order.status = "failed"
                 order.result_data = {
-                    "summary": f"Server error: {str(e)}",
+                    "summary": f"Server error: {e!s}",
                     "items": [],
                     "not_found": [],
                     "total_estimated_cost": 0,

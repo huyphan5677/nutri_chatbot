@@ -1,13 +1,18 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
+import json
 import asyncio
 import logging
-from typing import List, Optional, Union
 
-from langchain_core.exceptions import OutputParserException
+from pydantic import Field, BaseModel, field_validator, model_validator
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.exceptions import OutputParserException
+
 from nutri.ai.llm_client import get_llm
 from nutri.ai.system_prompt import SystemPrompt
 from nutri.ai.tools.menu_tools import fetch_historical_diet_log
-from pydantic import BaseModel, Field, field_validator, model_validator
+
 
 logger = logging.getLogger("nutri.ai.agents.meal_plan")
 
@@ -19,23 +24,23 @@ logger = logging.getLogger("nutri.ai.agents.meal_plan")
 
 class GeneratedMealData(BaseModel):
     name: str = Field(description="Name of the meal")
-    description: Optional[str] = None
+    description: str | None = None
     meal_type: str = Field(description="breakfast, lunch, dinner, or snack")
-    cuisine: Optional[str] = None
-    calories: Union[int, float, str] = 0
-    protein_grams: Union[int, float, str] = 0
-    carbs_grams: Union[int, float, str] = 0
-    fat_grams: Union[int, float, str] = 0
-    fiber_grams: Optional[Union[int, float, str]] = None
-    ingredients: List[str] = []
-    instructions: List[str] = []
-    per_person_breakdown: List[str] = []
-    adjustment_tips: List[str] = []
-    why: Optional[str] = None
-    prep_time_minutes: Optional[int] = None
-    cook_time_minutes: Optional[int] = None
-    servings: Optional[int] = 1
-    dietary_tags: List[str] = []
+    cuisine: str | None = None
+    calories: int | float | str = 0
+    protein_grams: int | float | str = 0
+    carbs_grams: int | float | str = 0
+    fat_grams: int | float | str = 0
+    fiber_grams: int | float | str | None = None
+    ingredients: list[str] = []
+    instructions: list[str] = []
+    per_person_breakdown: list[str] = []
+    adjustment_tips: list[str] = []
+    why: str | None = None
+    prep_time_minutes: int | None = None
+    cook_time_minutes: int | None = None
+    servings: int | None = 1
+    dietary_tags: list[str] = []
 
     @field_validator(
         "ingredients",
@@ -50,8 +55,6 @@ class GeneratedMealData(BaseModel):
             return []
         if isinstance(v, str):
             if "[" in v and "]" in v:
-                import json
-
                 try:
                     parsed = json.loads(v)
                     if isinstance(parsed, list):
@@ -68,7 +71,7 @@ class GeneratedMealData(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def normalize_common_aliases(cls, value):
+    def normalize_common_aliases(cls, value: dict) -> dict:
         if not isinstance(value, dict):
             return value
 
@@ -122,24 +125,26 @@ class GeneratedMealData(BaseModel):
         mode="before",
     )
     @classmethod
-    def normalize_nullable_macros(cls, v):
+    def normalize_nullable_macros(
+        cls, v: str | float | None
+    ) -> str | float | int:
         if v is None:
             return 0
         return v
 
-    glycemic_index_estimate: Optional[str] = None
-    glucose_impact_notes: Optional[str] = None
+    glycemic_index_estimate: str | None = None
+    glucose_impact_notes: str | None = None
 
 
 class DayMealsData(BaseModel):
-    meals: List[GeneratedMealData]
-    day_header: Optional[str] = None
-    daily_summary_lines: List[str] = Field(default_factory=list)
-    gap_fix: Optional[str] = None
+    meals: list[GeneratedMealData]
+    day_header: str | None = None
+    daily_summary_lines: list[str] = Field(default_factory=list)
+    gap_fix: str | None = None
 
     @model_validator(mode="before")
     @classmethod
-    def normalize_day_level_aliases(cls, value):
+    def normalize_day_level_aliases(cls, value: dict) -> dict:
         if not isinstance(value, dict):
             return value
 
@@ -168,14 +173,14 @@ class SkeletonMeal(BaseModel):
 
     name: str = Field(description="Unique dish name for this meal")
     meal_type: str = Field(description="breakfast, lunch, dinner, or snack")
-    key_ingredients: List[str] = Field(
+    key_ingredients: list[str] = Field(
         default_factory=list,
         description="2-3 main ingredients to ensure no duplication across meals",
     )
 
     @model_validator(mode="before")
     @classmethod
-    def normalize_skeleton_aliases(cls, value):
+    def normalize_skeleton_aliases(cls, value: dict) -> dict:
         if not isinstance(value, dict):
             return value
         if not value.get("name") and value.get("meal_name"):
@@ -183,7 +188,11 @@ class SkeletonMeal(BaseModel):
         if not value.get("meal_type") and value.get("type"):
             value["meal_type"] = value.get("type")
         if not value.get("key_ingredients"):
-            for alias in ("main_ingredients", "primary_ingredients", "ingredients"):
+            for alias in (
+                "main_ingredients",
+                "primary_ingredients",
+                "ingredients",
+            ):
                 if value.get(alias):
                     val = value.get(alias)
                     if isinstance(val, list):
@@ -196,14 +205,14 @@ class SkeletonDayData(BaseModel):
     """Skeleton output for a single day — meal names and types only."""
 
     day_number: int = Field(description="The day number, e.g., 1, 2, 3")
-    meals: List[SkeletonMeal]
-    day_header: Optional[str] = None
+    meals: list[SkeletonMeal]
+    day_header: str | None = None
 
 
 class SkeletonMultiDayData(BaseModel):
     """Skeleton output for multiple days."""
 
-    days: List[SkeletonDayData]
+    days: list[SkeletonDayData]
 
 
 # -------------------
@@ -234,7 +243,21 @@ async def _invoke_with_retries(
     max_retries: int = 5,
     label: str = "LLM",
 ):
-    """Generic retry wrapper for structured-output LLM calls."""
+    """Generic retry wrapper for structured-output LLM calls.
+
+    Args:
+        llm: The LLM client with structured output.
+        messages: The messages to send to the LLM.
+        fallback_messages: The fallback messages to send to the LLM.
+        max_retries: The maximum number of retries.
+        label: The label for the LLM.
+
+    Returns:
+        The result of the LLM call.
+
+    Raises:
+        OutputParserException: If the LLM call fails after all retries.
+    """
     last_error = None
     for attempt in range(max_retries + 1):
         try:
@@ -247,7 +270,7 @@ async def _invoke_with_retries(
         except OutputParserException as e:
             last_error = e
             if attempt >= max_retries:
-                logger.error(
+                logger.error(  # noqa: TRY400
                     "%s parse failed after max retries | retries=%d | error=%s",
                     label,
                     max_retries,
@@ -264,8 +287,9 @@ async def _invoke_with_retries(
         except Exception as e:
             last_error = e
             if not _is_transient_llm_error(e) or attempt >= max_retries:
-                logger.error(
-                    "%s failed (non-retryable or exhausted) | attempt=%d/%d | error=%s",
+                logger.error(  # noqa: TRY400
+                    "%s failed (non-retryable or exhausted) | "
+                    "attempt=%d/%d | error=%s",
                     label,
                     attempt + 1,
                     max_retries + 1,
@@ -290,8 +314,7 @@ async def _invoke_with_retries(
 
 
 class MealPlanAgent:
-    """
-    Stateless agent that generates a meal plan for a single day or multiple days.
+    """Stateless agent that generates a meal plan.
 
     Supports two generation strategies:
     - Legacy: `agenerate_for_day()` — single LLM call per day (full output).
@@ -299,9 +322,11 @@ class MealPlanAgent:
       parallel enrichment per meal.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.full_llm = get_llm().with_structured_output(DayMealsData)
-        self.skeleton_llm = get_llm().with_structured_output(SkeletonMultiDayData)
+        self.skeleton_llm = get_llm().with_structured_output(
+            SkeletonMultiDayData
+        )
         self.enrich_llm = get_llm().with_structured_output(GeneratedMealData)
 
     # --------------
@@ -317,9 +342,15 @@ class MealPlanAgent:
 
         try:
             language = (
-                config.get("configurable", {}).get("language", "en") if config else "en"
+                config.get("configurable", {}).get("language", "en")
+                if config
+                else "en"
             )
-            user_id = config.get("configurable", {}).get("user_id") if config else None
+            user_id = (
+                config.get("configurable", {}).get("user_id")
+                if config
+                else None
+            )
             if not user_id:
                 return ""
 
@@ -333,7 +364,9 @@ class MealPlanAgent:
             return ""
 
         context_text = str(recent_menu_context or "").strip()
-        logger.info("get_recent_menu_context | context_text=%s...", context_text[:180])
+        logger.info(
+            "get_recent_menu_context | context_text=%s...", context_text[:180]
+        )
         if not context_text or context_text.startswith("No menus found"):
             return ""
 
@@ -344,8 +377,8 @@ class MealPlanAgent:
         user_profile_context: str,
         day_number: int,
         total_days: int,
-        previous_days_context: Optional[str] = None,
-        custom_prompt: Optional[str] = None,
+        previous_days_context: str | None = None,
+        custom_prompt: str | None = None,
     ) -> str:
         user_msg = (
             # f"User Profile: {user_profile_context}\n"
@@ -368,9 +401,9 @@ class MealPlanAgent:
         self,
         user_profile_context: str,
         total_days: int,
-        custom_prompt: Optional[str] = None,
+        custom_prompt: str | None = None,
         max_parse_retries: int = 3,
-        recent_menu_context: Optional[str] = None,
+        recent_menu_context: str | None = None,
         language: str = "en",
     ) -> SkeletonMultiDayData:
         """Generate a lightweight skeleton for all days: meal names and types only."""
@@ -412,13 +445,17 @@ class MealPlanAgent:
             user_msg += f"User Profile: {user_profile_context}\n"
         if recent_menu_context:
             user_msg += (
-                "\nMenus from the previous 2 days (avoid repeating these dishes or main proteins):\n"
+                "\nMenus from the previous 2 days (avoid repeating these dishes "
+                "or main proteins):\n"
                 f"{recent_menu_context}\n"
             )
         if custom_prompt:
             user_msg += f"\nCustom Request: {custom_prompt}"
 
-        messages = [SystemMessage(content=str(prompt)), HumanMessage(content=user_msg)]
+        messages = [
+            SystemMessage(content=str(prompt)),
+            HumanMessage(content=user_msg),
+        ]
 
         logger.info(
             "agenerate_multi_day_skeleton | generating %d days...",
@@ -433,7 +470,8 @@ class MealPlanAgent:
         )
 
         logger.info(
-            "agenerate_multi_day_skeleton done | generated %d days", len(result.days)
+            "agenerate_multi_day_skeleton done | generated %d days",
+            len(result.days),
         )
         return result
 
@@ -445,14 +483,13 @@ class MealPlanAgent:
         self,
         meal_name: str,
         meal_type: str,
-        key_ingredients: List[str],
+        key_ingredients: list[str],
         profile_context: str,
-        custom_prompt: Optional[str] = None,
+        custom_prompt: str | None = None,
         max_parse_retries: int = 5,
         language: str = "en",
     ) -> GeneratedMealData:
         """Enrich a single skeleton meal into full GeneratedMealData."""
-
         key_ing_str = (
             ", ".join(key_ingredients) if key_ingredients else "as appropriate"
         )
@@ -486,7 +523,10 @@ class MealPlanAgent:
         if custom_prompt:
             user_msg += f"\nCustom Request: {custom_prompt}"
 
-        messages = [SystemMessage(content=str(prompt)), HumanMessage(content=user_msg)]
+        messages = [
+            SystemMessage(content=str(prompt)),
+            HumanMessage(content=user_msg),
+        ]
 
         fallback_prompt = SystemPrompt(
             background=[
@@ -507,7 +547,9 @@ class MealPlanAgent:
             HumanMessage(content=user_msg),
         ]
 
-        logger.info("aenrich_meal | meal=%s (%s) | enriching...", meal_name, meal_type)
+        logger.info(
+            "aenrich_meal | meal=%s (%s) | enriching...", meal_name, meal_type
+        )
 
         result = await _invoke_with_retries(
             self.enrich_llm,
@@ -538,8 +580,8 @@ class MealPlanAgent:
         user_profile_context: str,
         day_number: int,
         total_days: int,
-        previous_days_context: Optional[str] = None,
-        custom_prompt: Optional[str] = None,
+        previous_days_context: str | None = None,
+        custom_prompt: str | None = None,
         max_parse_retries: int = 5,
         language: str = "en",
     ) -> DayMealsData:
@@ -606,14 +648,19 @@ class MealPlanAgent:
             user_msg,
         )
 
-        messages = [SystemMessage(content=str(prompt)), HumanMessage(content=user_msg)]
+        messages = [
+            SystemMessage(content=str(prompt)),
+            HumanMessage(content=user_msg),
+        ]
         fallback_messages = [
             SystemMessage(content=str(fallback_prompt)),
             HumanMessage(content=user_msg),
         ]
 
         logger.info(
-            "MealPlanAgent.agenerate_for_day | day=%d/%d", day_number, total_days
+            "MealPlanAgent.agenerate_for_day | day=%d/%d",
+            day_number,
+            total_days,
         )
 
         result = await _invoke_with_retries(

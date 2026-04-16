@@ -1,31 +1,43 @@
-import uuid
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+import uuid
+from typing import TYPE_CHECKING, Annotated
+
+from fastapi import Depends, APIRouter, HTTPException
+from sqlalchemy.orm import selectinload
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from nutri.core.db.session import get_db
 from nutri.api.dependencies import get_current_user
 from nutri.core.auth.models import User
-from nutri.core.db.session import get_db
-from nutri.core.grocery.models import UserInventory
+from nutri.core.menus.models import Ingredient
 from nutri.core.inventory.dto import (
-    AddInventoryItemRequest,
-    BulkAddInventoryRequest,
     InventoryItemDTO,
     InventoryListResponse,
-    RenameCategoryRequest,
-    UpdateInventoryItemRequest,
+    AddInventoryItemRequest,
+    BulkAddInventoryRequest,
 )
+from nutri.core.grocery.models import UserInventory
 from nutri.core.inventory.services import accumulate_quantities
-from nutri.core.menus.models import Ingredient
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
+
+
+if TYPE_CHECKING:
+    from nutri.core.inventory.dto import (
+        RenameCategoryRequest,
+        UpdateInventoryItemRequest,
+    )
+
 
 router = APIRouter()
 
 
 @router.get("/current", response_model=InventoryListResponse)
 async def get_current_inventory(
-    db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)
-):
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> InventoryListResponse:
     """Get the current inventory for the user."""
     query = (
         select(UserInventory)
@@ -36,17 +48,16 @@ async def get_current_inventory(
     res = await db.execute(query)
     items = res.scalars().all()
 
-    dtos = []
-    for item in items:
-        dtos.append(
-            InventoryItemDTO(
-                id=str(item.id),
-                name=item.ingredient.name if item.ingredient else "Unknown",
-                category=item.ingredient.category if item.ingredient else "Other",
-                quantity=str(item.quantity) if item.quantity else "1",
-                expiration_date=item.expiration_date,
-            )
+    dtos = [
+        InventoryItemDTO(
+            id=str(item.id),
+            name=item.ingredient.name if item.ingredient else "Unknown",
+            category=item.ingredient.category if item.ingredient else "Other",
+            quantity=str(item.quantity) if item.quantity else "1",
+            expiration_date=item.expiration_date,
         )
+        for item in items
+    ]
 
     return InventoryListResponse(items=dtos)
 
@@ -54,12 +65,14 @@ async def get_current_inventory(
 @router.post("", response_model=InventoryItemDTO)
 async def add_inventory_item(
     request: AddInventoryItemRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> InventoryItemDTO:
     """Add an ingredient to the user's inventory."""
     # 1. Find or create the ingredient
-    ingredient_query = select(Ingredient).where(Ingredient.name.ilike(request.name))
+    ingredient_query = select(Ingredient).where(
+        Ingredient.name.ilike(request.name)
+    )
     ingredient_res = await db.execute(ingredient_query)
     ingredient = ingredient_res.scalars().first()
 
@@ -115,9 +128,9 @@ async def add_inventory_item(
 @router.post("/bulk", response_model=InventoryListResponse)
 async def bulk_add_inventory_items(
     request: BulkAddInventoryRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> InventoryListResponse:
     """Add multiple ingredients to the user's inventory in one transaction."""
     dtos = []
 
@@ -192,10 +205,22 @@ async def bulk_add_inventory_items(
 @router.delete("/{item_id}")
 async def delete_inventory_item(
     item_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Delete an ingredient from the user's inventory."""
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict[str, str]:
+    """Delete an ingredient from the user's inventory.
+
+    Args:
+        item_id: The ID of the inventory item to delete.
+        db: The database session.
+        current_user: The currently authenticated user.
+
+    Returns:
+        A dictionary containing the status and message of the deletion.
+
+    Raises:
+        HTTPException: If the inventory item is not found.
+    """
     query = select(UserInventory).where(
         UserInventory.id == item_id,
         UserInventory.user_id == current_user.id,
@@ -216,10 +241,23 @@ async def delete_inventory_item(
 async def update_inventory_item(
     item_id: str,
     request: UpdateInventoryItemRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Update an ingredient in the user's inventory."""
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> InventoryItemDTO:
+    """Update an ingredient in the user's inventory.
+
+    Args:
+        item_id: The ID of the inventory item to update.
+        request: The update request containing the new values.
+        db: The database session.
+        current_user: The currently authenticated user.
+
+    Returns:
+        The updated inventory item.
+
+    Raises:
+        HTTPException: If the inventory item is not found.
+    """
     # 1. Find the inventory row
     query = (
         select(UserInventory)
@@ -238,10 +276,14 @@ async def update_inventory_item(
     # 2. Re-link Ingredient if name or category changed
     if request.name is not None or request.category is not None:
         new_name = request.name or (
-            inventory_item.ingredient.name if inventory_item.ingredient else "Unknown"
+            inventory_item.ingredient.name
+            if inventory_item.ingredient
+            else "Unknown"
         )
         new_category = request.category or (
-            inventory_item.ingredient.category if inventory_item.ingredient else "Other"
+            inventory_item.ingredient.category
+            if inventory_item.ingredient
+            else "Other"
         )
 
         ing_query = select(Ingredient).where(Ingredient.name.ilike(new_name))
@@ -256,7 +298,10 @@ async def update_inventory_item(
             )
             db.add(ingredient)
             await db.flush()
-        elif request.category is not None and ingredient.category != request.category:
+        elif (
+            request.category is not None
+            and ingredient.category != request.category
+        ):
             ingredient.category = request.category
 
         inventory_item.ingredient_id = ingredient.id
@@ -274,11 +319,15 @@ async def update_inventory_item(
 
     return InventoryItemDTO(
         id=str(inventory_item.id),
-        name=inventory_item.ingredient.name if inventory_item.ingredient else "Unknown",
+        name=inventory_item.ingredient.name
+        if inventory_item.ingredient
+        else "Unknown",
         category=inventory_item.ingredient.category
         if inventory_item.ingredient
         else "Other",
-        quantity=str(inventory_item.quantity) if inventory_item.quantity else "1",
+        quantity=str(inventory_item.quantity)
+        if inventory_item.quantity
+        else "1",
         expiration_date=inventory_item.expiration_date,
     )
 
@@ -286,28 +335,39 @@ async def update_inventory_item(
 @router.patch("/categories/rename")
 async def rename_inventory_category(
     request: RenameCategoryRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Rename all ingredients categorized under old_name to new_name."""
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict[str, str]:
+    """Rename all ingredients categorized under old_name to new_name.
+
+    Args:
+        request: The rename request containing the old and new category names.
+        db: The database session.
+        current_user: The currently authenticated user.
+
+    Returns:
+        A dictionary containing the status and message of the rename operation.
+    """
     # We find all ingredients that have been used by the current user
     # and have the exact category name (case-insensitive for robustness)
     # and update them to the new name.
-    
-    # In this simplified model, Ingredients are shared. 
+
+    # In this simplified model, Ingredients are shared.
     # Renaming a category is a global metadata update.
-    
-    query = select(Ingredient).where(Ingredient.category.ilike(request.old_name))
+
+    query = select(Ingredient).where(
+        Ingredient.category.ilike(request.old_name)
+    )
     result = await db.execute(query)
     ingredients = result.scalars().all()
-    
+
     if not ingredients:
         # If no ingredients match, maybe it's only in the UserInventory?
         # But category is on Ingredient.
         return {"status": "success", "count": 0}
-        
+
     for ing in ingredients:
         ing.category = request.new_name
-        
+
     await db.commit()
     return {"status": "success", "count": len(ingredients)}

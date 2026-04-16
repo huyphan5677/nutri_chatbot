@@ -1,10 +1,14 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
 """Recipe schemas."""
 
-from typing import Any, List, Optional
+from __future__ import annotations
+
+import json
 from uuid import UUID
+from typing import Any
 
 import pydantic
-from pydantic import BaseModel, Field
+from pydantic import Field, BaseModel
 
 
 class IngredientSchema(BaseModel):
@@ -15,27 +19,30 @@ class IngredientSchema(BaseModel):
 
 class RecipeBase(BaseModel):
     name: str = Field(..., description="The name of the recipe")
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None, description="A brief description of the recipe"
     )
-    prep_time_minutes: Optional[int] = Field(
+    prep_time_minutes: int | None = Field(
         None, description="Preparation time in minutes"
     )
-    cook_time_minutes: Optional[int] = Field(
+    cook_time_minutes: int | None = Field(
         None, description="Cooking time in minutes"
     )
-    total_calories: Optional[int] = Field(None, description="Total calories")
-    type: Optional[str] = Field(
-        None, description="Categorization, e.g., Vegetarian, Meat, Poultry, Seafood"
+    total_calories: int | None = Field(None, description="Total calories")
+    type: str | None = Field(
+        None,
+        description="Categorization, e.g., Vegetarian, Meat, Poultry, Seafood",
     )
-    image_url: Optional[str] = Field(None, description="URL to an image of the recipe")
-    ingredients: List[Any] = Field(
+    image_url: str | None = Field(
+        None, description="URL to an image of the recipe"
+    )
+    ingredients: list[Any] = Field(
         default_factory=list, description="List of ingredients"
     )
-    instructions: List[str] = Field(
+    instructions: list[str] = Field(
         default_factory=list, description="List of instruction steps"
     )
-    source_url: Optional[str] = Field(
+    source_url: str | None = Field(
         None, description="URL if the recipe was scraped from the web"
     )
 
@@ -45,7 +52,7 @@ class RecipeCreate(RecipeBase):
 
 
 class RecipeList(BaseModel):
-    recipes: List[RecipeCreate]
+    recipes: list[RecipeCreate]
 
 
 class RecipeRead(RecipeBase):
@@ -57,8 +64,6 @@ class RecipeRead(RecipeBase):
     @classmethod
     def parse_instructions(cls, v):
         if isinstance(v, str):
-            import json
-
             try:
                 parsed = json.loads(v)
                 if isinstance(parsed, list):
@@ -85,13 +90,11 @@ class RecipeRead(RecipeBase):
             res = []
             for ri in v:
                 amount_str = str(ri.quantity) if ri.quantity else None
-                res.append(
-                    {
-                        "item": ri.ingredient.name if ri.ingredient else "Unknown",
-                        "amount": amount_str,
-                        "unit": ri.ingredient.base_unit if ri.ingredient else None,
-                    }
-                )
+                res.append({
+                    "item": ri.ingredient.name if ri.ingredient else "Unknown",
+                    "amount": amount_str,
+                    "unit": ri.ingredient.base_unit if ri.ingredient else None,
+                })
             return res
 
         return v

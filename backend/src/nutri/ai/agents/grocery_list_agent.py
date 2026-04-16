@@ -1,32 +1,37 @@
-import logging
-from importlib import import_module
-from importlib.util import find_spec
-from typing import List, Union
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
+import random
+import asyncio
+import logging
+
+from pydantic import Field, BaseModel, field_validator, model_validator
 from langchain_core.messages import HumanMessage, SystemMessage
+
+from nutri.ai.language import detect_user_language
 from nutri.ai.llm_client import get_llm
 from nutri.ai.system_prompt import SystemPrompt
-from pydantic import BaseModel, Field, field_validator, model_validator
+
 
 logger = logging.getLogger("nutri.ai.agents.grocery_list")
 
 
 class GroceryItemData(BaseModel):
     name: str = Field(description="Normalized ingredient name")
-    quantity: Union[str, int, float] = Field(
+    quantity: str | int | float = Field(
         description="Combined quantity and unit, e.g. '500g'."
     )
     category: str = Field(
         default="Other",
         description="Supermarket aisle, e.g. Produce, Dairy, Meat",
     )
-    days: List[str] = Field(
+    days: list[str] = Field(
         description="Days this ingredient is needed", default_factory=list
     )
 
     @model_validator(mode="before")
     @classmethod
-    def normalize_category_aliases(cls, value):
+    def normalize_category_aliases(cls, value: dict) -> dict:
         if isinstance(value, dict):
             if not value.get("name"):
                 value["name"] = value.get("item") or value.get("ingredient")
@@ -44,29 +49,35 @@ class GroceryItemData(BaseModel):
 
     @field_validator("quantity", mode="before")
     @classmethod
-    def normalize_quantity(cls, value):
+    def normalize_quantity(cls, value: str | float) -> str:
         if value is None:
             return "1"
         return str(value)
 
 
 class GroceryListData(BaseModel):
-    items: List[GroceryItemData]
+    items: list[GroceryItemData]
 
 
 class GroceryListGeneratorAgent:
-    """
-    Agent responsible for aggregating ingredients from a multi-day meal plan
-    and outputting a categorized shopping list.
+    """Agent responsible for aggregating ingredients from a multi-day meal plan.
+
+    Attributes:
+        llm: The LLM client with structured output.
+
+    Methods:
+        agenerate: Asynchronously generates a categorized shopping list from
+        a meal plan.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.llm = get_llm().with_structured_output(GroceryListData)
 
-    async def agenerate(self, meal_plan_ingredients_context: str, max_retries: int = 5) -> GroceryListData:
-        """Asynchronously generates a categorized shopping list from a meal plan."""
+    async def agenerate(
+        self, meal_plan_ingredients_context: str, max_retries: int = 5
+    ) -> GroceryListData:
+        """Asynchronously generates a categorized shopping list."""
         try:
-            from nutri.ai.language import detect_user_language
             detected_lang = detect_user_language(meal_plan_ingredients_context)
 
             lang_instruction = (
@@ -97,7 +108,8 @@ class GroceryListGeneratorAgent:
             HumanMessage(
                 content=(
                     f"Raw Ingredients Data:\n{meal_plan_ingredients_context}\n\n"
-                    "REMINDER: All item names and categories in your response must match the language of the ingredients above."
+                    "REMINDER: All item names and categories in your response "
+                    "must match the language of the ingredients above."
                 )
             ),
         ]
@@ -115,34 +127,52 @@ class GroceryListGeneratorAgent:
             try:
                 result = await self.llm.ainvoke(messages)
                 logger.info(
-                    "GroceryListGeneratorAgent.agenerate done | items=%d", len(result.items)
+                    "GroceryListGeneratorAgent.agenerate done | items=%d",
+                    len(result.items),
                 )
                 return result
+
             except Exception as e:
-                import asyncio
-                import random
                 last_error = e
                 err_text = str(e).lower()
 
-                # Check for Langchain "NoneType not iterable" parsing errors or standard rate limits
+                # Check for Langchain "NoneType not iterable" parsing errors
+                # or standard rate limits
                 is_transient = (
-                    "nonetype" in err_text or
-                    "invalid_request" in err_text or
-                    "internal_failure" in err_text or
-                    "rate limit" in err_text or
-                    "service unavailable" in err_text or
-                    "429" in err_text or
-                    "406" in err_text or
-                    "500" in err_text
+                    "nonetype" in err_text
+                    or "invalid_request" in err_text
+                    or "internal_failure" in err_text
+                    or "rate limit" in err_text
+                    or "service unavailable" in err_text
+                    or "429" in err_text
+                    or "406" in err_text
+                    or "500" in err_text
                 )
 
                 if not is_transient or attempt >= max_retries:
-                    logger.error("GroceryListGeneratorAgent parse failed | attempt=%d/%d | err=%s", attempt + 1, max_retries + 1, err_text[:240])
+                    logger.error(  # noqa: TRY400
+                        "GroceryListGeneratorAgent parse failed | "
+                        "attempt=%d/%d | err=%s",
+                        attempt + 1,
+                        max_retries + 1,
+                        err_text[:240],
+                    )
                     raise
 
-                logger.warning("GroceryListGenerator transient error, retrying | attempt=%d/%d | err=%s", attempt + 1, max_retries, err_text[:240])
-                # Exponential backoff with jitter to help spread parallel collisions
-                sleep_time = min(2.0 * (2 ** attempt), 10.0) + random.uniform(0.1, 1.5)
+                logger.warning(
+                    "GroceryListGenerator transient error, retrying | "
+                    "attempt=%d/%d | err=%s",
+                    attempt + 1,
+                    max_retries,
+                    err_text[:240],
+                )
+                # Exponential backoff with jitter to help spread
+                # parallel collisions
+                sleep_time = min(2.0 * (2**attempt), 10.0) + random.uniform(  # noqa: S311
+                    0.1, 1.5
+                )
                 await asyncio.sleep(sleep_time)
 
-        raise last_error or RuntimeError("GroceryListGenerator failed without output")
+        raise last_error or RuntimeError(
+            "GroceryListGenerator failed without output"
+        )

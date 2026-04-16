@@ -1,21 +1,32 @@
-from typing import Optional
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from typing import TYPE_CHECKING
+
 from jose import JWTError, jwt
-from nutri.common.config.settings import settings
-from nutri.core.auth.models import User
-from nutri.core.db.session import get_db
-from nutri.core.security.jwt import ALGORITHM
+from fastapi import Depends, HTTPException, status
 from pydantic import ValidationError
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.future import select
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+from nutri.core.db.session import get_db
+from nutri.core.auth.models import User
+from nutri.core.security.jwt import ALGORITHM
+from nutri.common.config.settings import settings
+
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_V1_STR}/auth/login"
+)
 
 
 async def get_current_user(
-    db: AsyncSession = Depends(get_db), token: str = Depends(oauth2_scheme)
+    db: AsyncSession = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
 ) -> User:
     """Get the current user from the token."""
     credentials_exception = HTTPException(
@@ -40,12 +51,12 @@ async def get_current_user(
 
 async def get_optional_user(
     db: AsyncSession = Depends(get_db),
-    token: Optional[str] = Depends(
+    token: str | None = Depends(
         OAuth2PasswordBearer(
             tokenUrl=f"{settings.API_V1_STR}/auth/login", auto_error=False
         )
     ),
-) -> Optional[User]:
+) -> User | None:
     """Get the optional user from the token."""
     if not token:
         return None

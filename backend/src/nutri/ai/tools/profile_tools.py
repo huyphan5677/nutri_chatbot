@@ -1,22 +1,38 @@
-import logging
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
-from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import tool
-from nutri.ai.language import get_language_from_config
-from nutri.core.auth.models import User
-from nutri.core.db.session import async_session_maker
-from nutri.core.onboarding.models import FamilyMember
+import logging
+from typing import TYPE_CHECKING
+
 from sqlalchemy.future import select
+from langchain_core.tools import tool
+
+from nutri.ai.language import get_language_from_config
+from nutri.core.db.session import async_session_maker
+from nutri.core.auth.models import User
+from nutri.core.onboarding.models import FamilyMember
+
+
+if TYPE_CHECKING:
+    from langchain_core.runnables import RunnableConfig
+
 
 logger = logging.getLogger("nutri.ai.tools.profile_tools")
 
 
 @tool
-async def get_user_profile(section: str = "all", *, config: RunnableConfig) -> str:
-    """
-    Retrieve the current user's profile information setup during onboarding.
+async def get_user_profile(
+    section: str = "all", *, config: RunnableConfig
+) -> str:
+    """Retrieve the current user's profile information setup during onboarding.
+
     Args:
-        section: Which part of the profile to retrieve (e.g. 'all', 'biometrics', 'dietary_preferences', 'allergies').
+        section: Which part of the profile to retrieve (e.g.'all', 'biometrics',
+         'dietary_preferences', 'allergies').
+        config: RunnableConfig containing user_id and language.
+
+    Returns:
+        str: Formatted string containing the user's profile information.
     """
     language = get_language_from_config(config)
     user_id = config.get("configurable", {}).get("user_id")
@@ -41,7 +57,9 @@ async def get_user_profile(section: str = "all", *, config: RunnableConfig) -> s
 
         profile_context += "Family Members & Kitchen Setup:\n"
         for idx, member in enumerate(members):
-            profile_context += f"Member {idx + 1} ({member.relationship_type}):\n"
+            profile_context += (
+                f"Member {idx + 1} ({member.relationship_type}):\n"
+            )
             profile_context += f"  - Name: {member.name}\n"
             profile_context += f"  - Gender: {member.gender or 'None'}\n"
             profile_context += f"  - Age: {member.age or 'N/A'}\n"
@@ -56,8 +74,6 @@ async def get_user_profile(section: str = "all", *, config: RunnableConfig) -> s
                 "  - Metabolic Metrics: "
                 f"BMR={member.bmr or 'N/A'} kcal, TDEE={member.tdee or 'N/A'} kcal\n"
             )
-            profile_context += (
-                f"  - Health Profile/Allergies: {member.health_profile or 'None'}\n\n"
-            )
+            profile_context += f"  - Health Profile/Allergies: {member.health_profile or 'None'}\n\n"
 
         return profile_context

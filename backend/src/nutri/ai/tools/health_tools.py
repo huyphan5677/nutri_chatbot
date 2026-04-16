@@ -1,13 +1,22 @@
-from langchain_core.runnables import RunnableConfig
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from sqlalchemy.future import select
 from langchain_core.tools import tool
+
 from nutri.core.db.session import async_session_maker
 from nutri.core.onboarding.models import FamilyMember
-from sqlalchemy.future import select
+
+
+if TYPE_CHECKING:
+    from langchain_core.runnables import RunnableConfig
 
 
 @tool
 async def get_health_goals(*, config: RunnableConfig) -> dict:
-    """Retrieves the user's and family's primary health goals from the database."""
+    """Retrieves the user's and family's primary health goals."""
     user_id = config.get("configurable", {}).get("user_id")
     if not user_id:
         return {"error": "Authentication required"}
@@ -22,7 +31,9 @@ async def get_health_goals(*, config: RunnableConfig) -> dict:
         for idx, member in enumerate(members):
             goals[f"member_{idx + 1}_{member.name}"] = {
                 "primary_goal": member.primary_goal,
-                "weight_kg": float(member.weight_kg) if member.weight_kg else None,
+                "weight_kg": float(member.weight_kg)
+                if member.weight_kg
+                else None,
                 "age": member.age,
                 "bmr": float(member.bmr) if member.bmr else None,
                 "tdee": float(member.tdee) if member.tdee else None,

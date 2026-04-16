@@ -1,23 +1,43 @@
-import logging
-import re
-from collections import defaultdict
-from datetime import date, timedelta
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
-from langchain_core.runnables import RunnableConfig
+import re
+import logging
+from typing import TYPE_CHECKING
+from datetime import date, timedelta
+from collections import defaultdict
+
+from sqlalchemy import desc
+from sqlalchemy.orm import selectinload
+from sqlalchemy.future import select
 from langchain_core.tools import tool
+
 from nutri.ai.language import get_language_from_config
 from nutri.core.db.session import async_session_maker
-from nutri.core.menus.models import Meal, MealPlan, Recipe, RecipeIngredient
+from nutri.core.menus.models import Meal, Recipe, MealPlan, RecipeIngredient
 from nutri.core.menus.services import format_quantity_grams
-from sqlalchemy import desc
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
+
+
+if TYPE_CHECKING:
+    from langchain_core.runnables import RunnableConfig
+
 
 logger = logging.getLogger("nutri.ai.tools.menu_tools")
 
 
 def _parse_days_back(days_text: str) -> int | None:
-    """Parse text into a day window for past history or None for full history."""
+    """Parse text into a day window for past history.
+
+    Args:
+        days_text: Text to parse, e.g. "all", "previous", "history", "all_previous", "7", "7d", "days:7"
+
+    Returns:
+        int: Number of days to look back in the past
+        None: If days_text is "all", "previous", "history", or "all_previous"
+
+    Raises:
+        ValueError: If days_text is not a valid day count
+    """
     text = str(days_text or "all").strip().lower()
     if not text or text in {"all", "previous", "history", "all_previous"}:
         return None
@@ -29,21 +49,25 @@ def _parse_days_back(days_text: str) -> int | None:
     if match:
         return max(int(match.group(1)), 1)
 
-    raise ValueError(
-        "days_to_look_back_in_past must be 'all' or a positive day count such as '7', '7d', or 'days:7'"
+    msg = (
+        "days_to_look_back_in_past must be 'all' or a positive day count "
+        "such as '7', '7d', or 'days:7'"
     )
+    raise ValueError(msg)
 
 
 def _plan_matches_window(
     meal_plan: MealPlan, window_start: date, window_end: date
 ) -> bool:
+    """Check if a meal plan falls within the specified date window."""
     for meal in meal_plan.meals or []:
         if meal.eat_date and window_start <= meal.eat_date <= window_end:
             return True
 
     if meal_plan.start_date and meal_plan.end_date:
         return not (
-            meal_plan.end_date < window_start or meal_plan.start_date > window_end
+            meal_plan.end_date < window_start
+            or meal_plan.start_date > window_end
         )
 
     return False
@@ -55,11 +79,10 @@ def _format_previous_menus(
     days_to_look_back: str,
     days_back: int | None,
 ) -> str:
+    """Format previous menus for display."""
     if not meal_plans:
         if days_back is None:
-            return (
-                f"No previous menus found.\nTarget response language code: {language}"
-            )
+            return f"No previous menus found.\nTarget response language code: {language}"
         return (
             f"No menus found in the previous {days_back} day(s).\n"
             f"Target response language code: {language}"
@@ -74,18 +97,20 @@ def _format_previous_menus(
     if days_back is None:
         lines.append(f"Total previous menus: {len(meal_plans)}")
     else:
-        lines.append(f"Menus matched in previous {days_back} day(s): {len(meal_plans)}")
+        lines.append(
+            f"Menus matched in previous {days_back} day(s): {len(meal_plans)}"
+        )
 
     for idx, meal_plan in enumerate(meal_plans, start=1):
-        lines.append("")
-        lines.append(f"Menu {idx}:")
-        lines.append(f"- id: {meal_plan.id}")
-        lines.append(f"- name: {meal_plan.name or 'Unnamed menu'}")
-        lines.append(
-            f"- range: {meal_plan.start_date or 'N/A'} to {meal_plan.end_date or 'N/A'}"
-        )
-        lines.append(f"- status: {meal_plan.status or 'unknown'}")
-        lines.append(f"- created_at: {meal_plan.created_at or 'N/A'}")
+        lines.extend((
+            "",
+            f"Menu {idx}:",
+            f"- id: {meal_plan.id}",
+            f"- name: {meal_plan.name or 'Unnamed menu'}",
+            f"- range: {meal_plan.start_date or 'N/A'} to {meal_plan.end_date or 'N/A'}",
+            f"- status: {meal_plan.status or 'unknown'}",
+            f"- created_at: {meal_plan.created_at or 'N/A'}",
+        ))
 
         meals_by_date: dict[date | None, list[str]] = defaultdict(list)
         for meal in sorted(
@@ -106,8 +131,7 @@ def _format_previous_menus(
             for eat_date, entries in meals_by_date.items():
                 day_label = str(eat_date) if eat_date else "unknown_date"
                 lines.append(f"  {day_label}")
-                for entry in entries:
-                    lines.append(f"  - {entry}")
+                lines.extend(f"  - {entry}" for entry in entries)
         else:
             lines.append("- meals: none")
 
@@ -127,7 +151,9 @@ async def fetch_historical_diet_log(
 
     today = date.today()
     window_end = today - timedelta(days=1)
-    window_start = window_end - timedelta(days=days_back - 1) if days_back else None
+    window_start = (
+        window_end - timedelta(days=days_back - 1) if days_back else None
+    )
 
     async with async_session_maker() as db:
         result = await db.execute(
@@ -149,7 +175,8 @@ async def fetch_historical_diet_log(
         ]
 
     logger.info(
-        "fetch_historical_diet_log | user_id=%s | days_to_look_back=%s | matched=%d",
+        "fetch_historical_diet_log | "
+        "user_id=%s | days_to_look_back=%s | matched=%d",
         user_id,
         days_to_look_back_in_past,
         len(previous_meal_plans),
@@ -167,35 +194,44 @@ async def fetch_historical_diet_log(
 async def get_overview_menu_previous(
     days_to_look_back_in_past: str = "all", *, config: RunnableConfig
 ) -> str:
-    """
-    Retrieve the current user's PAST/PREVIOUS saved meal plans.
+    """Retrieve the current user's PAST/PREVIOUS saved meal plans.
 
     WARNING: DO NOT use this tool to CREATE, PLAN, or GENERATE new menus.
     ONLY USE THIS TOOL when the user explicitly asks to view their history
-    or past menus (e.g., "show me the past menu from 2 days ago", "what did I eat last week?", "view all old menus").
+    or past menus (e.g., "show me the past menu from 2 days ago", "what did
+    I eat last week?", "view all old menus").
 
     Args:
         days_to_look_back_in_past:
             - "all": return all saved past menu history.
             - "<n>": return old menus from exactly n days in the past.
+        config: RunnableConfig containing user_id and language.
+
+    Returns:
+        str: Formatted string containing the user's past menu history.
     """
     language = get_language_from_config(config)
     user_id = config.get("configurable", {}).get("user_id")
     if not user_id:
         return "Authentication required to view previous menus."
 
-    return await fetch_historical_diet_log(user_id, language, days_to_look_back_in_past)
+    return await fetch_historical_diet_log(
+        user_id, language, days_to_look_back_in_past
+    )
 
 
 @tool("view_historical_diet_log_detail")
 async def get_detail_menu_previous_by_id(
     log_id: str, *, config: RunnableConfig
 ) -> str:
-    """
-    Retrieve detailed information for one saved historical log by id.
+    """Retrieve detailed information for one saved historical log by id.
 
     Args:
         log_id: Meal plan id returned by `view_historical_diet_log`.
+        config: RunnableConfig containing user_id and language.
+
+    Returns:
+        str: Formatted string containing the user's menu details.
     """
     language = get_language_from_config(config)
     user_id = config.get("configurable", {}).get("user_id")
@@ -261,14 +297,16 @@ async def get_detail_menu_previous_by_id(
                 lines.append(f"  - {meal.meal_type or 'meal'}: Unknown recipe")
                 continue
 
-            lines.append(f"  - {meal.meal_type or 'meal'}: {recipe.name}")
-            lines.append(f"    recipe_id: {recipe.id}")
-            lines.append(f"    servings: {meal.servings or 'N/A'}")
-            lines.append(f"    calories: {recipe.total_calories or 'N/A'}")
-            lines.append(f"    prep_time_minutes: {recipe.prep_time_minutes or 'N/A'}")
-            lines.append(f"    cook_time_minutes: {recipe.cook_time_minutes or 'N/A'}")
-            lines.append(f"    dietary_tags: {recipe.dietary_tags or []}")
-            lines.append(f"    macros: {recipe.macros or {}}")
+            lines.extend((
+                f"  - {meal.meal_type or 'meal'}: {recipe.name}",
+                f"    recipe_id: {recipe.id}",
+                f"    servings: {meal.servings or 'N/A'}",
+                f"    calories: {recipe.total_calories or 'N/A'}",
+                f"    prep_time_minutes: {recipe.prep_time_minutes or 'N/A'}",
+                f"    cook_time_minutes: {recipe.cook_time_minutes or 'N/A'}",
+                f"    dietary_tags: {recipe.dietary_tags or []}",
+                f"    macros: {recipe.macros or {}}",
+            ))
             if recipe.description:
                 lines.append(f"    description: {recipe.description}")
 
@@ -292,9 +330,13 @@ async def get_detail_menu_previous_by_id(
             if instructions:
                 lines.append(f"    instructions: {instructions}")
 
-            adjusted_instructions = str(meal.adjusted_instructions or "").strip()
+            adjusted_instructions = str(
+                meal.adjusted_instructions or ""
+            ).strip()
             if adjusted_instructions:
-                lines.append(f"    adjusted_instructions: {adjusted_instructions}")
+                lines.append(
+                    f"    adjusted_instructions: {adjusted_instructions}"
+                )
 
     logger.info(
         "get_detail_menu_previous_by_id | user_id=%s | menu_id=%s | meals=%d",

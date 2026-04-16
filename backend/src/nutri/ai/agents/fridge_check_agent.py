@@ -1,10 +1,14 @@
-import logging
-from typing import List
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
+import logging
+
+from pydantic import Field, BaseModel
 from langchain_core.messages import HumanMessage, SystemMessage
+
 from nutri.ai.llm_client import get_llm
 from nutri.ai.system_prompt import SystemPrompt
-from pydantic import BaseModel, Field
+
 
 logger = logging.getLogger("nutri.ai.agents.fridge_check")
 
@@ -42,7 +46,7 @@ class FridgeCheckItem(BaseModel):
 class FridgeCheckResult(BaseModel):
     """Full deduction result from the agent."""
 
-    items: List[FridgeCheckItem]
+    items: list[FridgeCheckItem]
 
 
 class FridgeCheckAgent:
@@ -53,13 +57,13 @@ class FridgeCheckAgent:
     unit conversion (kg ↔ g), and partial deduction.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.llm = get_llm().with_structured_output(FridgeCheckResult)
 
     async def acheck(
         self,
-        grocery_items: List[dict],
-        inventory_items: List[dict],
+        grocery_items: list[dict],
+        inventory_items: list[dict],
     ) -> FridgeCheckResult:
         """Compare grocery list against fridge inventory.
 
@@ -75,7 +79,10 @@ class FridgeCheckAgent:
 
         # If fridge is empty, skip LLM call — buy everything
         if not inventory_items:
-            logger.info("Fridge is empty, skipping LLM call — buy all %d items", len(grocery_items))
+            logger.info(
+                "Fridge is empty, skipping LLM call — buy all %d items",
+                len(grocery_items),
+            )
             return FridgeCheckResult(
                 items=[
                     FridgeCheckItem(
@@ -153,7 +160,9 @@ class FridgeCheckAgent:
                         FridgeCheckItem(
                             name=grocery_items[idx]["name"],
                             action="buy",
-                            buy_quantity=str(grocery_items[idx].get("quantity") or ""),
+                            buy_quantity=str(
+                                grocery_items[idx].get("quantity") or ""
+                            ),
                             fridge_has="",
                             reason="Fallback — LLM output mismatch",
                         )
@@ -181,7 +190,7 @@ class FridgeCheckAgent:
             return result
 
         except Exception as e:
-            logger.error("FridgeCheckAgent.acheck failed: %s", e)
+            logger.error("FridgeCheckAgent.acheck failed: %s", e)  # noqa: TRY400
             # Fallback: buy everything
             return FridgeCheckResult(
                 items=[

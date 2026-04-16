@@ -1,21 +1,23 @@
-from typing import List, Optional
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
+from pydantic import BaseModel
 
 from nutri.core.recipes.entities import RecipeRead
-from pydantic import BaseModel
 
 
 class RecipeUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    prep_time_minutes: Optional[int] = None
-    cook_time_minutes: Optional[int] = None
-    total_calories: Optional[int] = None
-    type: Optional[str] = None
-    image_url: Optional[str] = None
-    instructions: Optional[str] = None
-    source_url: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
+    prep_time_minutes: int | None = None
+    cook_time_minutes: int | None = None
+    total_calories: int | None = None
+    type: str | None = None
+    image_url: str | None = None
+    instructions: str | None = None
+    source_url: str | None = None
 
 
 class RecipeSearchResponse(BaseModel):
-    recipes: List[RecipeRead]
+    recipes: list[RecipeRead]
     total: int

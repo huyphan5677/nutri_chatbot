@@ -1,12 +1,24 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
 """Grocery domain models."""
+
+from __future__ import annotations
 
 import uuid
 
-from nutri.core.db.session import Base
-from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Numeric, String
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy import (
+    Date,
+    Column,
+    String,
+    Boolean,
+    Numeric,
+    DateTime,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+
+from nutri.core.db.session import Base
 
 
 class UserInventory(Base):

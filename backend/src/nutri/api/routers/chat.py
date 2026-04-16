@@ -1,30 +1,47 @@
-import json
-import logging
-import uuid
-from datetime import datetime, timezone
-from typing import List
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+import json
+import uuid
+import asyncio
+import logging
+from typing import TYPE_CHECKING, Annotated
+from datetime import UTC, datetime
+from collections.abc import AsyncGenerator
+
+from fastapi import Depends, APIRouter, HTTPException
+from sqlalchemy import update
 from fastapi.responses import StreamingResponse
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from langchain_core.exceptions import OutputParserException
-from nutri.ai.agents.assistant_agent import AssistantAgent
-from nutri.ai.language import detect_user_language, normalize_language
+from sqlalchemy.orm.attributes import flag_modified
+
+from nutri.ai.language import normalize_language, detect_user_language
+from nutri.core.chat.dto import (
+    ChatRequest,
+    UnreadSessionInfo,
+    ChatMessageResponse,
+    ChatSessionResponse,
+    UnreadCountResponse,
+)
+from nutri.core.db.session import get_db, async_session_maker
 from nutri.api.dependencies import get_current_user
 from nutri.core.auth.models import User
-from nutri.core.chat.dto import (
-    ChatMessageResponse,
-    ChatRequest,
-    ChatSessionResponse,
-    ChatSessionUpdateRequest,
-    UnreadCountResponse,
-    UnreadSessionInfo,
-)
 from nutri.core.chat.models import ChatMessage, ChatSession
-from nutri.core.chat.services import extract_meal_plan_draft, is_meaningful_message
+from nutri.core.chat.services import (
+    is_meaningful_message,
+    extract_meal_plan_draft,
+)
 from nutri.core.menus.services import find_meal_plan_draft
-from nutri.core.db.session import async_session_maker, get_db
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from nutri.ai.agents.assistant_agent import AssistantAgent
+
+
+if TYPE_CHECKING:
+    from nutri.core.chat.dto import (
+        ChatSessionUpdateRequest,
+    )
+
 
 router = APIRouter()
 logger = logging.getLogger("nutri.api.routers.chat")
@@ -32,15 +49,16 @@ logger = logging.getLogger("nutri.api.routers.chat")
 
 @router.get("/unread", response_model=UnreadCountResponse)
 async def get_unread_count(
-    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
-):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> UnreadCountResponse:
     """Get the number of unread messages for the current user."""
     result = await db.execute(
         select(ChatSession)
         .join(ChatMessage, ChatSession.id == ChatMessage.session_id)
         .where(ChatSession.user_id == current_user.id)
         .where(ChatMessage.message_type == "ai")
-        .where(ChatMessage.is_read == False)
+        .where(not ChatMessage.is_read)
         .distinct()
     )
     unread_sessions = result.scalars().all()
@@ -50,7 +68,10 @@ async def get_unread_count(
         for s in unread_sessions
     ]
 
-    return {"count": len(unread_sessions), "sessions": session_info_list}
+    return UnreadCountResponse(
+        count=len(unread_sessions),
+        sessions=session_info_list,
+    )
 
 
 # -------
@@ -58,10 +79,11 @@ async def get_unread_count(
 # -------
 
 
-@router.get("/sessions", response_model=List[ChatSessionResponse])
+@router.get("/sessions", response_model=list[ChatSessionResponse])
 async def get_chat_sessions(
-    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
-):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[ChatSessionResponse]:
     """Get all chat sessions for the current user."""
     result = await db.execute(
         select(ChatSession)
@@ -77,7 +99,7 @@ async def get_chat_sessions(
             select(ChatMessage)
             .where(ChatMessage.session_id == session.id)
             .where(ChatMessage.message_type == "ai")
-            .where(ChatMessage.is_read == False)
+            .where(not ChatMessage.is_read)
         )
         has_unread = unread_result.scalars().first() is not None
 
@@ -94,13 +116,25 @@ async def get_chat_sessions(
     return response_sessions
 
 
-@router.get("/{session_id}/messages", response_model=List[ChatMessageResponse])
+@router.get("/{session_id}/messages", response_model=list[ChatMessageResponse])
 async def get_chat_messages(
     session_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Get all messages for a specific chat session."""
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[ChatMessageResponse]:
+    """Get all messages for a specific chat session.
+
+    Args:
+        session_id: The ID of the chat session.
+        current_user: The current user.
+        db: The database session.
+
+    Returns:
+        A list of chat messages.
+
+    Raises:
+        HTTPException: If the chat session is not found.
+    """
     # Verify session belongs to user
     result = await db.execute(
         select(ChatSession).where(
@@ -142,10 +176,23 @@ async def get_chat_messages(
 async def update_chat_session(
     session_id: str,
     update_data: ChatSessionUpdateRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Update a chat session."""
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> ChatSessionResponse:
+    """Update a chat session.
+
+    Args:
+        session_id: The ID of the chat session.
+        update_data: The data to update the chat session with.
+        current_user: The current user.
+        db: The database session.
+
+    Returns:
+        The updated chat session.
+
+    Raises:
+        HTTPException: If the chat session is not found.
+    """
     result = await db.execute(
         select(ChatSession).where(
             ChatSession.id == session_id, ChatSession.user_id == current_user.id
@@ -156,7 +203,7 @@ async def update_chat_session(
         raise HTTPException(status_code=404, detail="Chat session not found")
 
     session.title = update_data.title
-    session.updated_at = datetime.now(timezone.utc)
+    session.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(session)
 
@@ -172,10 +219,22 @@ async def update_chat_session(
 @router.delete("/{session_id}", response_model=dict)
 async def delete_chat_session(
     session_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Delete a chat session."""
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Delete a chat session.
+
+    Args:
+        session_id: The ID of the chat session.
+        current_user: The current user.
+        db: The database session.
+
+    Returns:
+        A dictionary with the status and message.
+
+    Raises:
+        HTTPException: If the chat session is not found.
+    """
     result = await db.execute(
         select(ChatSession).where(
             ChatSession.id == session_id, ChatSession.user_id == current_user.id
@@ -193,10 +252,22 @@ async def delete_chat_session(
 @router.post("/{session_id}/read")
 async def mark_session_as_read(
     session_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Mark a chat session as read."""
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Mark a chat session as read.
+
+    Args:
+        session_id: The ID of the chat session.
+        current_user: The current user.
+        db: The database session.
+
+    Returns:
+        A dictionary with the status and message.
+
+    Raises:
+        HTTPException: If the chat session is not found.
+    """
     result = await db.execute(
         select(ChatSession).where(
             ChatSession.id == session_id, ChatSession.user_id == current_user.id
@@ -207,7 +278,6 @@ async def mark_session_as_read(
         raise HTTPException(status_code=404, detail="Chat session not found")
 
     # Mark all unread AI messages in this session as read
-    from sqlalchemy import update
 
     await db.execute(
         update(ChatMessage)
@@ -218,18 +288,33 @@ async def mark_session_as_read(
     await db.commit()
     return {"status": "success", "message": "Chat session marked as read"}
 
+
 @router.put("/messages/{message_id}/draft")
 async def sync_message_draft(
     message_id: str,
     draft_data: dict,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Sync a message draft.
+
+    Args:
+        message_id: The ID of the message.
+        draft_data: The draft data.
+        current_user: The current user.
+        db: The database session.
+
+    Returns:
+        A dictionary with the status and message.
+
+    Raises:
+        HTTPException: If the message is not found.
+    """
     try:
         msg_uuid = uuid.UUID(message_id)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid message_id")
-        
+
     result = await db.execute(
         select(ChatMessage)
         .join(ChatSession, ChatSession.id == ChatMessage.session_id)
@@ -239,23 +324,24 @@ async def sync_message_draft(
     chat_message = result.scalars().first()
     if not chat_message:
         raise HTTPException(status_code=404, detail="Message not found")
-        
+
     draft_idx, current_draft = find_meal_plan_draft(chat_message.tool_calls)
     if draft_idx is None:
-        raise HTTPException(status_code=400, detail="Message has no meal plan draft")
-        
+        raise HTTPException(
+            status_code=400, detail="Message has no meal plan draft"
+        )
+
     if current_draft and current_draft.get("saved"):
         draft_data["saved"] = True
         if "meal_plan_id" in current_draft:
             draft_data["meal_plan_id"] = current_draft["meal_plan_id"]
-        
+
     updated = list(chat_message.tool_calls)
     updated[draft_idx] = {"type": "meal_plan_draft", "data": draft_data}
     chat_message.tool_calls = updated
-    
-    from sqlalchemy.orm.attributes import flag_modified
+
     flag_modified(chat_message, "tool_calls")
-    
+
     await db.commit()
     return {"status": "success"}
 
@@ -268,13 +354,24 @@ async def sync_message_draft(
 @router.post("/stream")
 async def chat_stream_endpoint(
     request: ChatRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Stream chat with the AI assistant."""
+    """Stream chat with the AI assistant.
+
+    Args:
+        request: The chat request.
+        current_user: The current user.
+        db: The database session.
+
+    Returns:
+        A streaming response with the chat messages.
+    """
     user_id = str(current_user.id)
     thread_id = request.thread_id or str(uuid.uuid4())
-    result = await db.execute(select(ChatSession).where(ChatSession.id == thread_id))
+    result = await db.execute(
+        select(ChatSession).where(ChatSession.id == thread_id)
+    )
     session = result.scalars().first()
 
     if not session:
@@ -286,8 +383,6 @@ async def chat_stream_endpoint(
             else request.message,
         )
         db.add(session)
-    else:
-        pass
 
     user_msg = ChatMessage(
         session_id=thread_id, message_type="human", content=request.message
@@ -296,7 +391,6 @@ async def chat_stream_endpoint(
     await db.commit()
 
     # Send thread_id in the first event headers so the client knows it
-    import asyncio
 
     queue = asyncio.Queue()
     request_language = normalize_language(
@@ -305,7 +399,7 @@ async def chat_stream_endpoint(
 
     if not is_meaningful_message(request.message):
 
-        async def empty_generator():
+        async def empty_generator() -> AsyncGenerator[str, None]:
             yield f"data: {json.dumps({'type': 'init', 'thread_id': thread_id})}\n\n"
             if request_language == "vi":
                 content = (
@@ -322,7 +416,9 @@ async def chat_stream_endpoint(
             yield f"data: {json.dumps({'type': 'chunk', 'content': content})}\n\n"
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
-        return StreamingResponse(empty_generator(), media_type="text/event-stream")
+        return StreamingResponse(
+            empty_generator(), media_type="text/event-stream"
+        )
 
     async def bg_agent_task(q: asyncio.Queue, t_id: str, msg: str, uid: str):
         agent = AssistantAgent(user_id=uid, language=request_language)
@@ -362,12 +458,10 @@ async def chat_stream_endpoint(
                     tc.copy() if hasattr(tc, "copy") else tc for tc in all_tools
                 ]
                 if current_meal_plan_draft:
-                    processed_tools.append(
-                        {
-                            "type": "meal_plan_draft",
-                            "data": current_meal_plan_draft,
-                        }
-                    )
+                    processed_tools.append({
+                        "type": "meal_plan_draft",
+                        "data": current_meal_plan_draft,
+                    })
 
                 ai_msg = ChatMessage(
                     session_id=t_id,
@@ -386,7 +480,7 @@ async def chat_stream_endpoint(
                     )
                     s = res.scalars().first()
                     if s:
-                        s.updated_at = datetime.now(timezone.utc)
+                        s.updated_at = datetime.now(UTC)
 
                 await background_db.commit()
 
@@ -405,7 +499,9 @@ async def chat_stream_endpoint(
             nonlocal total_usage, all_tools, current_meal_plan_draft
 
             async with asyncio.timeout(300):  # 5 minute max per request
-                async for event in agent.chat_stream(msg, thread_id=stream_thread_id):
+                async for event in agent.chat_stream(
+                    msg, thread_id=stream_thread_id
+                ):
                     kind = event.get("type")
                     if kind == "chunk":
                         replies[-1] += event["content"]
@@ -429,7 +525,9 @@ async def chat_stream_endpoint(
                         continue  # We sent it manually, don't forward raw event
                     elif kind == "message_break":
                         # Persist current segment before opening the next assistant message.
-                        persisted = await persist_current_reply(update_session=False)
+                        persisted = await persist_current_reply(
+                            update_session=False
+                        )
                         if persisted:
                             await q.put(
                                 f"data: {json.dumps({'type': 'persisted_message', **persisted})}\n\n"
@@ -463,7 +561,9 @@ async def chat_stream_endpoint(
                         raise
 
                     reason = (
-                        "conversation_state" if is_history_retry else "output_parse"
+                        "conversation_state"
+                        if is_history_retry
+                        else "output_parse"
                     )
                     short_error = compact_error_message(e)
 
@@ -494,13 +594,17 @@ async def chat_stream_endpoint(
                     f"data: {json.dumps({'type': 'persisted_message', **persisted})}\n\n"
                 )
             await q.put(f"data: {json.dumps({'type': 'done'})}\n\n")
-        except asyncio.TimeoutError:
-            logger.error("bg_agent_task timed out | t_id=%s | msg=%r", t_id, msg[:200])
+        except TimeoutError:
+            logger.error(  # noqa: TRY400
+                "bg_agent_task timed out | t_id=%s | msg=%r", t_id, msg[:200]
+            )
             await q.put(
                 f"data: {json.dumps({'type': 'error', 'language': request_language, 'content': 'Request timed out after 3 minutes'})}\n\n"
             )
         except Exception as e:
-            logger.exception("bg_agent_task error | t_id=%s | error=%s", t_id, str(e))
+            logger.exception(
+                "bg_agent_task error | t_id=%s | error=%s", t_id, str(e)
+            )
             await q.put(
                 f"data: {json.dumps({'type': 'error', 'language': request_language, 'content': f'Error: {compact_error_message(e)}'})}\n\n"
             )
@@ -508,9 +612,11 @@ async def chat_stream_endpoint(
             await q.put(None)  # Sentinel to stop generator
 
     # Create the background task for the agent
-    asyncio.create_task(bg_agent_task(queue, thread_id, request.message, user_id))
+    asyncio.create_task(  # noqa: RUF006
+        bg_agent_task(queue, thread_id, request.message, user_id)
+    )
 
-    async def event_generator():
+    async def event_generator() -> AsyncGenerator[str, None]:
         # First event to send thread_id, in case this is a new chat
         yield f"data: {json.dumps({'type': 'init', 'thread_id': thread_id})}\n\n"
 

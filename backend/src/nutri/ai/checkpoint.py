@@ -1,13 +1,18 @@
-import logging
-from typing import Any, Optional
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
+import logging
+from typing import Any
+
+from psycopg_pool import AsyncConnectionPool
 from langchain_core.messages.utils import (
-    count_tokens_approximately,
     trim_messages,
+    count_tokens_approximately,
 )
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+
 from nutri.common.config.settings import settings
-from psycopg_pool import AsyncConnectionPool
+
 
 logger = logging.getLogger("nutri.ai.checkpoint")
 
@@ -15,6 +20,7 @@ logger = logging.getLogger("nutri.ai.checkpoint")
 def pre_model_trim_messages(
     state: dict[str, Any], max_tokens: int = 4096
 ) -> dict[str, Any]:
+    """Pre-model hook to trim messages to fit context window."""
     messages = state.get("messages", [])
     if not messages:
         return {"llm_input_messages": []}
@@ -31,17 +37,19 @@ def pre_model_trim_messages(
 
 
 class CheckpointerManager:
-    _instance: Optional["CheckpointerManager"] = None
-    _pool: Optional[AsyncConnectionPool] = None
-    _checkpointer: Optional[AsyncPostgresSaver] = None
+    _instance: CheckpointerManager | None = None
+    _pool: AsyncConnectionPool | None = None
+    _checkpointer: AsyncPostgresSaver | None = None
 
-    def __new__(cls):
+    def __new__(cls) -> CheckpointerManager:
+        """Create a new instance of the CheckpointerManager."""
         if cls._instance is None:
-            cls._instance = super(CheckpointerManager, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     @property
     def conn_string(self) -> str:
+        """Get database connection string."""
         if settings.DATABASE_URL:
             url = settings.DATABASE_URL
             if url.startswith("postgresql+asyncpg://"):
@@ -55,7 +63,8 @@ class CheckpointerManager:
             await self.initialize()
         return self._checkpointer
 
-    async def initialize(self):
+    async def initialize(self) -> None:
+        """Initialize the checkpointer pool and checkpointer."""
         if self._pool is None:
             logger.info("Initializing Postgres checkpointer pool...")
             self._pool = AsyncConnectionPool(
@@ -69,7 +78,8 @@ class CheckpointerManager:
             await self._checkpointer.setup()
             logger.info("Postgres checkpointer initialized.")
 
-    async def close(self):
+    async def close(self) -> None:
+        """Close the checkpointer pool."""
         if self._pool:
             await self._pool.close()
             self._pool = None
@@ -85,9 +95,9 @@ async def get_postgres_checkpointer() -> AsyncPostgresSaver:
     return await checkpointer_manager.get_checkpointer()
 
 
-async def init_checkpointer():
+async def init_checkpointer() -> None:
     await checkpointer_manager.initialize()
 
 
-async def close_checkpointer():
+async def close_checkpointer() -> None:
     await checkpointer_manager.close()

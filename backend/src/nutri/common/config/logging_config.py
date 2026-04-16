@@ -1,5 +1,5 @@
-"""
-Logging configuration for the Nutri backend.
+# Copyright (c) 2026 Nutri. All rights reserved.s
+"""Logging configuration for the Nutri backend.
 
 Creates two rotating log files:
   - logs/nutri.log       : All app logs (DEBUG+)
@@ -10,9 +10,12 @@ Usage:
     setup_logging()
 """
 
+from __future__ import annotations
+
 import logging
 import logging.handlers
 from pathlib import Path
+
 
 LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -31,8 +34,7 @@ AI_LOGGER_NAMES = [
 
 
 def setup_logging(log_dir: str = "logs") -> None:
-    """
-    Set up application-wide logging.
+    """Set up application-wide logging.
 
     Call this once at application startup (e.g., in api/main.py lifespan).
 

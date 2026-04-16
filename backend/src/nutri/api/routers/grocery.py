@@ -1,32 +1,48 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
-from nutri.ai.agents.fridge_check_agent import FridgeCheckAgent
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
+import re
+import uuid
+import logging
+from typing import TYPE_CHECKING, Annotated
+
+from fastapi import Query, Depends, APIRouter, HTTPException, BackgroundTasks
+from sqlalchemy import desc, delete
+from sqlalchemy.orm import selectinload
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from nutri.core.db.session import get_db
 from nutri.api.dependencies import get_current_user
 from nutri.core.auth.models import User
-from nutri.core.db.session import get_db
 from nutri.core.grocery.dto import (
-    GroceryByMenuResponse,
     GroceryItemDTO,
+    ShoppingRequest,
     GroceryListResponse,
     GroceryMenuGroupDTO,
+    GroceryByMenuResponse,
+    ShoppingOrderResponse,
     ShoppingHistoryItemDTO,
     ShoppingHistoryResponse,
-    ShoppingOrderResponse,
     ShoppingOrderStartResponse,
-    ShoppingRequest,
-    UpdateGroceryItemRequest,
 )
+from nutri.core.menus.models import MealPlan, Ingredient
 from nutri.core.grocery.models import GroceryItem, ShoppingOrder, UserInventory
 from nutri.core.grocery.services import format_quantity_grams
+from nutri.core.grocery.shopping_bg import process_shopping_background
 from nutri.core.grocery.store_mapping import (
     get_lotte_branches,
     get_winmart_provinces,
     get_winmart_stores_by_province,
 )
-from nutri.core.menus.models import Ingredient, MealPlan
-from sqlalchemy import delete, desc
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
+from nutri.ai.agents.fridge_check_agent import FridgeCheckAgent
+
+
+if TYPE_CHECKING:
+    from nutri.core.grocery.dto import (
+        UpdateGroceryItemRequest,
+    )
+
 
 router = APIRouter()
 
@@ -38,8 +54,9 @@ router = APIRouter()
 
 @router.get("/current", response_model=GroceryListResponse)
 async def get_current_grocery_list(
-    db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)
-):
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> GroceryListResponse:
     """Get the current grocery list for the user."""
     # Find most 1 recent meal plan to filter groceries
     result = await db.execute(
@@ -63,17 +80,16 @@ async def get_current_grocery_list(
     res = await db.execute(query)
     items = res.scalars().all()
 
-    dtos = []
-    for item in items:
-        dtos.append(
-            GroceryItemDTO(
-                id=str(item.id),
-                name=item.ingredient.name if item.ingredient else "Unknown",
-                category=item.ingredient.category if item.ingredient else "Other",
-                quantity=format_quantity_grams(item.quantity),
-                is_purchased=item.is_purchased,
-            )
+    dtos = [
+        GroceryItemDTO(
+            id=str(item.id),
+            name=item.ingredient.name if item.ingredient else "Unknown",
+            category=item.ingredient.category if item.ingredient else "Other",
+            quantity=format_quantity_grams(item.quantity),
+            is_purchased=item.is_purchased,
         )
+        for item in items
+    ]
 
     return GroceryListResponse(items=dtos)
 
@@ -82,12 +98,23 @@ async def get_current_grocery_list(
 async def update_grocery_item(
     item_id: str,
     request: UpdateGroceryItemRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Update a grocery item."""
-    import uuid
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> GroceryItemDTO:
+    """Update a grocery item.
 
+    Args:
+        item_id (str): ID of the grocery item to update.
+        request (UpdateGroceryItemRequest): Request body with fields to update.
+        db (AsyncSession): Database session.
+        current_user (User): Current user.
+
+    Returns:
+        GroceryItemDTO: Updated grocery item.
+
+    Raises:
+        HTTPException: If the grocery item is not found.
+    """
     # 1. Find the grocery item
     query = (
         select(GroceryItem)
@@ -101,21 +128,26 @@ async def update_grocery_item(
     grocery_item = result.scalars().first()
 
     if not grocery_item:
-        from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail="Grocery item not found")
 
-    # 2. If name or category changed, we need to find/create a new Ingredient and re-link it
+    # 2. If name or category changed, we need to find/create a new Ingredient
+    # and re-link it
     if request.name is not None or request.category is not None:
         new_name = request.name or (
-            grocery_item.ingredient.name if grocery_item.ingredient else "Unknown"
+            grocery_item.ingredient.name
+            if grocery_item.ingredient
+            else "Unknown"
         )
         new_category = request.category or (
-            grocery_item.ingredient.category if grocery_item.ingredient else "Other"
+            grocery_item.ingredient.category
+            if grocery_item.ingredient
+            else "Other"
         )
 
         # Find if this exact ingredient exists
-        ingredient_query = select(Ingredient).where(Ingredient.name.ilike(new_name))
+        ingredient_query = select(Ingredient).where(
+            Ingredient.name.ilike(new_name)
+        )
         ingredient_res = await db.execute(ingredient_query)
         ingredient = ingredient_res.scalars().first()
 
@@ -127,7 +159,10 @@ async def update_grocery_item(
             )
             db.add(ingredient)
             await db.flush()
-        elif request.category is not None and ingredient.category != request.category:
+        elif (
+            request.category is not None
+            and ingredient.category != request.category
+        ):
             # Optionally update category of existing
             ingredient.category = request.category
 
@@ -136,10 +171,8 @@ async def update_grocery_item(
 
     # 3. Update quantity if provided
     if request.quantity is not None:
-        import re as _re
-
         # Strip non-numeric suffix (e.g. "5g" → "5", "200ml" → "200")
-        numeric_str = _re.sub(r"[^\d.]", "", request.quantity)
+        numeric_str = re.sub(r"[^\d.]", "", request.quantity)
         grocery_item.quantity = float(numeric_str) if numeric_str else None
 
     # 4. Update purchase state if provided
@@ -151,7 +184,9 @@ async def update_grocery_item(
 
     return GroceryItemDTO(
         id=str(grocery_item.id),
-        name=grocery_item.ingredient.name if grocery_item.ingredient else "Unknown",
+        name=grocery_item.ingredient.name
+        if grocery_item.ingredient
+        else "Unknown",
         category=grocery_item.ingredient.category
         if grocery_item.ingredient
         else "Other",
@@ -163,10 +198,22 @@ async def update_grocery_item(
 @router.delete("/{item_id}")
 async def delete_grocery_item(
     item_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Delete a grocery item."""
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict[str, str]:
+    """Delete a grocery item.
+
+    Args:
+        item_id (str): ID of the grocery item to delete.
+        db (AsyncSession): Database session.
+        current_user (User): Current user.
+
+    Returns:
+        dict[str, str]: Response message.
+
+    Raises:
+        HTTPException: If the grocery item is not found.
+    """
     # Find the grocery item belonging to the current user
     query = select(GroceryItem).where(
         GroceryItem.id == item_id,
@@ -176,8 +223,6 @@ async def delete_grocery_item(
     item = result.scalars().first()
 
     if not item:
-        from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail="Grocery item not found")
 
     await db.delete(item)
@@ -205,7 +250,9 @@ async def list_winmart_provinces():
 
 @router.get("/stores/winmart")
 async def list_winmart_stores(
-    province: str = Query(..., description="Province name to filter stores"),
+    province: Annotated[
+        str, Query(description="Province name to filter stores")
+    ],
 ):
     """Return WinMart stores filtered by province."""
     return get_winmart_stores_by_province(province)
@@ -218,13 +265,23 @@ async def list_winmart_stores(
 
 @router.get("/by-menu", response_model=GroceryByMenuResponse)
 async def get_grocery_list_grouped_by_menu(
-    db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)
-):
-    """Return grocery items grouped by meal plan for the current user."""
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> GroceryByMenuResponse:
+    """Return grocery items grouped by meal plan for the current user.
+
+    Args:
+        db (AsyncSession): Database session.
+        current_user (User): Current user.
+
+    Returns:
+        GroceryByMenuResponse: Grocery items grouped by meal plan.
+    """
     grocery_result = await db.execute(
         select(GroceryItem)
         .options(
-            selectinload(GroceryItem.ingredient), selectinload(GroceryItem.meal_plan)
+            selectinload(GroceryItem.ingredient),
+            selectinload(GroceryItem.meal_plan),
         )
         .where(GroceryItem.user_id == current_user.id)
     )
@@ -242,7 +299,8 @@ async def get_grocery_list_grouped_by_menu(
             end_date = str(plan.end_date) if plan.end_date else None
             status = plan.status
         elif item.meal_plan_id is not None:
-            # Handle dangling references gracefully so existing DB rows still show in UI.
+            # Handle dangling references gracefully so existing DB rows still
+            # show in UI.
             key = str(item.meal_plan_id)
             meal_plan_id = str(item.meal_plan_id)
             meal_plan_name = "Archived menu"
@@ -271,7 +329,9 @@ async def get_grocery_list_grouped_by_menu(
             GroceryItemDTO(
                 id=str(item.id),
                 name=item.ingredient.name if item.ingredient else "Unknown",
-                category=item.ingredient.category if item.ingredient else "Other",
+                category=item.ingredient.category
+                if item.ingredient
+                else "Other",
                 quantity=format_quantity_grams(item.quantity),
                 is_purchased=item.is_purchased,
             )
@@ -292,17 +352,30 @@ async def get_grocery_list_grouped_by_menu(
 @router.delete("/by-menu/{meal_plan_id}")
 async def delete_grocery_items_by_menu(
     meal_plan_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Delete all grocery items for one meal plan group."""
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict[str, str]:
+    """Delete all grocery items for one meal plan group.
+
+    Args:
+        meal_plan_id (str): ID of the meal plan.
+        db (AsyncSession): Database session.
+        current_user (User): Current user.
+
+    Returns:
+        dict[str, str]: Response message.
+
+    Raises:
+        HTTPException: If the meal plan is not found.
+    """
     if meal_plan_id == "unassigned":
         stmt = delete(GroceryItem).where(
             GroceryItem.user_id == current_user.id,
             GroceryItem.meal_plan_id.is_(None),
         )
     else:
-        # Validate menu ownership before deleting to avoid touching unrelated rows.
+        # Validate menu ownership before deleting to avoid touching unrelated
+        # rows.
         plan_result = await db.execute(
             select(MealPlan).where(
                 MealPlan.id == meal_plan_id,
@@ -311,8 +384,6 @@ async def delete_grocery_items_by_menu(
         )
         plan = plan_result.scalars().first()
         if not plan:
-            from fastapi import HTTPException
-
             raise HTTPException(status_code=404, detail="Menu not found")
 
         stmt = delete(GroceryItem).where(
@@ -338,18 +409,26 @@ async def delete_grocery_items_by_menu(
 async def start_shopping(
     payload: ShoppingRequest,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ShoppingOrderStartResponse:
     """Start searching mart websites for grocery items in the background.
 
     Supports 3 strategies: lotte_priority, winmart_priority, cost_optimized.
     Uses FridgeCheckAgent to deduct fridge inventory before searching.
+
+    Args:
+        payload (ShoppingRequest): Request body with meal plan ID and strategy.
+        background_tasks (BackgroundTasks): Background tasks for processing.
+        db (AsyncSession): Database session.
+        current_user (User): Current user.
+
+    Returns:
+        ShoppingOrderStartResponse: Response with order ID and status.
+
+    Raises:
+        HTTPException: If the meal plan is not found.
     """
-    import logging
-
-    from nutri.core.grocery.shopping_bg import process_shopping_background
-
     logger = logging.getLogger("nutri.api.routers.grocery")
 
     # 1. Validate meal plan ownership
@@ -361,8 +440,6 @@ async def start_shopping(
     )
     plan = plan_result.scalars().first()
     if not plan:
-        from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail="Menu not found")
 
     # 2. Get unpurchased grocery items for this meal plan
@@ -436,22 +513,19 @@ async def start_shopping(
         )
 
         if decision.action == "skip":
-            fridge_covered.append(
-                {
-                    "name": decision.name,
-                    "fridge_quantity": decision.fridge_has,
-                    "required_quantity": original.get("quantity", ""),
-                }
-            )
+            fridge_covered.append({
+                "name": decision.name,
+                "fridge_quantity": decision.fridge_has,
+                "required_quantity": original.get("quantity", ""),
+            })
         else:
-            search_items.append(
-                {
-                    "name": decision.name,
-                    "quantity": decision.buy_quantity or original.get("quantity", ""),
-                    "original_quantity": original.get("quantity", ""),
-                    "fridge_deducted": decision.fridge_has,
-                }
-            )
+            search_items.append({
+                "name": decision.name,
+                "quantity": decision.buy_quantity
+                or original.get("quantity", ""),
+                "original_quantity": original.get("quantity", ""),
+                "fridge_deducted": decision.fridge_has,
+            })
 
     # If everything is covered by fridge
     if not search_items:
@@ -486,7 +560,8 @@ async def start_shopping(
         )
 
     logger.info(
-        "Shopping search start | user=%s | plan=%s | strategy=%s | to_buy=%d | fridge_covered=%d | lotte=%s | winmart=%s/%s",
+        "Shopping search start | user=%s | plan=%s | strategy=%s | to_buy=%d | "
+        " fridge_covered=%d | lotte=%s | winmart=%s/%s",
         current_user.id,
         payload.meal_plan_id,
         payload.strategy,
@@ -529,9 +604,18 @@ async def start_shopping(
 
 @router.get("/shopping/history", response_model=ShoppingHistoryResponse)
 async def get_shopping_history(
-    db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)
-):
-    """Get the shopping history for the current user."""
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ShoppingHistoryResponse:
+    """Get the shopping history for the current user.
+
+    Args:
+        db (AsyncSession): Database session.
+        current_user (User): Current user.
+
+    Returns:
+        ShoppingHistoryResponse: Response with shopping history.
+    """
     result = await db.execute(
         select(ShoppingOrder)
         .where(ShoppingOrder.user_id == current_user.id)
@@ -556,7 +640,9 @@ async def get_shopping_history(
 
             # Use total_estimated_cost if total_amount is not present
             if o.total_amount is None:
-                current_amount = float(o.result_data.get("total_estimated_cost", 0))
+                current_amount = float(
+                    o.result_data.get("total_estimated_cost", 0)
+                )
             else:
                 current_amount = float(o.total_amount)
         else:
@@ -592,13 +678,22 @@ async def get_shopping_history(
 @router.get("/shopping/order/{order_id}", response_model=ShoppingOrderResponse)
 async def get_shopping_order(
     order_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    import uuid
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ShoppingOrderResponse:
+    """Get a specific shopping order by ID.
 
-    from fastapi import HTTPException
+    Args:
+        order_id (str): ID of the order to retrieve.
+        db (AsyncSession): Database session.
+        current_user (User): Current user.
 
+    Returns:
+        ShoppingOrderResponse: Response with shopping order details.
+
+    Raises:
+        HTTPException: If the order is not found or the ID format is invalid.
+    """
     try:
         oid = uuid.UUID(order_id)
     except ValueError:
@@ -620,25 +715,39 @@ async def get_shopping_order(
     )
 
 
-@router.get("/shopping/latest/{meal_plan_id}", response_model=ShoppingOrderResponse)
+@router.get(
+    "/shopping/latest/{meal_plan_id}", response_model=ShoppingOrderResponse
+)
 async def get_latest_shopping_order(
     meal_plan_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    import uuid
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ShoppingOrderResponse:
+    """Get the latest shopping order for a specific meal plan.
 
-    from fastapi import HTTPException
+    Args:
+        meal_plan_id (str): ID of the meal plan.
+        db (AsyncSession): Database session.
+        current_user (User): Current user.
 
+    Returns:
+        ShoppingOrderResponse: Response with shopping order details.
+
+    Raises:
+        HTTPException: If the meal plan ID format is invalid or no order is found.
+    """
     try:
         mpid = uuid.UUID(meal_plan_id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid meal plan ID format")
+        raise HTTPException(
+            status_code=400, detail="Invalid meal plan ID format"
+        )
 
     result = await db.execute(
         select(ShoppingOrder)
         .where(
-            ShoppingOrder.meal_plan_id == mpid, ShoppingOrder.user_id == current_user.id
+            ShoppingOrder.meal_plan_id == mpid,
+            ShoppingOrder.user_id == current_user.id,
         )
         .order_by(ShoppingOrder.ordered_at.desc())
     )
@@ -657,15 +766,22 @@ async def get_latest_shopping_order(
 @router.post("/shopping/notification/{order_id}/read")
 async def mark_shopping_notification_read(
     order_id: str,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Mark a shopping order notification as read."""
-    import uuid as _uuid
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, bool]:
+    """Mark a shopping order notification as read.
 
+    Args:
+        order_id (str): ID of the order.
+        current_user (User): Current user.
+        db (AsyncSession): Database session.
+
+    Returns:
+        dict[str, bool]: Dictionary with status.
+    """
     result = await db.execute(
         select(ShoppingOrder).where(
-            ShoppingOrder.id == _uuid.UUID(order_id),
+            ShoppingOrder.id == uuid.UUID(order_id),
             ShoppingOrder.user_id == current_user.id,
         )
     )

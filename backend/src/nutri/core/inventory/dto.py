@@ -1,5 +1,7 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 from datetime import date
-from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -7,31 +9,31 @@ from pydantic import BaseModel
 class InventoryItemDTO(BaseModel):
     id: str
     name: str
-    category: Optional[str]
-    quantity: Optional[str]
-    expiration_date: Optional[date]
+    category: str | None
+    quantity: str | None
+    expiration_date: date | None
 
 
 class InventoryListResponse(BaseModel):
-    items: List[InventoryItemDTO]
+    items: list[InventoryItemDTO]
 
 
 class AddInventoryItemRequest(BaseModel):
     name: str
-    category: Optional[str] = None
-    quantity: Optional[str] = None
-    expiration_date: Optional[str] = None
+    category: str | None = None
+    quantity: str | None = None
+    expiration_date: str | None = None
 
 
 class BulkAddInventoryRequest(BaseModel):
-    items: List[AddInventoryItemRequest]
+    items: list[AddInventoryItemRequest]
 
 
 class UpdateInventoryItemRequest(BaseModel):
-    name: Optional[str] = None
-    category: Optional[str] = None
-    quantity: Optional[str] = None
-    expiration_date: Optional[date] = None
+    name: str | None = None
+    category: str | None = None
+    quantity: str | None = None
+    expiration_date: date | None = None
 
 
 class RenameCategoryRequest(BaseModel):

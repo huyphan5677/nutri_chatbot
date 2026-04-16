@@ -1,23 +1,27 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
 """Menus domain models."""
+
+from __future__ import annotations
 
 import uuid
 
-from nutri.core.db.session import Base
 from sqlalchemy import (
     JSON,
-    Boolean,
-    Column,
     Date,
-    DateTime,
-    ForeignKey,
+    Text,
+    Column,
+    String,
+    Boolean,
     Integer,
     Numeric,
-    String,
-    Text,
+    DateTime,
+    ForeignKey,
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import UUID
+
+from nutri.core.db.session import Base
 
 
 class Recipe(Base):
@@ -52,7 +56,9 @@ class Ingredient(Base):
     base_unit = Column(String)
 
     recipe_links = relationship("RecipeIngredient", back_populates="ingredient")
-    user_inventories = relationship("UserInventory", back_populates="ingredient")
+    user_inventories = relationship(
+        "UserInventory", back_populates="ingredient"
+    )
     grocery_links = relationship("GroceryItem", back_populates="ingredient")
 
 
@@ -60,7 +66,9 @@ class RecipeIngredient(Base):
     __tablename__ = "recipe_ingredients"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    recipe_id = Column(UUID(as_uuid=True), ForeignKey("recipes.id"), nullable=False)
+    recipe_id = Column(
+        UUID(as_uuid=True), ForeignKey("recipes.id"), nullable=False
+    )
     ingredient_id = Column(
         UUID(as_uuid=True), ForeignKey("ingredients.id"), nullable=False
     )
@@ -100,7 +108,9 @@ class Meal(Base):
     meal_plan_id = Column(
         UUID(as_uuid=True), ForeignKey("meal_plans.id"), nullable=False
     )
-    recipe_id = Column(UUID(as_uuid=True), ForeignKey("recipes.id"), nullable=False)
+    recipe_id = Column(
+        UUID(as_uuid=True), ForeignKey("recipes.id"), nullable=False
+    )
     eat_date = Column(Date)
     meal_type = Column(String)
     servings = Column(Integer)
@@ -120,7 +130,9 @@ class RecipeCollection(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     collection_recipes = relationship(
-        "CollectionRecipe", back_populates="collection", cascade="all, delete-orphan"
+        "CollectionRecipe",
+        back_populates="collection",
+        cascade="all, delete-orphan",
     )
     user = relationship("User", back_populates="recipe_collections")
 
@@ -132,8 +144,12 @@ class CollectionRecipe(Base):
     collection_id = Column(
         UUID(as_uuid=True), ForeignKey("recipe_collections.id"), nullable=False
     )
-    recipe_id = Column(UUID(as_uuid=True), ForeignKey("recipes.id"), nullable=False)
+    recipe_id = Column(
+        UUID(as_uuid=True), ForeignKey("recipes.id"), nullable=False
+    )
     added_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    collection = relationship("RecipeCollection", back_populates="collection_recipes")
+    collection = relationship(
+        "RecipeCollection", back_populates="collection_recipes"
+    )
     recipe = relationship("Recipe")

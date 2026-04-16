@@ -1,9 +1,13 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
 """Store mapping utilities for Lotte Mart and WinMart."""
+
+from __future__ import annotations
 
 import json
 import logging
-from functools import lru_cache
 from pathlib import Path
+from functools import lru_cache
+
 
 logger = logging.getLogger("nutri.core.grocery.store_mapping")
 
@@ -14,7 +18,7 @@ _DATA_DIR = Path(__file__).parent / "data"
 def get_lotte_branches() -> list[dict]:
     """Return all Lotte Mart branches [{code, name}, ...]."""
     path = _DATA_DIR / "lotte_branches.json"
-    with open(path, encoding="utf-8") as f:
+    with Path(path).open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -22,16 +26,16 @@ def get_lotte_branches() -> list[dict]:
 def _load_winmart_stores() -> list[dict]:
     """Load all WinMart stores from JSON."""
     path = _DATA_DIR / "winmart_stores.json"
-    with open(path, encoding="utf-8") as f:
+    with Path(path).open(encoding="utf-8") as f:
         return json.load(f)
 
 
 def get_winmart_provinces() -> list[str]:
     """Return distinct province names sorted."""
     stores = _load_winmart_stores()
-    provinces = sorted(
-        {s.get("provinceTitle", "") for s in stores if s.get("provinceTitle")}
-    )
+    provinces = sorted({
+        s.get("provinceTitle", "") for s in stores if s.get("provinceTitle")
+    })
     return provinces
 
 

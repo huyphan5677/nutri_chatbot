@@ -1,4 +1,11 @@
-from fastapi import Request
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from fastapi import Request
 
 
 SUPPORTED_LANGUAGES = {"en", "vi"}
@@ -17,4 +24,6 @@ def normalize_language(language: str | None, default: str = "en") -> str:
 
 
 def get_request_language(request: Request, default: str = "en") -> str:
-    return normalize_language(request.headers.get("Accept-Language"), default=default)
+    return normalize_language(
+        request.headers.get("Accept-Language"), default=default
+    )

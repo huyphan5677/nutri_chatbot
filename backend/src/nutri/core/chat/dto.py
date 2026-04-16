@@ -1,12 +1,14 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 from datetime import datetime
-from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
 
 class ChatRequest(BaseModel):
     message: str
-    thread_id: Optional[str] = None
+    thread_id: str | None = None
 
 
 class ChatSessionUpdateRequest(BaseModel):
@@ -33,7 +35,7 @@ class ChatMessageResponse(BaseModel):
     role: str
     content: str
     created_at: datetime
-    meal_plan_draft: Optional[dict] = None
+    meal_plan_draft: dict | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -45,4 +47,4 @@ class UnreadSessionInfo(BaseModel):
 
 class UnreadCountResponse(BaseModel):
     count: int
-    sessions: List[UnreadSessionInfo]
+    sessions: list[UnreadSessionInfo]

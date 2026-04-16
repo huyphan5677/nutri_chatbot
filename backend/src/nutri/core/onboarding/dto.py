@@ -1,67 +1,73 @@
-from typing import List, Optional
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import Field, BaseModel
 
 
 class HealthProfileDto(BaseModel):
-    allergies: Optional[List[str]] = Field(default_factory=list)
-    favorite_dishes: Optional[List[str]] = Field(default_factory=list)
-    conditions: Optional[List[str]] = Field(default_factory=list)
+    allergies: list[str] | None = Field(default_factory=list)
+    favorite_dishes: list[str] | None = Field(default_factory=list)
+    conditions: list[str] | None = Field(default_factory=list)
 
 
 class MemberDto(BaseModel):
-    name: Optional[str] = None
-    relationship: Optional[str] = None
-    age: Optional[int] = None
-    gender: Optional[str] = None
-    weight_kg: Optional[float] = None
-    height_cm: Optional[float] = None
-    bmr: Optional[float] = None
-    tdee: Optional[float] = None
-    primary_goal: Optional[str] = None
-    activity_level: Optional[str] = None
-    health_profile: Optional[HealthProfileDto] = Field(default_factory=HealthProfileDto)
+    name: str | None = None
+    relationship: str | None = None
+    age: int | None = None
+    gender: str | None = None
+    weight_kg: float | None = None
+    height_cm: float | None = None
+    bmr: float | None = None
+    tdee: float | None = None
+    primary_goal: str | None = None
+    activity_level: str | None = None
+    health_profile: HealthProfileDto | None = Field(
+        default_factory=HealthProfileDto
+    )
 
 
 class OnboardingRequest(BaseModel):
     # User-level fields (→ users table)
-    diet_mode: Optional[str] = None
-    budget_level: Optional[str] = None
+    diet_mode: str | None = None
+    budget_level: str | None = None
     # Kitchen equipment
-    equipment: Optional[List[str]] = Field(default_factory=list)
+    equipment: list[str] | None = Field(default_factory=list)
     # Family members (→ family_members table)
-    members: Optional[List[MemberDto]] = Field(default_factory=list)
+    members: list[MemberDto] | None = Field(default_factory=list)
 
 
 class MenuRecommendationResponse(BaseModel):
     message: str
-    menu_preview: Optional[List[dict]] = Field(default_factory=list)
+    menu_preview: list[dict] | None = Field(default_factory=list)
 
 
 class HealthProfileResponse(BaseModel):
-    allergies: List[str] = Field(default_factory=list)
-    favorite_dishes: List[str] = Field(default_factory=list)
-    conditions: List[str] = Field(default_factory=list)
+    allergies: list[str] = Field(default_factory=list)
+    favorite_dishes: list[str] = Field(default_factory=list)
+    conditions: list[str] = Field(default_factory=list)
 
 
 class MemberResponse(BaseModel):
     id: UUID
     name: str
-    relationship: Optional[str] = None
-    age: Optional[int] = None
-    gender: Optional[str] = None
-    weight_kg: Optional[float] = None
-    height_cm: Optional[float] = None
-    bmr: Optional[float] = None
-    tdee: Optional[float] = None
-    primary_goal: Optional[str] = None
-    activity_level: Optional[str] = None
-    health_profile: HealthProfileResponse = Field(default_factory=HealthProfileResponse)
+    relationship: str | None = None
+    age: int | None = None
+    gender: str | None = None
+    weight_kg: float | None = None
+    height_cm: float | None = None
+    bmr: float | None = None
+    tdee: float | None = None
+    primary_goal: str | None = None
+    activity_level: str | None = None
+    health_profile: HealthProfileResponse = Field(
+        default_factory=HealthProfileResponse
+    )
 
 
 class OnboardingDataResponse(BaseModel):
-    diet_mode: Optional[str] = None
-    budget_level: Optional[str] = None
-    equipment: List[str] = Field(default_factory=list)
-    members: List[MemberResponse] = Field(default_factory=list)
+    diet_mode: str | None = None
+    budget_level: str | None = None
+    equipment: list[str] = Field(default_factory=list)
+    members: list[MemberResponse] = Field(default_factory=list)

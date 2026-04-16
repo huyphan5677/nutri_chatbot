@@ -1,17 +1,23 @@
-import logging
-from pathlib import Path
-from typing import List
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+import logging
+from typing import Annotated
+from pathlib import Path
+from datetime import UTC, datetime, timedelta
+
+from fastapi import Query, Depends, APIRouter, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from nutri.core.db.session import get_db
 from nutri.api.dependencies import get_current_user
 from nutri.core.auth.models import User
 from nutri.core.chat.models import ChatMessage, ChatSession
-from nutri.core.db.session import get_db
-from nutri.core.grocery.models import GroceryItem, ShoppingOrder, UserInventory
 from nutri.core.menus.models import MealPlan
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from nutri.core.grocery.models import GroceryItem, ShoppingOrder, UserInventory
+
 
 router = APIRouter()
 logger = logging.getLogger("nutri.api.routers.system")
@@ -43,7 +49,7 @@ class DashboardStatusResponse(BaseModel):
 
 
 @router.get("/health")
-async def health_check():
+async def health_check() -> dict[str, str]:
     """Check if the system is healthy."""
     logger.info("Health check called")
     return {"status": "ok"}
@@ -51,17 +57,16 @@ async def health_check():
 
 @router.get("/dashboard-status", response_model=DashboardStatusResponse)
 async def get_dashboard_status(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> DashboardStatusResponse:
     """Return lightweight navbar counters in a single API call."""
-
     unread_result = await db.execute(
         select(ChatSession)
         .join(ChatMessage, ChatSession.id == ChatMessage.session_id)
         .where(ChatSession.user_id == current_user.id)
         .where(ChatMessage.message_type == "ai")
-        .where(ChatMessage.is_read == False)
+        .where(not ChatMessage.is_read)
         .distinct()
     )
     unread_sessions = unread_result.scalars().all()
@@ -69,7 +74,7 @@ async def get_dashboard_status(
     grocery_result = await db.execute(
         select(GroceryItem)
         .where(GroceryItem.user_id == current_user.id)
-        .where(GroceryItem.is_purchased == False)
+        .where(not GroceryItem.is_purchased)
     )
     unpurchased_items = grocery_result.scalars().all()
 
@@ -84,15 +89,14 @@ async def get_dashboard_status(
     menus = menu_result.scalars().all()
 
     # Shopping order notifications - recently completed or failed
-    from datetime import datetime, timedelta, timezone
 
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
+    cutoff = datetime.now(UTC) - timedelta(hours=1)
     shopping_result = await db.execute(
         select(ShoppingOrder)
         .where(
             ShoppingOrder.user_id == current_user.id,
             ShoppingOrder.status.in_(["completed", "failed"]),
-            ShoppingOrder.notification_read == False,
+            not ShoppingOrder.notification_read,
             ShoppingOrder.ordered_at >= cutoff,
         )
         .order_by(ShoppingOrder.ordered_at.desc())
@@ -103,7 +107,9 @@ async def get_dashboard_status(
     mp_ids = [o.meal_plan_id for o in recent_orders if o.meal_plan_id]
     mp_name_map: dict = {}
     if mp_ids:
-        mp_result = await db.execute(select(MealPlan).where(MealPlan.id.in_(mp_ids)))
+        mp_result = await db.execute(
+            select(MealPlan).where(MealPlan.id.in_(mp_ids))
+        )
         for mp in mp_result.scalars().all():
             mp_name_map[mp.id] = mp.name
 
@@ -128,17 +134,15 @@ async def get_dashboard_status(
     )
 
 
-@router.get("/logs", response_model=List[str])
+@router.get("/logs", response_model=list[str])
 async def get_system_logs(
     type: str = Query("app", description="Log type: 'app' or 'ai'"),
     lines: int = Query(100, description="Number of tail lines to fetch"),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    Reads the tail of the requested log file.
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> list[str]:
+    """Reads the tail of the requested log file.
     Restricted to authenticated users (and ideally admins later).
     """
-
     # Map 'type' parameter to actual filename
     if type == "app":
         filename = "nutri.log"
@@ -159,7 +163,7 @@ async def get_system_logs(
     try:
         # Read the file and return the last N lines
         # This is a simple python tail implementation for medium sized files
-        with open(file_path, "r", encoding="utf-8") as f:
+        with Path(file_path).open(encoding="utf-8") as f:
             all_lines = f.readlines()
 
         # Return tail
@@ -167,7 +171,7 @@ async def get_system_logs(
         return [line.rstrip("\n") for line in tail_lines]
 
     except Exception as e:
-        logger.error(f"Error reading logs: {e}")
+        logger.error("Error reading logs: %s", e)
         raise HTTPException(
             status_code=500, detail="Internal server error reading logs."
         )

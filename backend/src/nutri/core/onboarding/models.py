@@ -1,18 +1,22 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
 """Auth domain models."""
+
+from __future__ import annotations
 
 import uuid
 
-from nutri.core.db.session import Base
 from sqlalchemy import (
     JSON,
     Column,
-    ForeignKey,
+    String,
     Integer,
     Numeric,
-    String,
+    ForeignKey,
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
+
+from nutri.core.db.session import Base
 
 
 class FamilyMember(Base):

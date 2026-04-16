@@ -1,7 +1,9 @@
-from typing import Optional
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import EmailStr, BaseModel, ConfigDict
 
 
 class AuthResponse(BaseModel):
@@ -43,8 +45,8 @@ class UserResponse(BaseModel):
     status: str
     preferred_language: str = "en"
     preferred_theme: str = "light"
-    diet_mode: Optional[str] = None
-    budget_level: Optional[str] = None
+    diet_mode: str | None = None
+    budget_level: str | None = None
 
 
 class UserDTO(BaseModel):
@@ -55,5 +57,5 @@ class UserDTO(BaseModel):
     status: str
     preferred_language: str = "en"
     preferred_theme: str = "light"
-    diet_mode: Optional[str] = None
-    budget_level: Optional[str] = None
+    diet_mode: str | None = None
+    budget_level: str | None = None

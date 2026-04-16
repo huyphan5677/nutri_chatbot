@@ -1,24 +1,35 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from datetime import date, timedelta
-from typing import Optional
 
 from fastapi import HTTPException
+from sqlalchemy import desc
+from sqlalchemy.orm import selectinload
+from sqlalchemy.future import select
+
 from nutri.core.menus.dto import (
     MealDTO,
-    MealPlanResponse,
     RecipeDTO,
+    MealPlanResponse,
     RecipeIngredientDTO,
-    SaveMenuShoppingItem,
-    UpdateCurrentMenuRequest,
-    UpdateMenuRequest,
 )
-from nutri.core.menus.models import Meal, MealPlan, Recipe, RecipeIngredient
-from sqlalchemy import desc
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
+from nutri.core.menus.models import Meal, Recipe, MealPlan, RecipeIngredient
+
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from nutri.core.menus.dto import (
+        UpdateMenuRequest,
+        SaveMenuShoppingItem,
+        UpdateCurrentMenuRequest,
+    )
 
 
 def format_quantity_grams(quantity) -> str:
+    """Format quantity in grams."""
     if quantity is None:
         return "as needed"
     try:
@@ -31,6 +42,7 @@ def format_quantity_grams(quantity) -> str:
 
 
 def find_meal_plan_draft(tool_calls):
+    """Find meal plan draft in tool calls."""
     if not isinstance(tool_calls, list):
         return None, None
 
@@ -42,7 +54,10 @@ def find_meal_plan_draft(tool_calls):
     return None, None
 
 
-def build_shopping_list_message(shopping_list: list[SaveMenuShoppingItem]) -> str:
+def build_shopping_list_message(
+    shopping_list: list[SaveMenuShoppingItem],
+) -> str:
+    """Build shopping list message."""
     if not shopping_list:
         return "Shopping list is empty."
 
@@ -51,7 +66,9 @@ def build_shopping_list_message(shopping_list: list[SaveMenuShoppingItem]) -> st
         key = item.category or "Other"
         grouped.setdefault(key, []).append(item)
 
-    lines: list[str] = ["Shopping list is empty." if not shopping_list else "🛍️ 🛒"]
+    lines: list[str] = [
+        "Shopping list is empty." if not shopping_list else "🛍️ 🛒"
+    ]
     for category, items in grouped.items():
         lines.append(f"\n[{category}]")
         for item in items:
@@ -60,6 +77,18 @@ def build_shopping_list_message(shopping_list: list[SaveMenuShoppingItem]) -> st
 
 
 def parse_date_field(value: str, field_name: str) -> date:
+    """Parse date field.
+
+    Args:
+        value: Date string
+        field_name: Field name
+
+    Returns:
+        date: Parsed date
+
+    Raises:
+        HTTPException: If date is invalid
+    """
     try:
         return date.fromisoformat(value)
     except Exception as exc:
@@ -74,16 +103,30 @@ async def apply_menu_updates(
     meal_plan: MealPlan,
     payload: UpdateCurrentMenuRequest | UpdateMenuRequest,
 ):
+    """Apply menu updates.
+
+    Args:
+        db: AsyncSession
+        meal_plan: MealPlan
+        payload: UpdateCurrentMenuRequest | UpdateMenuRequest
+
+    Raises:
+        HTTPException: If menu name or status is empty, or if total_days or total_meals is invalid.
+    """
     if payload.name is not None:
         clean_name = payload.name.strip()
         if not clean_name:
-            raise HTTPException(status_code=400, detail="Menu name cannot be empty")
+            raise HTTPException(
+                status_code=400, detail="Menu name cannot be empty"
+            )
         meal_plan.name = clean_name
 
     if payload.status is not None:
         clean_status = payload.status.strip()
         if not clean_status:
-            raise HTTPException(status_code=400, detail="Menu status cannot be empty")
+            raise HTTPException(
+                status_code=400, detail="Menu status cannot be empty"
+            )
         meal_plan.status = clean_status
 
     next_start_date = meal_plan.start_date
@@ -97,7 +140,9 @@ async def apply_menu_updates(
 
     if payload.total_days is not None:
         if payload.total_days < 1:
-            raise HTTPException(status_code=400, detail="total_days must be >= 1")
+            raise HTTPException(
+                status_code=400, detail="total_days must be >= 1"
+            )
         next_end_date = next_start_date + timedelta(days=payload.total_days - 1)
 
     if next_end_date < next_start_date:
@@ -111,10 +156,12 @@ async def apply_menu_updates(
 
     if payload.total_meals is not None:
         if payload.total_meals < 1:
-            raise HTTPException(status_code=400, detail="total_meals must be >= 1")
+            raise HTTPException(
+                status_code=400, detail="total_meals must be >= 1"
+            )
 
         meals_sorted = sorted(
-            list(meal_plan.meals or []),
+            meal_plan.meals or [],
             key=lambda m: (m.eat_date or next_start_date, str(m.id)),
         )
         current_total = len(meals_sorted)
@@ -144,6 +191,14 @@ async def apply_menu_updates(
 
 
 def meal_plan_to_response(meal_plan: MealPlan) -> MealPlanResponse:
+    """Convert MealPlan to MealPlanResponse.
+
+    Args:
+        meal_plan: MealPlan
+
+    Returns:
+        MealPlanResponse: MealPlanResponse
+    """
     meals_dto = []
     for meal in meal_plan.meals:
         if meal.recipe:
@@ -188,8 +243,17 @@ def meal_plan_to_response(meal_plan: MealPlan) -> MealPlanResponse:
 
 async def get_latest_meal_plan(
     db: AsyncSession,
-    user_id,
-) -> Optional[MealPlan]:
+    user_id: str,
+) -> MealPlan | None:
+    """Get latest meal plan.
+
+    Args:
+        db: AsyncSession
+        user_id: User ID
+
+    Returns:
+        MealPlan | None: Meal plan
+    """
     result = await db.execute(
         select(MealPlan)
         .options(
@@ -206,9 +270,19 @@ async def get_latest_meal_plan(
 
 async def get_user_meal_plan_by_id(
     db: AsyncSession,
-    user_id,
+    user_id: str,
     meal_plan_id: str,
-) -> Optional[MealPlan]:
+) -> MealPlan | None:
+    """Get user meal plan by ID.
+
+    Args:
+        db: AsyncSession
+        user_id: User ID
+        meal_plan_id: Meal plan ID
+
+    Returns:
+        MealPlan | None: Meal plan
+    """
     result = await db.execute(
         select(MealPlan)
         .options(

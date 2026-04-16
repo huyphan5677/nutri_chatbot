@@ -1,10 +1,14 @@
+# Copyright (c) 2026 Nutri. All rights reserved.
 """Recipe domain models."""
+
+from __future__ import annotations
 
 import uuid
 
-from nutri.core.db.session import Base
-from sqlalchemy import JSON, Column, Integer, String, Text
+from sqlalchemy import JSON, Text, Column, String, Integer
 from sqlalchemy.dialects.postgresql import UUID
+
+from nutri.core.db.session import Base
 
 
 class Recipe(Base):

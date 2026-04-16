@@ -1,9 +1,9 @@
-"""
-DishEditAgent — Stateless agent for swapping/adding a single dish in a meal plan draft.
+# Copyright (c) 2026 Nutri. All rights reserved.
+"""DishEditAgent — Stateless agent for swapping/adding a single dish.
 
-This agent is purpose-built for the interactive menu editor UI. It takes a user's
-custom prompt (e.g. "Đổi thành cá kho") along with the current menu context to
-generate exactly ONE new dish that fits the meal slot.
+This agent is purpose-built for the interactive menu editor UI. It takes a
+user's custom prompt (e.g. "Đổi thành cá kho") along with the current
+menu context to generate exactly ONE new dish that fits the meal slot.
 
 Usage:
     agent = DishEditAgent()
@@ -17,16 +17,20 @@ Usage:
     )
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
-from typing import Literal, Optional
+from typing import Literal
 
-from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import HumanMessage, SystemMessage
-from nutri.ai.agents.meal_plan_agent import GeneratedMealData
+from langchain_core.exceptions import OutputParserException
+
 from nutri.ai.language import detect_user_language
 from nutri.ai.llm_client import get_llm
 from nutri.ai.system_prompt import SystemPrompt
+from nutri.ai.agents.meal_plan_agent import GeneratedMealData
+
 
 logger = logging.getLogger("nutri.ai.agents.dish_edit")
 
@@ -63,7 +67,21 @@ async def _invoke_with_retries(
     max_retries: int = 3,
     label: str = "DishEdit",
 ):
-    """Retry wrapper for structured-output LLM calls."""
+    """Retry wrapper for structured-output LLM calls.
+
+    Args:
+        llm: The LLM to invoke.
+        messages: The messages to send to the LLM.
+        fallback_messages: The fallback messages to send to the LLM.
+        max_retries: The maximum number of retries.
+        label: The label for the LLM.
+
+    Returns:
+        The result of the LLM invocation.
+
+    Raises:
+        OutputParserException: If the LLM fails to parse the output.
+    """
     last_error = None
     for attempt in range(max_retries + 1):
         try:
@@ -76,7 +94,7 @@ async def _invoke_with_retries(
         except OutputParserException as e:
             last_error = e
             if attempt >= max_retries:
-                logger.error(
+                logger.error(  # noqa: TRY400
                     "%s parse failed after retries | retries=%d | error=%s",
                     label,
                     max_retries,
@@ -93,7 +111,7 @@ async def _invoke_with_retries(
         except Exception as e:
             last_error = e
             if not _is_transient_error(e) or attempt >= max_retries:
-                logger.error(
+                logger.error(  # noqa: TRY400
                     "%s failed | attempt=%d/%d | error=%s",
                     label,
                     attempt + 1,
@@ -119,16 +137,14 @@ async def _invoke_with_retries(
 
 
 class DishEditAgent:
-    """
-    Stateless agent to generate a single replacement or additional dish
-    based on user's custom prompt and the current menu context.
+    """Stateless agent to generate a single replacement.
 
     Supports two actions:
     - swap: Replace an existing dish with a new one
     - add: Generate a new dish to add to a meal slot
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.llm = get_llm().with_structured_output(GeneratedMealData)
 
     async def generate_dish(
@@ -138,7 +154,7 @@ class DishEditAgent:
         custom_prompt: str,
         profile_context: str,
         current_menu_context: str = "",
-        original_dish_name: Optional[str] = None,
+        original_dish_name: str | None = None,
         max_retries: int = 5,
     ) -> GeneratedMealData:
         """Generate a single dish for swap or add.
@@ -214,7 +230,10 @@ class DishEditAgent:
         if profile_context:
             user_msg += f"\nUser Profile:\n{profile_context}\n"
 
-        messages = [SystemMessage(content=str(prompt)), HumanMessage(content=user_msg)]
+        messages = [
+            SystemMessage(content=str(prompt)),
+            HumanMessage(content=user_msg),
+        ]
 
         # Simpler fallback prompt for retry
         fallback_prompt = SystemPrompt(
