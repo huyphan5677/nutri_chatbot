@@ -9,7 +9,6 @@ import logging
 from typing import TYPE_CHECKING, Any
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from collections.abc import AsyncGenerator
 
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import SystemMessage
@@ -42,6 +41,8 @@ from nutri.ai.tools.nutrition_tools import (
 
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from langchain_core.runnables import Runnable
 
 

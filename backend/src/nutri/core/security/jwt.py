@@ -12,7 +12,7 @@ from nutri.common.config.settings import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-ALGORITHM = "HS256"
+ALGORITHM = "RS256"
 
 
 def create_access_token(

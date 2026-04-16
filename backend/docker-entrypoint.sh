@@ -19,9 +19,3 @@ async def init_db():
 
 asyncio.run(init_db())
 "
-
-# echo "Starting Uvicorn..."
-# exec uv run uvicorn nutri.api.main:app --host 0.0.0.0 --port ${BACKEND_PORT:-8000}
-
-# echo "Starting Gunicorn..."
-# exec uv run gunicorn nutri.api.main:app -w 4 -k uvicorn.workers.UvicornWorker -b [IP_ADDRESS]:${BACKEND_PORT:-8000}

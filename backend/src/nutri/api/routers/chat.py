@@ -58,7 +58,7 @@ async def get_unread_count(
         .join(ChatMessage, ChatSession.id == ChatMessage.session_id)
         .where(ChatSession.user_id == current_user.id)
         .where(ChatMessage.message_type == "ai")
-        .where(not ChatMessage.is_read)
+        .where(ChatMessage.is_read == False)  # noqa: E712
         .distinct()
     )
     unread_sessions = result.scalars().all()
@@ -99,7 +99,7 @@ async def get_chat_sessions(
             select(ChatMessage)
             .where(ChatMessage.session_id == session.id)
             .where(ChatMessage.message_type == "ai")
-            .where(not ChatMessage.is_read)
+            .where(ChatMessage.is_read == False)  # noqa: E712
         )
         has_unread = unread_result.scalars().first() is not None
 

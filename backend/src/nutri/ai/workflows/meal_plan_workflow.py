@@ -1,22 +1,40 @@
-import ast
-import asyncio
-import datetime
-import logging
-import re
-import uuid
+# Copyright (c) 2026 Nutri. All rights reserved.
+from __future__ import annotations
 
+import re
+import ast
+import uuid
+import asyncio
+import logging
+import datetime
+from typing import TYPE_CHECKING
+
+from sqlalchemy.future import select
+
+from nutri.core.db.session import async_session_maker
+from nutri.core.auth.models import User
+from nutri.core.menus.models import (
+    Meal,
+    Recipe,
+    MealPlan,
+    Ingredient,
+    RecipeIngredient,
+)
+from nutri.core.onboarding.models import FamilyMember
 from nutri.ai.agents.meal_plan_agent import (
     DayMealsData,
     MealPlanAgent,
-    SkeletonMeal,
 )
 from nutri.ai.workflows.grocery_workflow import generate_grocery_list_background
-from nutri.core.auth.models import User
-from nutri.core.db.session import async_session_maker
-from nutri.core.menus.models import Ingredient, Meal, MealPlan, Recipe, RecipeIngredient
-from nutri.core.onboarding.models import FamilyMember
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from nutri.ai.agents.meal_plan_agent import (
+        SkeletonMeal,
+    )
+
 
 logger = logging.getLogger("nutri.ai.workflows.meal_plan")
 
@@ -127,7 +145,9 @@ def _parse_ingredient_entry(raw_ingredient) -> tuple[str, float | None]:
         value = float(leading_weight.group(1).replace(",", "."))
         unit = leading_weight.group(2).lower()
         grams = (
-            value * 1000 if unit.startswith("kg") or unit.startswith("kilo") else value
+            value * 1000
+            if unit.startswith("kg") or unit.startswith("kilo")
+            else value
         )
         name_part = leading_weight.group(3).strip() or raw_text
         return name_part, grams
@@ -143,7 +163,9 @@ def _parse_ingredient_entry(raw_ingredient) -> tuple[str, float | None]:
         value = float(trailing_weight.group(2).replace(",", "."))
         unit = trailing_weight.group(3).lower()
         grams = (
-            value * 1000 if unit.startswith("kg") or unit.startswith("kilo") else value
+            value * 1000
+            if unit.startswith("kg") or unit.startswith("kilo")
+            else value
         )
         return name_part, grams
 
@@ -233,7 +255,9 @@ async def generate_meal_plan_draft(
         skeleton_by_day = {}
 
         try:
-            await _emit(_t("Get menu previous...", "Đang lấy thực đơn gần đây..."))
+            await _emit(
+                _t("Get menu previous...", "Đang lấy thực đơn gần đây...")
+            )
             recent_menu_context = await agent.get_recent_menu_context(
                 config, num_of_pre_day=2
             )
@@ -242,7 +266,9 @@ async def generate_meal_plan_draft(
                 recent_menu_context[:150] + "...",
             )
 
-            await _emit(_t("Generating menu skeleton...", "Đang tạo khung thực đơn..."))
+            await _emit(
+                _t("Generating menu skeleton...", "Đang tạo khung thực đơn...")
+            )
             skeleton_multi = await agent.agenerate_multi_day_skeleton(
                 user_profile_context=profile_context,
                 total_days=total_days,
@@ -257,21 +283,36 @@ async def generate_meal_plan_draft(
                 skeleton_by_day[idx] = d
                 day_meals = ", ".join([m.name for m in d.meals])
                 preview_lines.append(
-                    _t(f"Day {idx + 1}: {day_meals}", f"Ngày {idx + 1}: {day_meals}")
+                    _t(
+                        f"Day {idx + 1}: {day_meals}",
+                        f"Ngày {idx + 1}: {day_meals}",
+                    )
                 )
 
-            logger.info("Multi-Day Skeleton ready | %d days", len(skeleton_multi.days))
+            logger.info(
+                "Multi-Day Skeleton ready | %d days", len(skeleton_multi.days)
+            )
             await _emit(
-                _t("-> Menu skeleton ready: ", "-> Khung thực đơn đã sẵn sàng: "),
+                _t(
+                    "-> Menu skeleton ready: ",
+                    "-> Khung thực đơn đã sẵn sàng: ",
+                ),
                 "\n".join(preview_lines) + "...",
             )
 
             # Step 2: Global Parallel Enrichment
             logger.info("Analyzing meal details...")
-            await _emit(_t("Analyzing meal details...", "Đang phân tích chi tiết món ăn..."))
+            await _emit(
+                _t(
+                    "Analyzing meal details...",
+                    "Đang phân tích chi tiết món ăn...",
+                )
+            )
             semaphore = asyncio.Semaphore(MAX_ENRICH_CONCURRENCY)
 
-            async def _enrich_w_day(d_idx: int, m_skeleton: SkeletonMeal, delay: float):
+            async def _enrich_w_day(
+                d_idx: int, m_skeleton: SkeletonMeal, delay: float
+            ):
                 # Small stagger to prevent slamming the API simultaneously
                 if delay > 0:
                     await asyncio.sleep(delay)
@@ -301,7 +342,9 @@ async def generate_meal_plan_draft(
             for d_idx, day_skel in enumerate(skeleton_multi.days):
                 enriched_meals_by_day[d_idx] = []
                 for m_skel in day_skel.meals:
-                    all_tasks.append(_enrich_w_day(d_idx, m_skel, delay=delay_counter))
+                    all_tasks.append(
+                        _enrich_w_day(d_idx, m_skel, delay=delay_counter)
+                    )
                     delay_counter += 0.3
 
             logger.info("Spawning %d enrichment tasks globally", len(all_tasks))
@@ -356,7 +399,9 @@ async def generate_meal_plan_draft(
                 )
 
             # Serialization and markdown building
-            serialized_meals = [_serialize_generated_meal(m) for m in day_data.meals]
+            serialized_meals = [
+                _serialize_generated_meal(m) for m in day_data.meals
+            ]
 
             daily_summary = []
             for m in serialized_meals:
@@ -381,16 +426,14 @@ async def generate_meal_plan_draft(
                 + "\n\n"
             )
 
-            draft_days.append(
-                {
-                    "day_number": day,
-                    "eat_date": str(eat_date),
-                    "day_header": day_data.day_header,
-                    "daily_summary_lines": day_data.daily_summary_lines,
-                    "gap_fix": day_data.gap_fix,
-                    "meals": serialized_meals,
-                }
-            )
+            draft_days.append({
+                "day_number": day,
+                "eat_date": str(eat_date),
+                "day_header": day_data.day_header,
+                "daily_summary_lines": day_data.daily_summary_lines,
+                "gap_fix": day_data.gap_fix,
+                "meals": serialized_meals,
+            })
 
         return {
             "draft_id": str(uuid.uuid4()),
@@ -416,7 +459,6 @@ async def persist_meal_plan_from_draft(
     wait_for_grocery: bool = False,
 ):
     """Persist a draft payload into meal tables and trigger grocery generation."""
-
     meal_plan = MealPlan(
         user_id=user_id,
         name=draft_payload.get("name")
@@ -436,12 +478,16 @@ async def persist_meal_plan_from_draft(
             recipe = Recipe(
                 name=generated_meal.get("name"),
                 description=generated_meal.get("description"),
-                instructions="\n".join(generated_meal.get("instructions") or []),
+                instructions="\n".join(
+                    generated_meal.get("instructions") or []
+                ),
                 prep_time_minutes=generated_meal.get("prep_time_minutes"),
                 cook_time_minutes=generated_meal.get("cook_time_minutes"),
                 total_calories=_parse_number(generated_meal.get("calories")),
                 macros={
-                    "protein": _parse_number(generated_meal.get("protein_grams")),
+                    "protein": _parse_number(
+                        generated_meal.get("protein_grams")
+                    ),
                     "carbs": _parse_number(generated_meal.get("carbs_grams")),
                     "fat": _parse_number(generated_meal.get("fat_grams")),
                     "fiber": _parse_number(generated_meal.get("fiber_grams")),
@@ -454,7 +500,9 @@ async def persist_meal_plan_from_draft(
             for ing in generated_meal.get("ingredients") or []:
                 ingredient_name, ingredient_qty = _parse_ingredient_entry(ing)
                 existing_ing_result = await db.execute(
-                    select(Ingredient).where(Ingredient.name.ilike(ingredient_name))
+                    select(Ingredient).where(
+                        Ingredient.name.ilike(ingredient_name)
+                    )
                 )
                 ingredient = existing_ing_result.scalars().first()
                 if not ingredient:
@@ -487,7 +535,9 @@ async def persist_meal_plan_from_draft(
     else:
         asyncio.create_task(generate_grocery_list_background(meal_plan.id))
 
-    logger.info("MealPlan %s persisted from draft for user %s", meal_plan.id, user_id)
+    logger.info(
+        "MealPlan %s persisted from draft for user %s", meal_plan.id, user_id
+    )
     return meal_plan
 
 
