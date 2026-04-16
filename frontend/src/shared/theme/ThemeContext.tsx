@@ -20,18 +20,20 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
+function getTimeBasedTheme(): Theme {
+  const hour = new Date().getHours();
+  return hour >= 18 || hour < 7 ? "dark" : "light";
+}
+
 function getInitialTheme(): Theme {
-  return (localStorage.getItem("theme") as Theme) || "light";
+  return (localStorage.getItem("theme") as Theme) || getTimeBasedTheme();
 }
 
 function applyTheme(theme: Theme) {
   const root = window.document.documentElement;
   const body = window.document.body;
   const rootPortal = window.document.getElementById("root");
-  
-  const oldHtmlClass = root.className;
-  const oldBodyClass = body.className;
-  
+
   if (theme === "dark") {
     root.classList.add("dark");
     body.classList.add("dark");
@@ -40,21 +42,15 @@ function applyTheme(theme: Theme) {
     root.classList.remove("dark");
     body.classList.remove("dark");
     rootPortal?.classList.remove("dark");
-    
+
     // Force cleanup for all potential targets
-    [root, body, rootPortal].forEach(el => {
+    [root, body, rootPortal].forEach((el) => {
       if (el && el.classList.contains("dark")) {
         el.className = el.className.replace(/\bdark\b/g, "").trim();
       }
     });
   }
-  
-  console.log(`[Theme] Switched to: ${theme}`);
-  console.log(`[Theme] HTML: "${oldHtmlClass}" -> "${root.className}"`);
-  console.log(`[Theme] Body: "${oldBodyClass}" -> "${body.className}"`);
-  if (rootPortal) {
-    console.log(`[Theme] Root: "${rootPortal.className}"`);
-  }
+
   localStorage.setItem("theme", theme);
 }
 
@@ -66,6 +62,23 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
+
+  // Handle automatic time transitions (checking every minute)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const hasStoredPreference = localStorage.getItem("theme");
+      const token = localStorage.getItem("nutri_token");
+
+      // Only auto-switch if user hasn't manually set a preference locally
+      // and isn't logged in (which means we should follow default logic)
+      if (!hasStoredPreference && !token) {
+        const expectedTheme = getTimeBasedTheme();
+        setThemeState((prev) => (prev !== expectedTheme ? expectedTheme : prev));
+      }
+    }, 60000); // Check once per minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Sync from DB on mount (if user is logged in)
   useEffect(() => {
