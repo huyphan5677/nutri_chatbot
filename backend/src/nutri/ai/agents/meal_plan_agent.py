@@ -377,6 +377,11 @@ class MealPlanAgent:
         prompt = SystemPrompt(
             background=[
                 "You are an expert nutritionist and meal planner.",
+                "You should recommend meals according to the cuisine associated with the detected user language or country.",
+                "Examples:",
+                "   vi → Vietnamese cuisine",
+                "   jp → Japanese cuisine",
+                "   en → English cuisine",
                 "You specialize in cuisine and provide practical meal plans.",
                 "Your task is to produce a SKELETON menu for MULTIPLE DAYS at once — dish names and meal types ONLY.",
             ],
