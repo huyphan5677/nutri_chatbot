@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { inventoryApi } from "@/features/inventory/api/inventoryApi";
+import { useLocale } from "@/shared/i18n/LocaleContext";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -26,6 +27,7 @@ import {
   ShoppingStrategy,
   WinmartStore,
 } from "../api/groceryApi";
+import { groceryMessages } from "../grocery.messages";
 
 interface ShoppingModalProps {
   isOpen: boolean;
@@ -83,6 +85,9 @@ export default function ShoppingModal({
   mealPlanId,
   mealPlanName,
 }: ShoppingModalProps) {
+  const { locale } = useLocale();
+  const t = groceryMessages[locale].shoppingModal;
+
   const [step, setStep] = useState<Step>("select_strategy");
   const [selectedStrategy, setSelectedStrategy] =
     useState<ShoppingStrategy | null>(null);
@@ -238,15 +243,14 @@ export default function ShoppingModal({
           setResult(fastResult.result_data);
           setStep("results");
         } else {
-          setError("No ingredients found!");
+          setError(t.errors.noIngredients);
           setStep("select_store");
         }
       } else {
         setPollingOrderId(data.order_id);
       }
     } catch (err: any) {
-      const message =
-        err?.response?.data?.detail || "Cannot start search. Please try again.";
+      const message = err?.response?.data?.detail || t.errors.cannotStart;
       setError(message);
       setStep("select_store");
     }
@@ -265,16 +269,13 @@ export default function ShoppingModal({
               setResult(res.result_data);
               setStep("results");
             } else {
-              setError("There was an error analyzing the results.");
+              setError(t.errors.analyzeError);
               setStep("select_store");
             }
           } else if (res.status === "failed") {
             if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setPollingOrderId(null);
-            setError(
-              res.result_data?.summary ||
-                "An error occurred on the server during the search.",
-            );
+            setError(res.result_data?.summary || t.errors.serverError);
             setStep("select_store");
           }
         } catch (err) {
@@ -456,7 +457,7 @@ export default function ShoppingModal({
       }, 2000);
     } catch (err) {
       console.error(err);
-      setError("Failed to save to inventory.");
+      setError(t.errors.saveInventoryFail);
     } finally {
       setIsSavingInventory(false);
     }
@@ -481,14 +482,14 @@ export default function ShoppingModal({
       const unit = pkgMatch[2];
       const leftover = pkgVal * buyQty - reqVal;
       if (leftover > 0)
-        return `Keep the refrigerator: +${Number(leftover.toFixed(2))}${unit}`;
-      return "Use it all up";
+        return `${t.keepRefrigerator}: +${Number(leftover.toFixed(2))}${unit}`;
+      return t.useItAllUp;
     }
 
     if (product.fridge_quantity) {
       const isZero = /^0\s*[a-zA-Z]*$/.test(product.fridge_quantity.trim());
-      if (isZero) return "Use it all up";
-      return `Keep the refrigerator: +${product.fridge_quantity}`;
+      if (isZero) return t.useItAllUp;
+      return `${t.keepRefrigerator}: +${product.fridge_quantity}`;
     }
 
     return null;
@@ -518,8 +519,12 @@ export default function ShoppingModal({
             <ShoppingCart className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Go shopping</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{mealPlanName}</p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              {t.title}
+            </h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {mealPlanName}
+            </p>
           </div>
         </div>
       </div>
@@ -529,7 +534,7 @@ export default function ShoppingModal({
         {step === "select_strategy" && (
           <div className="space-y-3">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Select a shopping strategy that fits your needs.:
+              {t.selectStrategy}
             </p>
             {STRATEGIES.map((s) => (
               <button
@@ -545,11 +550,13 @@ export default function ShoppingModal({
                     {s.icon}
                   </div>
                   <div>
-                    <div className={`font-semibold text-gray-900 dark:text-white text-sm`}>
-                      {s.label}
+                    <div
+                      className={`font-semibold text-gray-900 dark:text-white text-sm`}
+                    >
+                      {t.strategies[s.key]?.label || s.label}
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {s.description}
+                      {t.strategies[s.key]?.description || s.description}
                     </p>
                   </div>
                 </div>
@@ -566,14 +573,16 @@ export default function ShoppingModal({
               onClick={handleBack}
               className="text-sm text-gray-500 hover:text-primary transition-colors flex items-center gap-1"
             >
-              ← Change strategy
+              ← {t.changeStrategy}
             </button>
 
             <div className="p-3 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700/50">
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Strategy:</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {t.strategyLabel}
+                </span>
                 <span className="font-semibold text-gray-900 dark:text-white">
-                  {STRATEGIES.find((s) => s.key === selectedStrategy)?.label}
+                  {selectedStrategy && t.strategies[selectedStrategy]?.label}
                 </span>
               </div>
             </div>
@@ -583,7 +592,7 @@ export default function ShoppingModal({
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <Store className="inline h-4 w-4 mr-1 text-red-500" />
-                  Lotte Mart Branch
+                  {t.lotteBranch}
                 </label>
                 <div className="relative">
                   <select
@@ -609,7 +618,7 @@ export default function ShoppingModal({
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <MapPin className="inline h-4 w-4 mr-1 text-green-500" />
-                    Province / City (WinMart)
+                    {t.winmartProvince}
                   </label>
                   <div className="relative">
                     <select
@@ -617,7 +626,9 @@ export default function ShoppingModal({
                       onChange={(e) => setSelectedProvince(e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-200 dark:focus:ring-green-900/40 focus:border-green-400 transition-all text-sm appearance-none pr-10 text-gray-900 dark:text-white"
                     >
-                      <option value="" className="dark:bg-slate-800">-- Select Province/City --</option>
+                      <option value="" className="dark:bg-slate-800">
+                        {t.selectProvince}
+                      </option>
                       {winmartProvinces.map((p) => (
                         <option key={p} value={p} className="dark:bg-slate-800">
                           {p}
@@ -633,16 +644,16 @@ export default function ShoppingModal({
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       <Store className="inline h-4 w-4 mr-1 text-green-500" />
-                      WinMart Store
+                      {t.winmartStore}
                     </label>
                     {loadingStores ? (
                       <div className="flex items-center gap-2 text-sm text-gray-500 py-3">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading store list...
+                        {t.loadingStores}
                       </div>
                     ) : winmartStores.length === 0 ? (
                       <p className="text-sm text-gray-400 py-2">
-                        No stores found
+                        {t.noStoresFound}
                       </p>
                     ) : (
                       <div className="relative">
@@ -657,7 +668,11 @@ export default function ShoppingModal({
                           className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-200 dark:focus:ring-green-900/40 focus:border-green-400 transition-all text-sm appearance-none pr-10 text-gray-900 dark:text-white"
                         >
                           {winmartStores.map((s) => (
-                            <option key={s.storeCode} value={s.storeCode} className="dark:bg-slate-800">
+                            <option
+                              key={s.storeCode}
+                              value={s.storeCode}
+                              className="dark:bg-slate-800"
+                            >
                               {s.storeName} ({s.districtTitle})
                             </option>
                           ))}
@@ -684,7 +699,7 @@ export default function ShoppingModal({
               className="w-full px-4 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               <Search className="h-4 w-4" />
-              Search products
+              {t.searchProducts}
             </button>
           </div>
         )}
@@ -698,18 +713,16 @@ export default function ShoppingModal({
               </div>
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Searching for products...
+              {t.searchingProducts}
             </h3>
             <p className="text-sm text-gray-500 max-w-xs mb-4">
-              Browsing through stores to find the best prices for you. This
-              process may take 1-2 minutes. You can close this window, and the
-              system will continue running in the background.
+              {t.searchingDescription}
             </p>
             <button
               onClick={handleBack}
               className="text-sm text-red-500 hover:text-red-700 transition-colors"
             >
-              Cancel search
+              {t.cancelSearch}
             </button>
           </div>
         )}
@@ -722,7 +735,7 @@ export default function ShoppingModal({
               onClick={handleBack}
               className="text-sm text-gray-500 hover:text-primary transition-colors flex items-center gap-1"
             >
-              ← Search again
+              ← {t.searchAgain}
             </button>
 
             {/* Summary Card */}
@@ -730,17 +743,27 @@ export default function ShoppingModal({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    {result.summary}
+                    {t.resultSummary(
+                      result.items.length,
+                      result.items.length +
+                        result.fridge_covered.length +
+                        result.not_found.length,
+                      result.fridge_covered.length,
+                      result.total_estimated_cost,
+                      result.not_found.length,
+                    )}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Strategy:{" "}
-                    {STRATEGIES.find((s) => s.key === result.strategy)?.label ||
+                    {t.strategyLabel}{" "}
+                    {t.strategies[result.strategy as ShoppingStrategy]?.label ||
                       result.strategy}
                   </p>
                 </div>
                 {result.total_estimated_cost > 0 && (
                   <div className="text-right">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Total Estimated</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {t.totalEstimated}
+                    </p>
                     <p className="text-lg font-bold text-primary dark:text-rose-400">
                       {formatPrice(result.total_estimated_cost)}
                     </p>
@@ -748,7 +771,7 @@ export default function ShoppingModal({
                 )}
               </div>
             </div>
-            
+
             {/* Fridge covered items */}
             {result.fridge_covered && result.fridge_covered.length > 0 && (
               <div className="overflow-hidden rounded-2xl border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/40 dark:bg-emerald-900/10 shadow-sm transition-all hover:shadow-md">
@@ -758,29 +781,37 @@ export default function ShoppingModal({
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                     </div>
                     <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-tight">
-                      Deducted from fridge
+                      {t.deductedFromFridge}
                     </span>
                   </div>
                   <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full shadow-sm border border-emerald-100/30 dark:border-emerald-900/40">
-                    {result.fridge_covered.length} ITEMS SAVED
+                    {t.itemsSaved(result.fridge_covered.length)}
                   </span>
                 </div>
                 <div className="p-1 space-y-1 max-h-[160px] overflow-y-auto custom-scrollbar">
                   {result.fridge_covered.map((item, idx) => (
-                    <div 
+                    <div
                       key={`${item.name}-${idx}`}
                       className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/60 transition-colors"
                     >
                       <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">{item.name}</span>
+                        <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
+                          {item.name}
+                        </span>
                         <div className="flex items-center gap-1.5">
                           <span className="flex h-1 w-1 rounded-full bg-emerald-400" />
-                          <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-500">Inventory: {item.fridge_quantity}</span>
+                          <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-500">
+                            {t.inventory}: {item.fridge_quantity}
+                          </span>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-[10px] text-gray-400 line-through block">Need: {item.required_quantity}</span>
-                        <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">Already Had</span>
+                        <span className="text-[10px] text-gray-400 line-through block">
+                          {t.need}: {item.required_quantity}
+                        </span>
+                        <span className="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">
+                          {t.alreadyHad}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -792,9 +823,7 @@ export default function ShoppingModal({
             {isSuccess ? (
               <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/40 flex items-center gap-3 text-green-700 dark:text-green-400 mt-2">
                 <CheckCircle2 className="h-5 w-5" />
-                <span className="font-semibold">
-                  Successfully saved to your Fridge!
-                </span>
+                <span className="font-semibold">{t.savedSuccess}</span>
               </div>
             ) : (
               <div className="flex gap-3 mt-4 mb-2">
@@ -808,7 +837,7 @@ export default function ShoppingModal({
                   ) : (
                     <ShoppingCart className="h-5 w-5 mr-2" />
                   )}
-                  Confirm & Save to Fridge
+                  {t.confirmAndSave}
                 </Button>
               </div>
             )}
@@ -823,7 +852,9 @@ export default function ShoppingModal({
                   >
                     <div
                       className={`px-4 py-2 border-b border-gray-100 flex items-center gap-2 dark:border-slate-700/30 ${
-                        mart === "Lotte" ? "bg-red-50 dark:bg-red-900/20" : "bg-green-50 dark:bg-green-900/20"
+                        mart === "Lotte"
+                          ? "bg-red-50 dark:bg-red-900/20"
+                          : "bg-green-50 dark:bg-green-900/20"
                       }`}
                     >
                       <Store
@@ -833,7 +864,7 @@ export default function ShoppingModal({
                         {mart === "Lotte" ? "Lotte Mart" : "WinMart"}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
-                        {products.length} products
+                        {t.productsCount(products.length)}
                       </span>
                     </div>
                     <ul className="divide-y divide-gray-50 dark:divide-slate-700/30">
@@ -843,7 +874,8 @@ export default function ShoppingModal({
                         const buyQty = product.buy_quantity ?? 1;
                         const unitPrice = product.price ?? 0;
                         const totalPrice = unitPrice * buyQty;
-                        const neededQty = product.required_quantity || product.quantity || "";
+                        const neededQty =
+                          product.required_quantity || product.quantity || "";
 
                         return (
                           <li
@@ -855,7 +887,7 @@ export default function ShoppingModal({
                                 <div className="flex items-center gap-3 w-full">
                                   <div className="flex-1">
                                     <label className="text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-0.5 block uppercase tracking-wider">
-                                      Display name
+                                      {t.displayName}
                                     </label>
                                     <input
                                       className="w-full text-sm border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 flex-1 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all dark:bg-slate-800 dark:text-white"
@@ -867,7 +899,7 @@ export default function ShoppingModal({
                                   </div>
                                   <div className="w-20 shrink-0">
                                     <label className="text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-0.5 block uppercase tracking-wider">
-                                      Quantity
+                                      {t.quantity}
                                     </label>
                                     <input
                                       type="number"
@@ -888,13 +920,13 @@ export default function ShoppingModal({
                                     onClick={() => setEditingIndex(null)}
                                     className="h-8"
                                   >
-                                    Cancel
+                                    {t.cancel}
                                   </Button>
                                   <Button
                                     onClick={() => handleSaveEdit(idx)}
                                     className="h-8 text-xs px-3"
                                   >
-                                    Save
+                                    {t.save}
                                   </Button>
                                 </div>
                               </div>
@@ -931,52 +963,65 @@ export default function ShoppingModal({
                                       className="inline-flex items-center text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-slate-700 px-2 py-1.5 rounded-md max-w-full sm:max-w-[220px]"
                                       title={product.ingredient_name}
                                     >
-                                      <span className="font-medium mr-1 text-gray-400 shrink-0">For:</span>
-                                      <span className="truncate">{product.ingredient_name}</span>
+                                      <span className="font-medium mr-1 text-gray-400 shrink-0">
+                                        {t.forLabel}
+                                      </span>
+                                      <span className="truncate">
+                                        {product.ingredient_name}
+                                      </span>
                                     </span>
-                                    
+
                                     {product.original_quantity && (
                                       <span
                                         className="text-[10px] px-2 py-1.5 rounded-md bg-gray-50 text-gray-400 font-medium shrink-0 line-through decoration-gray-300"
                                         title="Original recipe quantity"
                                       >
-                                        Original: {product.original_quantity}
+                                        {t.original}:{" "}
+                                        {product.original_quantity}
                                       </span>
                                     )}
-                                    
+
                                     {neededQty && (
                                       <span
                                         className={`text-xs px-2 py-1.5 rounded-md font-semibold shrink-0 ${
-                                          product.fridge_deducted 
-                                            ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 shadow-sm" 
+                                          product.fridge_deducted
+                                            ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 shadow-sm"
                                             : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                                         }`}
-                                        title={product.fridge_deducted ? "Quantity after fridge deduction" : "Required quantity for the recipe"}
+                                        title={
+                                          product.fridge_deducted
+                                            ? "Quantity after fridge deduction"
+                                            : "Required quantity for the recipe"
+                                        }
                                       >
-                                        {product.fridge_deducted ? `Search: ${neededQty}` : `Need: ${neededQty}`}
+                                        {product.fridge_deducted
+                                          ? `${t.searchQuantity}: ${neededQty}`
+                                          : `${t.need}: ${neededQty}`}
                                       </span>
                                     )}
 
                                     {product.fridge_deducted && (
-                                      <span
-                                        className="text-[10px] px-2 py-1.5 rounded-md bg-emerald-500/10 text-emerald-800 font-black uppercase tracking-wider flex items-center gap-1 border border-emerald-500/10 shadow-sm"
-                                      >
+                                      <span className="text-[10px] px-2 py-1.5 rounded-md bg-emerald-500/10 text-emerald-800 font-black uppercase tracking-wider flex items-center gap-1 border border-emerald-500/10 shadow-sm">
                                         <CheckCircle2 className="h-2.5 w-2.5" />
-                                        Saved {product.fridge_deducted}
+                                        {t.saved} {product.fridge_deducted}
                                       </span>
                                     )}
                                     <span
                                       className="text-xs px-2 py-1.5 rounded-md bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 font-semibold shrink-0 shadow-sm border border-orange-100/50 dark:border-orange-900/40"
                                       title="Number of products to buy from the supermarket"
                                     >
-                                      Buy: ×{buyQty}
+                                      {t.buy}: ×{buyQty}
                                     </span>
                                   </div>
 
                                   {getLeftoverDisplay(product) && (
                                     <div className="flex items-center gap-1.5 mt-0.5">
-                                      <span className={`w-1.5 h-1.5 rounded-full ${getLeftoverDisplay(product)?.includes("+") ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700"}`} />
-                                      <p className={`text-xs font-medium ${getLeftoverDisplay(product)?.includes("+") ? "text-green-700 dark:text-green-500" : "text-gray-500 dark:text-gray-400"}`}>
+                                      <span
+                                        className={`w-1.5 h-1.5 rounded-full ${getLeftoverDisplay(product)?.includes("+") ? "bg-green-500" : "bg-gray-300 dark:bg-slate-700"}`}
+                                      />
+                                      <p
+                                        className={`text-xs font-medium ${getLeftoverDisplay(product)?.includes("+") ? "text-green-700 dark:text-green-500" : "text-gray-500 dark:text-gray-400"}`}
+                                      >
                                         {getLeftoverDisplay(product)}
                                       </p>
                                     </div>
@@ -999,30 +1044,36 @@ export default function ShoppingModal({
                                           {formatPrice(totalPrice)}
                                         </p>
                                         <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 font-medium bg-gray-50 dark:bg-slate-700 inline-block px-1.5 py-0.5 rounded">
-                                          {formatPrice(unitPrice)} / item
+                                          {formatPrice(unitPrice)} {t.perItem}
                                         </p>
                                       </>
                                     ) : (
                                       <span className="text-sm font-bold text-gray-400">
-                                        Contact
+                                        {t.contact}
                                       </span>
                                     )}
                                   </div>
 
                                   {/* Mobile Unit Price */}
                                   <div className="sm:hidden text-[11px] text-gray-500 font-medium bg-gray-50 px-2.5 py-1.5 rounded-md border border-gray-100">
-                                    {product.price ? `${formatPrice(unitPrice)} / item` : ""}
+                                    {product.price
+                                      ? `${formatPrice(unitPrice)} ${t.perItem}`
+                                      : ""}
                                   </div>
 
                                   {/* Actions */}
                                   <div className="flex items-center gap-1.5 sm:opacity-0 group-hover/item:opacity-100 focus-within:opacity-100 transition-opacity">
                                     <button
-                                      onClick={() => handleStartEdit(idx, product)}
+                                      onClick={() =>
+                                        handleStartEdit(idx, product)
+                                      }
                                       className="px-2 py-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-300 rounded-md transition-colors flex items-center justify-center gap-1.5 text-xs font-medium border border-transparent hover:border-blue-100 dark:hover:border-blue-900/40"
                                       title="Edit item"
                                     >
                                       <Pencil className="w-3.5 h-3.5" />
-                                      <span className="sm:hidden">Edit</span>
+                                      <span className="sm:hidden">
+                                        {t.edit}
+                                      </span>
                                     </button>
                                     <button
                                       onClick={() => handleDeleteItem(idx)}
@@ -1030,7 +1081,9 @@ export default function ShoppingModal({
                                       title="Remove item"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
-                                      <span className="sm:hidden">Remove</span>
+                                      <span className="sm:hidden">
+                                        {t.remove}
+                                      </span>
                                     </button>
                                   </div>
                                 </div>
@@ -1051,19 +1104,19 @@ export default function ShoppingModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div className="sm:col-span-2">
                     <label className="text-[11px] font-bold text-primary uppercase tracking-wider mb-1.5 block">
-                      PRODUCT NAME *
+                      {t.addCustom.productName}
                     </label>
                     <input
                       className="w-full text-sm border-0 ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all dark:bg-slate-800 dark:text-white"
                       value={customName}
                       onChange={(e) => setCustomName(e.target.value)}
-                      placeholder="Enter product name..."
+                      placeholder={t.addCustom.productNamePlaceholder}
                       autoFocus
                     />
                   </div>
                   <div>
                     <label className="text-[11px] font-bold text-primary uppercase tracking-wider mb-1.5 block">
-                      PRICE (VND)
+                      {t.addCustom.price}
                     </label>
                     <input
                       type="text"
@@ -1075,7 +1128,7 @@ export default function ShoppingModal({
                   </div>
                   <div>
                     <label className="text-[11px] font-bold text-primary uppercase tracking-wider mb-1.5 block">
-                      BUY QUANTITY
+                      {t.addCustom.buyQuantity}
                     </label>
                     <input
                       type="number"
@@ -1089,26 +1142,26 @@ export default function ShoppingModal({
                   </div>
                   <div>
                     <label className="text-[11px] font-bold text-primary uppercase tracking-wider mb-1.5 block">
-                      NEEDED FOR RECIPE
+                      {t.addCustom.neededForRecipe}
                     </label>
                     <input
                       type="text"
                       className="w-full text-sm border-0 ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all dark:bg-slate-800 dark:text-white"
                       value={customNeeded}
                       onChange={(e) => setCustomNeeded(e.target.value)}
-                      placeholder="e.g. 50g, 2 pieces..."
+                      placeholder={t.addCustom.neededForRecipePlaceholder}
                     />
                   </div>
                   <div>
                     <label className="text-[11px] font-bold text-primary uppercase tracking-wider mb-1.5 block">
-                      KEEP IN FRIDGE
+                      {t.addCustom.keepInFridge}
                     </label>
                     <input
                       type="text"
                       className="w-full text-sm border-0 ring-1 ring-gray-200 dark:ring-slate-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary shadow-sm outline-none transition-all dark:bg-slate-800 dark:text-white"
                       value={customFridge}
                       onChange={(e) => setCustomFridge(e.target.value)}
-                      placeholder="e.g. 500g, 1 box..."
+                      placeholder={t.addCustom.keepInFridgePlaceholder}
                     />
                   </div>
                 </div>
@@ -1118,14 +1171,14 @@ export default function ShoppingModal({
                     onClick={() => setIsAddingCustom(false)}
                     className="text-gray-500 hover:text-gray-700 text-xs px-3 py-1.5 h-auto"
                   >
-                    Cancel
+                    {t.cancel}
                   </Button>
                   <Button
                     onClick={handleAddCustom}
                     disabled={!customName.trim()}
                     className="shadow-sm text-xs px-3 py-1.5 h-auto"
                   >
-                    Add to cart
+                    {t.addCustom.addToCart}
                   </Button>
                 </div>
               </div>
@@ -1135,7 +1188,7 @@ export default function ShoppingModal({
                 className="w-full py-3.5 mt-4 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-xl text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-primary hover:border-primary/40 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all flex items-center justify-center gap-2 group mx-1"
               >
                 <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />{" "}
-                ADD PRODUCT
+                {t.addCustom.addProduct}
               </button>
             )}
 
@@ -1145,7 +1198,7 @@ export default function ShoppingModal({
                 <div className="flex items-center gap-2 mb-2">
                   <XCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
                   <span className="text-sm font-semibold text-amber-800 dark:text-amber-400">
-                    Not Found ({result.not_found.length})
+                    {t.notFound(result.not_found.length)}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
