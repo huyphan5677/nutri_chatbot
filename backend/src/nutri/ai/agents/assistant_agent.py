@@ -119,7 +119,6 @@ class AssistantAgent:
 
     async def _get_app(
         self,
-        thread_id: str,
         memories_context: str = "",
     ) -> Runnable:
         """Lazy load the agent with the postgres checkpointer."""
@@ -318,8 +317,8 @@ class AssistantAgent:
                         [{"role": "user", "content": user_message}],
                         user_id=self.user_id,
                     )
-                except Exception as e:
-                    logger.warning("Failed to add memory: %s", e)
+                except Exception:
+                    logger.exception("Failed to add memory")
 
             asyncio.create_task(add_memory_task())
 
@@ -357,8 +356,8 @@ class AssistantAgent:
                     len(memories_list),
                     self.user_id,
                 )
-        except Exception as e:
-            logger.warning("Mem0 execution error: %s", e)
+        except Exception:
+            logger.exception("Mem0 execution error")
 
         # Notify UI about memory retrieval completion
         logger.info(
@@ -370,7 +369,7 @@ class AssistantAgent:
             "result_snippet": memories_str or " ",
         }
 
-        app_with_prompt = await self._get_app(thread_id, memories_str)
+        app_with_prompt = await self._get_app(memories_str)
 
         inputs = {"messages": [("user", user_message)]}
         total_chunks = 0
@@ -387,7 +386,8 @@ class AssistantAgent:
                 # The model is yielding a chunk
                 chunk = event["data"]["chunk"]
 
-                # Check if this chunk is part of a tool call setup by the orchestrator
+                # Check if this chunk is part of a tool call setup by the
+                # orchestrator
                 is_tool_call = False
                 if hasattr(chunk, "tool_calls") and chunk.tool_calls:
                     is_tool_call = True
@@ -456,7 +456,7 @@ class AssistantAgent:
                                 else out_str
                             )
                         except Exception:
-                            pass
+                            logger.exception("Failed to extract tool output")
 
                     meal_plan_draft = None
                     if event.get("name") == "build_new_menu_plan":

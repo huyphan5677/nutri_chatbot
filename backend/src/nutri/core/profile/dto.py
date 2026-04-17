@@ -5,12 +5,16 @@ from pydantic import BaseModel
 
 
 class AchievementDTO(BaseModel):
+    """Achievement data transfer object."""
+
     id: str
     points: str
     unlocked: bool
 
 
 class RewardsDTO(BaseModel):
+    """Rewards data transfer object."""
+
     currentPoints: int
     nextTierPoints: int
     tierName: str
@@ -19,6 +23,8 @@ class RewardsDTO(BaseModel):
 
 
 class CollectionDTO(BaseModel):
+    """Collection data transfer object."""
+
     id: int
     name: str
     image_url: str | None
@@ -26,6 +32,8 @@ class CollectionDTO(BaseModel):
 
 
 class PersonalRecipeDTO(BaseModel):
+    """Personal recipe data transfer object."""
+
     id: int
     title: str
     image_url: str | None

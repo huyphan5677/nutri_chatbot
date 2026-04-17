@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import secrets
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 import httpx
 from fastapi import Depends, Request, APIRouter, HTTPException, status
@@ -12,9 +12,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from nutri.common.i18n import normalize_language, get_request_language
 from nutri.core.auth.dto import (
+    AUTH_MESSAGES,
     UserDTO,
     UserCreate,
     AuthResponse,
+    PasswordUpdate,
+    ThemePreferenceUpdate,
+    LanguagePreferenceUpdate,
 )
 from nutri.core.db.session import get_db
 from nutri.api.dependencies import get_current_user
@@ -27,43 +31,7 @@ from nutri.core.security.jwt import (
 from nutri.core.auth.entities import GoogleToken
 
 
-if TYPE_CHECKING:
-    from nutri.core.auth.dto import (
-        PasswordUpdate,
-        ThemePreferenceUpdate,
-        LanguagePreferenceUpdate,
-    )
-
-
 router = APIRouter()
-
-
-AUTH_MESSAGES = {
-    "email_already_registered": {
-        "en": "Email already registered",
-        "vi": "Email đã được đăng ký",
-    },
-    "not_registered": {
-        "en": "Not registered. Please sign up before login.",
-        "vi": "Tài khoản chưa được đăng ký. Vui lòng đăng kí trước khi đăng nhập.",
-    },
-    "account_not_active": {
-        "en": "Account is not active",
-        "vi": "Tài khoản hiện không hoạt động",
-    },
-    "incorrect_credentials": {
-        "en": "Incorrect email or password",
-        "vi": "Email hoặc mật khẩu không đúng",
-    },
-    "invalid_google_token": {
-        "en": "Invalid Google Token",
-        "vi": "Token Google không hợp lệ",
-    },
-    "google_missing_email": {
-        "en": "Google account missing email",
-        "vi": "Tài khoản Google không có email",
-    },
-}
 
 
 def auth_message(key: str, language: str) -> str:

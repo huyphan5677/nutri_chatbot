@@ -3,19 +3,15 @@ from __future__ import annotations
 
 import os
 import logging
-from typing import TYPE_CHECKING
 
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage
+from langchain_core.runnables.config import RunnableConfig  # noqa: TC002
 from langchain_community.tools.tavily_search import TavilySearchResults
 
 from nutri.ai.language import get_language_from_config
 from nutri.ai.llm_client import get_llm
 from nutri.common.config.settings import settings
-
-
-if TYPE_CHECKING:
-    from langchain_core.runnables import RunnableConfig
 
 
 os.environ["TAVILY_API_KEY"] = settings.TAVILY_API_KEY
@@ -44,7 +40,8 @@ def get_diet_reference(
 
 @tool
 def enrich_attribute_metadata(category: str, value: str) -> dict:
-    """Calls a background extraction agent to build medical rules for an allergy or diet condition.
+    """Calls a background extraction agent to build medical rules.
+
     Use this when the user mentions a new health condition or allergy.
     """
     from nutri.ai.agents.enrich_metadata_agent import EnrichMetadataAgent
@@ -56,8 +53,8 @@ def enrich_attribute_metadata(category: str, value: str) -> dict:
 
 @tool
 def web_search_info(query: str, *, config: RunnableConfig) -> str:
-    """Search the web for general information, facts, news, or broad queries
-    that are outside the scope of personal nutrition and health data.
+    """Search the web.
+
     Use this to answer questions like "giá vàng hôm nay bao nhiêu?".
 
     Returns:
@@ -92,6 +89,6 @@ def web_search_info(query: str, *, config: RunnableConfig) -> str:
             formatted_results.append("\n".join(lines))
 
         return "\n\n".join(formatted_results)
-    except Exception as e:
-        logger.error("web_search_info error: %s", e)  # noqa: TRY400
-        return f"Error performing web search: {e!s}"
+    except Exception:
+        logger.exception("web_search_info error")
+        return "Error performing web search"

@@ -5,11 +5,15 @@ from pydantic import BaseModel
 
 
 class RecipeIngredientDTO(BaseModel):
+    """Recipe ingredient data transfer object."""
+
     name: str
     quantity: float | None = None
 
 
 class RecipeDTO(BaseModel):
+    """Recipe data transfer object."""
+
     id: str
     name: str
     description: str | None
@@ -23,6 +27,8 @@ class RecipeDTO(BaseModel):
 
 
 class MealDTO(BaseModel):
+    """Meal data transfer object."""
+
     id: str
     eat_date: str
     meal_type: str
@@ -30,6 +36,8 @@ class MealDTO(BaseModel):
 
 
 class MealPlanResponse(BaseModel):
+    """Meal plan response model."""
+
     id: str
     name: str
     start_date: str
@@ -39,23 +47,31 @@ class MealPlanResponse(BaseModel):
 
 
 class SaveMenuFromChatRequest(BaseModel):
+    """Save menu from chat request model."""
+
     chat_message_id: str
     modified_draft: dict | None = None
 
 
 class SaveMenuShoppingItem(BaseModel):
+    """Save menu shopping item data transfer object."""
+
     name: str
     category: str | None = None
     quantity: str
 
 
 class SaveMenuFromChatResponse(BaseModel):
+    """Save menu from chat response model."""
+
     status: str
     meal_plan_id: str | None = None
     shopping_list: list[SaveMenuShoppingItem] = []
 
 
 class UpdateCurrentMenuRequest(BaseModel):
+    """Update current menu request model."""
+
     name: str | None = None
     status: str | None = None
     start_date: str | None = None
@@ -65,11 +81,15 @@ class UpdateCurrentMenuRequest(BaseModel):
 
 
 class DeleteCurrentMenuResponse(BaseModel):
+    """Delete current menu response model."""
+
     status: str
     meal_plan_id: str
 
 
 class MealPlanSummaryResponse(BaseModel):
+    """Meal plan summary response model."""
+
     id: str
     name: str | None = None
     start_date: str
@@ -78,6 +98,8 @@ class MealPlanSummaryResponse(BaseModel):
 
 
 class UpdateMenuRequest(BaseModel):
+    """Update menu request model."""
+
     name: str | None = None
     status: str | None = None
     start_date: str | None = None
@@ -87,5 +109,7 @@ class UpdateMenuRequest(BaseModel):
 
 
 class DeleteMenuResponse(BaseModel):
+    """Delete menu response model."""
+
     status: str
     meal_plan_id: str

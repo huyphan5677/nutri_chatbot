@@ -7,20 +7,28 @@ from pydantic import BaseModel, ConfigDict
 
 
 class ChatRequest(BaseModel):
+    """Chat request model."""
+
     message: str
     thread_id: str | None = None
 
 
 class ChatSessionUpdateRequest(BaseModel):
+    """Chat session update request model."""
+
     title: str
 
 
 class ChatResponse(BaseModel):
+    """Chat response model."""
+
     reply: str
     thread_id: str
 
 
 class ChatSessionResponse(BaseModel):
+    """Chat session response model."""
+
     id: str
     title: str
     created_at: datetime
@@ -31,6 +39,8 @@ class ChatSessionResponse(BaseModel):
 
 
 class ChatMessageResponse(BaseModel):
+    """Chat message response model."""
+
     id: str
     role: str
     content: str
@@ -41,10 +51,14 @@ class ChatMessageResponse(BaseModel):
 
 
 class UnreadSessionInfo(BaseModel):
+    """Unread session info model."""
+
     id: str
     title: str
 
 
 class UnreadCountResponse(BaseModel):
+    """Unread count response model."""
+
     count: int
     sessions: list[UnreadSessionInfo]

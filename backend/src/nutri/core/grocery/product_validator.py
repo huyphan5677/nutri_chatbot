@@ -9,6 +9,8 @@ how many units to buy.
 
 from __future__ import annotations
 
+import re
+import asyncio
 import logging
 
 from pydantic import Field, BaseModel
@@ -70,7 +72,7 @@ async def pick_best_product(
     candidates: list,
     required_quantity: str = "",
 ) -> object | None:
-    """Use LLM to validate which candidate (if any) actually matches the ingredient.
+    """Use LLM to validate which candidate actually matches the ingredient.
 
     Args:
         ingredient: The ingredient name being searched for.
@@ -156,8 +158,8 @@ QUANTITY CALCULATION RULES (buy_quantity):
         )
         return chosen
 
-    except Exception as e:
-        logger.error("LLM validation failed for '%s': %s", ingredient, e)
+    except Exception:
+        logger.exception("LLM validation failed for '%s'", ingredient)
         # Fallback: return first candidate without validation
         if candidates:
             candidates[0].required_quantity = required_quantity
@@ -170,8 +172,6 @@ async def pick_cost_optimized(
     candidates: list,
     required_quantity: str = "",
 ) -> object | None:
-    import re
-    import asyncio
 
     if not candidates:
         return None
@@ -298,8 +298,8 @@ COST OPTIMIZATION RULES:
                 await asyncio.sleep(1)
                 continue
 
-            logger.error(
-                "LLM cost-opt permanently failed for '%s': %s", ingredient, e
+            logger.exception(
+                "LLM cost-opt permanently failed for '%s'", ingredient
             )
             break
 

@@ -20,7 +20,14 @@ logger = logging.getLogger("nutri.api.routers.onboarding")
 
 
 def validate_required_member(data: OnboardingRequest) -> None:
-    """Validate that the first member in the list has all required fields for metabolism calculations."""
+    """Validate that the first member.
+
+    Args:
+        data: Onboarding request data.
+
+    Raises:
+        HTTPException: If the first member is missing required fields.
+    """
     members = data.members or []
     if not members:
         raise HTTPException(
@@ -71,7 +78,7 @@ def activity_multiplier(activity_level: str | None) -> float:
 def calculate_member_bmr_tdee(
     member: FamilyMember,
 ) -> tuple[float, float] | None:
-    """Calculate BMR and TDEE for a family member if all required fields are present."""
+    """Calculate BMR and TDEE for a family member."""
     if (
         member.weight_kg is None
         or member.age is None
@@ -104,7 +111,10 @@ def calculate_member_bmr_tdee(
 
 
 async def recompute_user_metabolism(user_id):
-    """Recompute BMR and TDEE for all family members of the user. This is called asynchronously after onboarding updates."""
+    """Recompute BMR and TDEE for all family members of the user.
+
+    This is called asynchronously after onboarding updates.
+    """
     async with async_session_maker() as db:
         result = await db.execute(
             select(FamilyMember).where(FamilyMember.user_id == user_id)
@@ -126,12 +136,10 @@ async def recompute_user_metabolism(user_id):
 
 
 async def enrich_user_health_profiles(user_id) -> None:
-    """Background task: enrich all family members' health profiles with
-    dietary metadata from the EnrichMetadataAgent.
+    """Enrich health profiles.
 
-    Called asynchronously after onboarding submit/update. For each member
-    that has conditions or allergies, the agent researches dietary rules
-    and saves enriched data back to health_profile JSON.
+    Args:
+        user_id: User ID.
     """
     from nutri.ai.agents.enrich_metadata_agent import EnrichMetadataAgent
 

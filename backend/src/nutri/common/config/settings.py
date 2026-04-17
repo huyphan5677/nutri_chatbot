@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Nutri API"
     ENVIRONMENT: Literal["local", "production"] = "local"
 
+    HOST: str = "0.0.0.0"
+    PORT: int = 8000
+    ALLOW_ORIGINS: list[str] = ["*"]
+    ALLOW_CREDENTIALS: bool = True
+
     # SECURITY
     SECRET_KEY: str = "supersecretkey"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 1  # 1 days

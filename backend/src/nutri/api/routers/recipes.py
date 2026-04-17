@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from fastapi import Query, Depends, APIRouter, HTTPException
 from sqlalchemy import or_, func, delete
@@ -15,6 +15,7 @@ from nutri.api.dependencies import get_current_user, get_optional_user
 from nutri.core.auth.models import User
 from nutri.core.recipes.dto import (
     RecipeRead,
+    RecipeUpdateRequest,
     RecipeSearchResponse,
 )
 from nutri.core.menus.models import (
@@ -24,12 +25,6 @@ from nutri.core.menus.models import (
     RecipeIngredient,
 )
 from nutri.ai.tools.recipe_tools import perform_recipe_web_search
-
-
-if TYPE_CHECKING:
-    from nutri.core.recipes.dto import (
-        RecipeUpdateRequest,
-    )
 
 
 router = APIRouter()

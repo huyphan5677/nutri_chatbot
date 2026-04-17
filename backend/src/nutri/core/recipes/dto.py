@@ -7,6 +7,8 @@ from nutri.core.recipes.entities import RecipeRead
 
 
 class RecipeUpdateRequest(BaseModel):
+    """Recipe update request model."""
+
     name: str | None = None
     description: str | None = None
     prep_time_minutes: int | None = None
@@ -19,5 +21,7 @@ class RecipeUpdateRequest(BaseModel):
 
 
 class RecipeSearchResponse(BaseModel):
+    """Recipe search response model."""
+
     recipes: list[RecipeRead]
     total: int

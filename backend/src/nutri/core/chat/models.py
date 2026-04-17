@@ -24,6 +24,8 @@ from nutri.core.db.session import Base
 
 
 class ChatSession(Base):
+    """Chat session model."""
+
     __tablename__ = "chat_sessions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -44,6 +46,8 @@ class ChatSession(Base):
 
 
 class ChatMessage(Base):
+    """Chat message model."""
+
     __tablename__ = "chat_messages"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

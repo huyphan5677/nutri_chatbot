@@ -16,8 +16,18 @@ logger = logging.getLogger("nutri.ai.tools.recipe_tools")
 
 
 async def perform_recipe_web_search(query: str) -> list[dict[str, Any]] | None:
-    """Uses Tavily to search the web for a recipe, and then an LLM to extract the structure.
+    """Search the web for a recipe.
+
     Returns a list of dictionaries matching RecipeCreate schema.
+
+    Args:
+        query: The query to search for.
+
+    Returns:
+        list[dict[str, Any]] | None: A list of dictionaries matching RecipeCreate schema.
+
+    Raises:
+        ValueError: If the TAVILY_API_KEY environment variable is not set.
     """
     logger.info("Performing web search for: %s", query)
 
@@ -43,8 +53,8 @@ async def perform_recipe_web_search(query: str) -> list[dict[str, Any]] | None:
             include_raw_content=True,
             max_results=3,
         )
-    except Exception as e:
-        logger.error("Tavily search failed: %s", e)  # noqa: TRY400
+    except Exception:
+        logger.exception("Tavily search failed")
         return None
 
     # 2. Extract content from best results
@@ -91,6 +101,6 @@ async def perform_recipe_web_search(query: str) -> list[dict[str, Any]] | None:
             recipe_dicts.append(recipe_dict)
 
         return recipe_dicts
-    except Exception as e:
-        logger.error("LLM extraction failed: %s", e)  # noqa: TRY400
+    except Exception:
+        logger.exception("LLM extraction failed")
         return None

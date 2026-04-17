@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 
-def format_quantity_grams(quantity) -> str:
+def format_quantity_grams(quantity: float) -> str:
+    """Format quantity in grams."""
     if quantity is None:
         return "1g"
     try:

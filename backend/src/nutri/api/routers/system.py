@@ -136,12 +136,26 @@ async def get_dashboard_status(
 
 @router.get("/logs", response_model=list[str])
 async def get_system_logs(
-    type: str = Query("app", description="Log type: 'app' or 'ai'"),
-    lines: int = Query(100, description="Number of tail lines to fetch"),
     current_user: Annotated[User, Depends(get_current_user)],
+    type: Annotated[str, Query(description="Log type: 'app' or 'ai'")] = "app",
+    lines: Annotated[
+        int, Query(description="Number of tail lines to fetch")
+    ] = 100,
 ) -> list[str]:
     """Reads the tail of the requested log file.
+
     Restricted to authenticated users (and ideally admins later).
+
+    Args:
+        current_user: The current user.
+        type: The type of log to fetch.
+        lines: The number of tail lines to fetch.
+
+    Returns:
+        A list of log lines.
+
+    Raises:
+        HTTPException: If the log type is invalid or the log file cannot be read.
     """
     # Map 'type' parameter to actual filename
     if type == "app":
@@ -163,15 +177,15 @@ async def get_system_logs(
     try:
         # Read the file and return the last N lines
         # This is a simple python tail implementation for medium sized files
-        with Path(file_path).open(encoding="utf-8") as f:
+        with file_path.open(encoding="utf-8") as f:
             all_lines = f.readlines()
 
         # Return tail
         tail_lines = all_lines[-lines:] if lines > 0 else all_lines
         return [line.rstrip("\n") for line in tail_lines]
 
-    except Exception as e:
-        logger.error("Error reading logs: %s", e)
+    except Exception:
+        logger.exception("Error reading logs")
         raise HTTPException(
             status_code=500, detail="Internal server error reading logs."
         )

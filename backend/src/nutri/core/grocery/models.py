@@ -22,6 +22,8 @@ from nutri.core.db.session import Base
 
 
 class UserInventory(Base):
+    """User inventory model."""
+
     __tablename__ = "user_inventories"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -38,6 +40,8 @@ class UserInventory(Base):
 
 
 class GroceryItem(Base):
+    """Grocery item model."""
+
     __tablename__ = "grocery_items"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -57,6 +61,8 @@ class GroceryItem(Base):
 
 
 class ShoppingOrder(Base):
+    """Shopping order model."""
+
     __tablename__ = "shopping_orders"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

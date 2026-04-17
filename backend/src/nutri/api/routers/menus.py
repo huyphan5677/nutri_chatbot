@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import uuid
 import logging
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy import desc, delete
@@ -14,11 +14,13 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from nutri.core.menus.dto import (
     MealPlanResponse,
+    UpdateMenuRequest,
     DeleteMenuResponse,
     SaveMenuShoppingItem,
     MealPlanSummaryResponse,
     SaveMenuFromChatRequest,
     SaveMenuFromChatResponse,
+    UpdateCurrentMenuRequest,
     DeleteCurrentMenuResponse,
 )
 from nutri.core.db.session import get_db
@@ -36,13 +38,6 @@ from nutri.core.menus.services import (
     get_user_meal_plan_by_id,
 )
 from nutri.ai.workflows.meal_plan_workflow import persist_meal_plan_from_draft
-
-
-if TYPE_CHECKING:
-    from nutri.core.menus.dto import (
-        UpdateMenuRequest,
-        UpdateCurrentMenuRequest,
-    )
 
 
 router = APIRouter()

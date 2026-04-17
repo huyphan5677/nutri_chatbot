@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from nutri.api.routers import (
@@ -74,8 +75,8 @@ app = FastAPI(
 # CORS (Allow Frontend)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with frontend domain
-    allow_credentials=True,
+    allow_origins=settings.ALLOW_ORIGINS,
+    allow_credentials=settings.ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -85,7 +86,7 @@ app.add_middleware(
 async def log_requests(
     request: Request, call_next: RequestResponseEndpoint
 ) -> Response:
-    """Log incoming HTTP requests and outgoing responses, appending the extracted client IP.
+    """Log incoming HTTP requests and outgoing responses.
 
     Args:
         request: The incoming FastAPI HTTP request.
@@ -129,6 +130,12 @@ async def log_requests(
     )
 
     return response
+
+
+@app.get("/", include_in_schema=False)
+async def root() -> RedirectResponse:
+    """Redirect root path to API documentation."""
+    return RedirectResponse(url="/docs")
 
 
 # Include Routers
@@ -183,7 +190,7 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "nutri.api.main:app",
-        host="0.0.0.0",
-        port=8000,
+        host=settings.HOST,
+        port=settings.PORT,
         reload=True,
     )

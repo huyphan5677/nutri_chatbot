@@ -190,7 +190,7 @@ class FridgeCheckAgent:
             return result
 
         except Exception as e:
-            logger.error("FridgeCheckAgent.acheck failed: %s", e)  # noqa: TRY400
+            logger.exception("FridgeCheckAgent.acheck failed")
             # Fallback: buy everything
             return FridgeCheckResult(
                 items=[

@@ -33,10 +33,9 @@ def _load_winmart_stores() -> list[dict]:
 def get_winmart_provinces() -> list[str]:
     """Return distinct province names sorted."""
     stores = _load_winmart_stores()
-    provinces = sorted({
+    return sorted({
         s.get("provinceTitle", "") for s in stores if s.get("provinceTitle")
     })
-    return provinces
 
 
 def get_winmart_stores_by_province(province: str) -> list[dict]:

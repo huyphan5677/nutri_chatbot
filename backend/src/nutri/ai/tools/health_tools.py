@@ -1,17 +1,12 @@
 # Copyright (c) 2026 Nutri. All rights reserved.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from sqlalchemy.future import select
 from langchain_core.tools import tool
+from langchain_core.runnables.config import RunnableConfig  # noqa: TC002
 
 from nutri.core.db.session import async_session_maker
 from nutri.core.onboarding.models import FamilyMember
-
-
-if TYPE_CHECKING:
-    from langchain_core.runnables import RunnableConfig
 
 
 @tool

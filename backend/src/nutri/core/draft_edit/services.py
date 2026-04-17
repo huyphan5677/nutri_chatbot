@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
 
-def _parse_number(val) -> int:
+def parse_number(val: Any) -> int:
+    """Parse number from value."""
     if val is None:
         return 0
     if isinstance(val, (int, float)):

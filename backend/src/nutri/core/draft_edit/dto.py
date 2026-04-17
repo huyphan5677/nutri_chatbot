@@ -7,6 +7,8 @@ from pydantic import Field, BaseModel
 
 
 class EditDishRequest(BaseModel):
+    """Edit dish request model."""
+
     action: Literal["swap", "add"] = Field(
         description="'swap' to replace an existing dish, 'add' to add a new one"
     )
@@ -47,6 +49,8 @@ class EditDishMealResponse(BaseModel):
 
 
 class EditDishResponse(BaseModel):
+    """Edit dish response model."""
+
     status: str
     action: str
     meal: EditDishMealResponse | None = None

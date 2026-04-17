@@ -5,7 +5,7 @@ import json
 import uuid
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 from datetime import UTC, datetime
 from collections.abc import AsyncGenerator
 
@@ -24,6 +24,7 @@ from nutri.core.chat.dto import (
     ChatMessageResponse,
     ChatSessionResponse,
     UnreadCountResponse,
+    ChatSessionUpdateRequest,
 )
 from nutri.core.db.session import get_db, async_session_maker
 from nutri.api.dependencies import get_current_user
@@ -35,12 +36,6 @@ from nutri.core.chat.services import (
 )
 from nutri.core.menus.services import find_meal_plan_draft
 from nutri.ai.agents.assistant_agent import AssistantAgent
-
-
-if TYPE_CHECKING:
-    from nutri.core.chat.dto import (
-        ChatSessionUpdateRequest,
-    )
 
 
 router = APIRouter()

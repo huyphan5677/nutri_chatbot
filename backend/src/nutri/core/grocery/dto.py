@@ -5,6 +5,8 @@ from pydantic import BaseModel
 
 
 class GroceryItemDTO(BaseModel):
+    """Grocery item data transfer object."""
+
     id: str
     name: str
     category: str | None
@@ -13,6 +15,8 @@ class GroceryItemDTO(BaseModel):
 
 
 class UpdateGroceryItemRequest(BaseModel):
+    """Update grocery item request model."""
+
     name: str | None = None
     category: str | None = None
     quantity: str | None = None
@@ -20,10 +24,14 @@ class UpdateGroceryItemRequest(BaseModel):
 
 
 class GroceryListResponse(BaseModel):
+    """Grocery list response model."""
+
     items: list[GroceryItemDTO]
 
 
 class GroceryMenuGroupDTO(BaseModel):
+    """Grocery menu group data transfer object."""
+
     meal_plan_id: str | None = None
     meal_plan_name: str
     start_date: str | None = None
@@ -33,10 +41,14 @@ class GroceryMenuGroupDTO(BaseModel):
 
 
 class GroceryByMenuResponse(BaseModel):
+    """Grocery by menu response model."""
+
     menus: list[GroceryMenuGroupDTO]
 
 
 class ShoppingRequest(BaseModel):
+    """Shopping request model."""
+
     meal_plan_id: str
     strategy: str  # "lotte_priority" | "winmart_priority" | "cost_optimized"
     lotte_branch_id: str = "nsg"
@@ -45,12 +57,16 @@ class ShoppingRequest(BaseModel):
 
 
 class FridgeCoveredDTO(BaseModel):
+    """Fridge covered data transfer object."""
+
     name: str
     fridge_quantity: str | None = ""
     required_quantity: str | None = ""
 
 
 class ShoppingProductDTO(BaseModel):
+    """Shopping product data transfer object."""
+
     ingredient_name: str
     quantity: str | None = None
     required_quantity: str | None = None
@@ -68,6 +84,8 @@ class ShoppingProductDTO(BaseModel):
 
 
 class ShoppingResultDTO(BaseModel):
+    """Shopping result data transfer object."""
+
     items: list[ShoppingProductDTO]
     not_found: list[str]
     fridge_covered: list[FridgeCoveredDTO] = []
@@ -77,18 +95,24 @@ class ShoppingResultDTO(BaseModel):
 
 
 class ShoppingOrderResponse(BaseModel):
+    """Shopping order response model."""
+
     order_id: str
     status: str  # "processing", "completed", "failed"
     result_data: ShoppingResultDTO | None = None
 
 
 class ShoppingOrderStartResponse(BaseModel):
+    """Shopping order start response model."""
+
     order_id: str
     status: str
     message: str
 
 
 class ShoppingHistoryItemDTO(BaseModel):
+    """Shopping history item data transfer object."""
+
     id: str
     date: str
     items_count: int
@@ -98,6 +122,8 @@ class ShoppingHistoryItemDTO(BaseModel):
 
 
 class ShoppingHistoryResponse(BaseModel):
+    """Shopping history response model."""
+
     total_trips: int
     total_spent: float
     avg_items: int

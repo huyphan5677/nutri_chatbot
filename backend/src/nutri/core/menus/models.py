@@ -25,6 +25,8 @@ from nutri.core.db.session import Base
 
 
 class Recipe(Base):
+    """Recipe model."""
+
     __tablename__ = "recipes"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -48,6 +50,8 @@ class Recipe(Base):
 
 
 class Ingredient(Base):
+    """Ingredient model."""
+
     __tablename__ = "ingredients"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -63,6 +67,8 @@ class Ingredient(Base):
 
 
 class RecipeIngredient(Base):
+    """Recipe ingredient model."""
+
     __tablename__ = "recipe_ingredients"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -81,6 +87,8 @@ class RecipeIngredient(Base):
 
 
 class MealPlan(Base):
+    """Meal plan model."""
+
     __tablename__ = "meal_plans"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -102,6 +110,8 @@ class MealPlan(Base):
 
 
 class Meal(Base):
+    """Meal model."""
+
     __tablename__ = "meals"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -121,6 +131,8 @@ class Meal(Base):
 
 
 class RecipeCollection(Base):
+    """Recipe collection model."""
+
     __tablename__ = "recipe_collections"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -138,6 +150,8 @@ class RecipeCollection(Base):
 
 
 class CollectionRecipe(Base):
+    """Collection recipe model."""
+
     __tablename__ = "collection_recipes"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

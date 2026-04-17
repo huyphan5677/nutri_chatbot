@@ -5,6 +5,8 @@ from pydantic import BaseModel
 
 
 class CollectionDTO(BaseModel):
+    """Collection data transfer object."""
+
     id: str
     name: str
     is_default: bool
@@ -12,14 +14,20 @@ class CollectionDTO(BaseModel):
 
 
 class CollectionListResponse(BaseModel):
+    """Collection list response model."""
+
     collections: list[CollectionDTO]
 
 
 class CreateCollectionRequest(BaseModel):
+    """Create collection request model."""
+
     name: str
 
 
 class RecipeDTO(BaseModel):
+    """Recipe data transfer object."""
+
     id: str
     name: str
     image_url: str | None = None
@@ -28,8 +36,12 @@ class RecipeDTO(BaseModel):
 
 
 class CollectionRecipeResponse(BaseModel):
+    """Collection recipe response model."""
+
     recipes: list[RecipeDTO]
 
 
 class AddRecipeRequest(BaseModel):
+    """Add recipe request model."""
+
     recipe_id: str

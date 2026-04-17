@@ -3,15 +3,18 @@
 
 from __future__ import annotations
 
-import uuid
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.future import select
 
 from nutri.core.db.session import async_session_maker
 from nutri.core.grocery.models import ShoppingOrder
 from nutri.core.grocery.mart_search import execute_strategy
+
+
+if TYPE_CHECKING:
+    import uuid
 
 
 logger = logging.getLogger("nutri.core.grocery.shopping_bg")

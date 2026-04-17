@@ -5,4 +5,6 @@ from pydantic import BaseModel
 
 
 class GoogleToken(BaseModel):
+    """Google OAuth token payload."""
+
     token: str

@@ -12,12 +12,16 @@ from pydantic import Field, BaseModel
 
 
 class IngredientSchema(BaseModel):
+    """Ingredient schema."""
+
     item: str
     amount: str | None = None
     unit: str | None = None
 
 
 class RecipeBase(BaseModel):
+    """Recipe base model."""
+
     name: str = Field(..., description="The name of the recipe")
     description: str | None = Field(
         None, description="A brief description of the recipe"
@@ -48,14 +52,18 @@ class RecipeBase(BaseModel):
 
 
 class RecipeCreate(RecipeBase):
-    pass
+    """Recipe create model."""
 
 
 class RecipeList(BaseModel):
+    """Recipe list model."""
+
     recipes: list[RecipeCreate]
 
 
 class RecipeRead(RecipeBase):
+    """Recipe read model."""
+
     id: UUID
 
     model_config = pydantic.ConfigDict(from_attributes=True)

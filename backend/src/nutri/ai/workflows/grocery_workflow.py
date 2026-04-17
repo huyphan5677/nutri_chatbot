@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import asyncio
 import logging
 
 from sqlalchemy.orm import selectinload
@@ -39,9 +40,7 @@ def _parse_numeric_quantity(value) -> float | None:
 
 
 async def generate_grocery_list_background(meal_plan_id: str):
-    """Background workflow to aggregate ingredients from a meal plan into a grocery list via parallel chunking."""
-    import asyncio
-
+    """Background workflow to aggregate ingredients from a meal plan."""
     async with async_session_maker() as db:
         # 1. Fetch MealPlan and its relations
         result = await db.execute(
@@ -116,11 +115,8 @@ async def generate_grocery_list_background(meal_plan_id: str):
                 try:
                     grocery_data = await agent.agenerate(raw_context)
                     return grocery_data.items
-                except Exception as e:
-                    logger.error(
-                        "Grocery chunk processing failed | err=%s",
-                        str(e).splitlines()[0][:240],
-                    )
+                except Exception:
+                    logger.exception("Grocery chunk processing failed")
                     return []
 
         logger.info(

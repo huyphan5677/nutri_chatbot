@@ -85,6 +85,7 @@ class GroceryListGeneratorAgent:
                 "You MUST respond entirely in this language."
             )
         except Exception:
+            logger.exception("Failed to detect language")
             lang_instruction = "Respond in the same language as the input."
 
         prompt = SystemPrompt(

@@ -359,8 +359,8 @@ class MealPlanAgent:
                 language=language,
                 days_to_look_back_in_past=str(num_of_pre_day),
             )
-        except Exception as exc:
-            logger.warning("Failed to load recent menu context: %s", exc)
+        except Exception:
+            logger.exception("Failed to load recent menu context")
             return ""
 
         context_text = str(recent_menu_context or "").strip()

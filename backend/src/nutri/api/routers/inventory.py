@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.orm import selectinload
@@ -16,18 +16,13 @@ from nutri.core.menus.models import Ingredient
 from nutri.core.inventory.dto import (
     InventoryItemDTO,
     InventoryListResponse,
+    RenameCategoryRequest,
     AddInventoryItemRequest,
     BulkAddInventoryRequest,
+    UpdateInventoryItemRequest,
 )
 from nutri.core.grocery.models import UserInventory
 from nutri.core.inventory.services import accumulate_quantities
-
-
-if TYPE_CHECKING:
-    from nutri.core.inventory.dto import (
-        RenameCategoryRequest,
-        UpdateInventoryItemRequest,
-    )
 
 
 router = APIRouter()

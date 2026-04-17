@@ -70,7 +70,7 @@ def _extract_quantity_grams(raw_value) -> float | None:
     if weight_match:
         value = float(weight_match.group(1))
         unit = weight_match.group(2)
-        if unit.startswith("kg") or unit.startswith("kilo"):
+        if unit.startswith(("kg", "kilo")):
             return value * 1000
         return value
 
@@ -78,7 +78,7 @@ def _extract_quantity_grams(raw_value) -> float | None:
     return None
 
 
-def _serialize_generated_meal(generated_meal) -> dict:
+def serialize_generated_meal(generated_meal) -> dict:
     return {
         "name": generated_meal.name,
         "description": generated_meal.description,
@@ -144,11 +144,7 @@ def _parse_ingredient_entry(raw_ingredient) -> tuple[str, float | None]:
     if leading_weight:
         value = float(leading_weight.group(1).replace(",", "."))
         unit = leading_weight.group(2).lower()
-        grams = (
-            value * 1000
-            if unit.startswith("kg") or unit.startswith("kilo")
-            else value
-        )
+        grams = value * 1000 if unit.startswith(("kg", "kilo")) else value
         name_part = leading_weight.group(3).strip() or raw_text
         return name_part, grams
 
@@ -162,17 +158,15 @@ def _parse_ingredient_entry(raw_ingredient) -> tuple[str, float | None]:
         name_part = trailing_weight.group(1).strip() or raw_text
         value = float(trailing_weight.group(2).replace(",", "."))
         unit = trailing_weight.group(3).lower()
-        grams = (
-            value * 1000
-            if unit.startswith("kg") or unit.startswith("kilo")
-            else value
-        )
+        grams = value * 1000 if unit.startswith(("kg", "kilo")) else value
         return name_part, grams
 
     return raw_text, None
 
 
-async def _load_user_profile_context(db: AsyncSession, user_id: str):
+async def load_user_profile_context(
+    db: AsyncSession, user_id: str
+) -> tuple[str | None, str | None]:
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalars().first()
     if not user:
@@ -215,11 +209,13 @@ async def generate_meal_plan_draft(
     language: str = "en",
     config: dict | None = None,
 ):
-    """Generate meal plan draft using 2-step: multi-day skeleton then global parallel enrichment.
+    """Generate meal plan draft using 2-step.
 
     Step 1: Single fast LLM call for the ENTIRE plan (all days) skeleton.
-    Step 2: Parallel enrichment of ALL meals across ALL days (max MAX_ENRICH_CONCURRENCY concurrent).
-    Fallback: If any part fails, fall back to day-by-day legacy agenerate_for_day.
+    Step 2: Parallel enrichment of ALL meals across ALL days (max
+    MAX_ENRICH_CONCURRENCY concurrent).
+    Fallback: If any part fails, fall back to day-by-day legacy
+    agenerate_for_day.
     """
     from langchain_core.callbacks import adispatch_custom_event
 
@@ -235,7 +231,7 @@ async def generate_meal_plan_draft(
         return msg_vi if (language or "").lower().startswith("vi") else msg_en
 
     async with async_session_maker() as db:
-        user, profile_context = await _load_user_profile_context(db, user_id)
+        user, profile_context = await load_user_profile_context(db, user_id)
         if not user:
             logger.error("Workflow Error: User %s not found.", user_id)
             return {"error": "User not found"}
@@ -400,7 +396,7 @@ async def generate_meal_plan_draft(
 
             # Serialization and markdown building
             serialized_meals = [
-                _serialize_generated_meal(m) for m in day_data.meals
+                serialize_generated_meal(m) for m in day_data.meals
             ]
 
             daily_summary = []
@@ -456,8 +452,9 @@ async def persist_meal_plan_from_draft(
     db: AsyncSession,
     user_id: str,
     draft_payload: dict,
+    *,
     wait_for_grocery: bool = False,
-):
+) -> MealPlan:
     """Persist a draft payload into meal tables and trigger grocery generation."""
     meal_plan = MealPlan(
         user_id=user_id,

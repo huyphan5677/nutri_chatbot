@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 import uuid
 import logging
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from fastapi import Query, Depends, APIRouter, HTTPException, BackgroundTasks
 from sqlalchemy import desc, delete
@@ -24,6 +24,7 @@ from nutri.core.grocery.dto import (
     ShoppingOrderResponse,
     ShoppingHistoryItemDTO,
     ShoppingHistoryResponse,
+    UpdateGroceryItemRequest,
     ShoppingOrderStartResponse,
 )
 from nutri.core.menus.models import MealPlan, Ingredient
@@ -36,12 +37,6 @@ from nutri.core.grocery.store_mapping import (
     get_winmart_stores_by_province,
 )
 from nutri.ai.agents.fridge_check_agent import FridgeCheckAgent
-
-
-if TYPE_CHECKING:
-    from nutri.core.grocery.dto import (
-        UpdateGroceryItemRequest,
-    )
 
 
 router = APIRouter()
@@ -243,7 +238,7 @@ async def list_lotte_branches():
 
 
 @router.get("/stores/winmart/provinces")
-async def list_winmart_provinces():
+async def list_winmart_provinces() -> list[str]:
     """Return distinct province names for WinMart stores."""
     return get_winmart_provinces()
 
@@ -253,7 +248,7 @@ async def list_winmart_stores(
     province: Annotated[
         str, Query(description="Province name to filter stores")
     ],
-):
+) -> list:
     """Return WinMart stores filtered by province."""
     return get_winmart_stores_by_province(province)
 

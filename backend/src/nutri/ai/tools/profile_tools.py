@@ -2,19 +2,15 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 from sqlalchemy.future import select
 from langchain_core.tools import tool
+from langchain_core.runnables.config import RunnableConfig  # noqa: TC002
 
 from nutri.ai.language import get_language_from_config
 from nutri.core.db.session import async_session_maker
 from nutri.core.auth.models import User
 from nutri.core.onboarding.models import FamilyMember
-
-
-if TYPE_CHECKING:
-    from langchain_core.runnables import RunnableConfig
 
 
 logger = logging.getLogger("nutri.ai.tools.profile_tools")

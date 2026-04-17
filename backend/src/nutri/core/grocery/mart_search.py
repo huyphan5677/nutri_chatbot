@@ -43,6 +43,8 @@ class ShoppingProduct(BaseModel):
 
 
 class OptimizedIngredient(BaseModel):
+    """Optimized ingredient data transfer object."""
+
     index: int = Field(
         description="The index of the ingredient in the input list.",
     )
@@ -53,6 +55,8 @@ class OptimizedIngredient(BaseModel):
 
 
 class OptimizedIngredients(BaseModel):
+    """Optimized ingredients data transfer object."""
+
     items: list[OptimizedIngredient] = Field(
         description="An array of optimized ingredients, maintaining the original order and quantity."
     )
@@ -122,8 +126,8 @@ REQUIREMENTS:
             output.append(optimized)
 
         return output
-    except Exception as e:
-        logger.error("Failed to optimize search terms: %s", e)
+    except Exception:
+        logger.exception("Failed to optimize search terms")
         return items
 
 
@@ -209,8 +213,8 @@ async def search_lotte_api(
         )
         return products
 
-    except Exception as e:
-        logger.error("Lotte API search failed for '%s': %s", query, e)
+    except Exception:
+        logger.exception("Lotte API search failed for '%s'", query)
         return []
 
 
@@ -290,8 +294,8 @@ async def search_winmart_api(
         )
         return products
 
-    except Exception as e:
-        logger.error("WinMart API search failed for '%s': %s", query, e)
+    except Exception:
+        logger.exception("WinMart API search failed for '%s'", query)
         return []
 
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import re
 import logging
-from typing import TYPE_CHECKING
 from datetime import date, timedelta
 from collections import defaultdict
 
@@ -11,15 +10,12 @@ from sqlalchemy import desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.future import select
 from langchain_core.tools import tool
+from langchain_core.runnables.config import RunnableConfig  # noqa: TC002
 
 from nutri.ai.language import get_language_from_config
 from nutri.core.db.session import async_session_maker
 from nutri.core.menus.models import Meal, Recipe, MealPlan, RecipeIngredient
 from nutri.core.menus.services import format_quantity_grams
-
-
-if TYPE_CHECKING:
-    from langchain_core.runnables import RunnableConfig
 
 
 logger = logging.getLogger("nutri.ai.tools.menu_tools")
@@ -29,7 +25,8 @@ def _parse_days_back(days_text: str) -> int | None:
     """Parse text into a day window for past history.
 
     Args:
-        days_text: Text to parse, e.g. "all", "previous", "history", "all_previous", "7", "7d", "days:7"
+        days_text: Text to parse, e.g. "all", "previous", "history",
+        "all_previous", "7", "7d", "days:7"
 
     Returns:
         int: Number of days to look back in the past

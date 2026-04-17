@@ -61,7 +61,18 @@ original_generate_response = OpenAILLM.generate_response
 
 
 def patched_generate_response(self, messages: list, **kwargs):
-    """Patch mem0 generate response function."""
+    """Patch mem0 generate response function.
+
+    Args:
+        messages: List of messages to send to the LLM.
+        **kwargs: Additional keyword arguments to pass to the LLM.
+
+    Returns:
+        str: The response from the LLM.
+
+    Raises:
+        ValueError: If the response content is empty.
+    """
     max_retries = 5
     for attempt in range(max_retries + 1):
         try:

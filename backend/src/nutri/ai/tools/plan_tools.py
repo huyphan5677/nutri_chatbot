@@ -3,20 +3,16 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING
 
 from sqlalchemy.future import select
 from langchain_core.tools import tool
 from langchain_core.callbacks import adispatch_custom_event
+from langchain_core.runnables.config import RunnableConfig  # noqa: TC002
 
 from nutri.ai.memory import get_nutri_memory
 from nutri.core.db.session import async_session_maker
 from nutri.core.onboarding.models import FamilyMember
 from nutri.ai.workflows.meal_plan_workflow import generate_meal_plan_draft
-
-
-if TYPE_CHECKING:
-    from langchain_core.runnables import RunnableConfig
 
 
 def _fmt_num(v):

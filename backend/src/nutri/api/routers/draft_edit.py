@@ -16,11 +16,11 @@ from nutri.core.draft_edit.dto import (
     EditDishResponse,
     EditDishMealResponse,
 )
-from nutri.core.draft_edit.services import _parse_number
+from nutri.core.draft_edit.services import parse_number
 from nutri.ai.agents.dish_edit_agent import DishEditAgent
 from nutri.ai.workflows.meal_plan_workflow import (
-    _serialize_generated_meal,
-    _load_user_profile_context,
+    serialize_generated_meal,
+    load_user_profile_context,
 )
 
 
@@ -50,7 +50,7 @@ async def edit_dish(
 
     # Load user profile context
     async with async_session_maker() as db:
-        user, profile_context = await _load_user_profile_context(db, user_id)
+        user, profile_context = await load_user_profile_context(db, user_id)
 
     if not user or not profile_context:
         raise HTTPException(status_code=404, detail="User profile not found")
@@ -81,7 +81,7 @@ async def edit_dish(
         )
 
     # Serialize the GeneratedMealData to dict matching the draft format
-    serialized = _serialize_generated_meal(result)
+    serialized = serialize_generated_meal(result)
 
     meal_response = EditDishMealResponse(
         name=serialized["name"],
@@ -92,11 +92,11 @@ async def edit_dish(
         why=serialized.get("why"),
         prep_time_minutes=serialized.get("prep_time_minutes"),
         cook_time_minutes=serialized.get("cook_time_minutes"),
-        calories=_parse_number(serialized.get("calories")),
-        protein_grams=_parse_number(serialized.get("protein_grams")),
-        carbs_grams=_parse_number(serialized.get("carbs_grams")),
-        fat_grams=_parse_number(serialized.get("fat_grams")),
-        fiber_grams=_parse_number(serialized.get("fiber_grams")),
+        calories=parse_number(serialized.get("calories")),
+        protein_grams=parse_number(serialized.get("protein_grams")),
+        carbs_grams=parse_number(serialized.get("carbs_grams")),
+        fat_grams=parse_number(serialized.get("fat_grams")),
+        fiber_grams=parse_number(serialized.get("fiber_grams")),
         dietary_tags=serialized.get("dietary_tags") or [],
         ingredients=serialized.get("ingredients") or [],
         meal_type=serialized.get("meal_type") or payload.meal_type,

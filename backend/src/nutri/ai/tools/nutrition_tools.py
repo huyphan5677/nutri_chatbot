@@ -1,16 +1,11 @@
 # Copyright (c) 2026 Nutri. All rights reserved.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from langchain_core.tools import tool
+from langchain_core.runnables.config import RunnableConfig  # noqa: TC002
 
 from nutri.ai.language import get_language_from_config
 from nutri.ai.agents.spike_predictor_agent import SpikePredictorAgent
-
-
-if TYPE_CHECKING:
-    from langchain_core.runnables import RunnableConfig
 
 
 @tool

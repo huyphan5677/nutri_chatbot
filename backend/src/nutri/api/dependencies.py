@@ -1,22 +1,19 @@
 # Copyright (c) 2026 Nutri. All rights reserved.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 import jwt
 from fastapi import Depends, HTTPException, status
 from pydantic import ValidationError
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: TC002
 
 from nutri.core.db.session import get_db
 from nutri.core.auth.models import User
 from nutri.core.security.jwt import ALGORITHM
 from nutri.common.config.settings import settings
-
-
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 oauth2_scheme = OAuth2PasswordBearer(
