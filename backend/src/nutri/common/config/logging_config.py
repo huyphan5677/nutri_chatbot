@@ -16,6 +16,8 @@ import logging
 import logging.handlers
 from pathlib import Path
 
+from rich.logging import RichHandler
+
 
 LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -48,9 +50,14 @@ def setup_logging(log_dir: str = "logs") -> None:
     formatter = logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT)
 
     # Console handler (INFO and above)
-    console_handler = logging.StreamHandler()
+    console_handler = RichHandler(
+        rich_tracebacks=True,
+        markup=True,
+        show_path=True,
+        omit_repeated_times=False,
+    )
     console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(formatter)
+    console_handler.setFormatter(logging.Formatter("%(name)s | %(message)s"))
 
     # Rotating file handler — App logs (DEBUG and above)
     app_file_handler = logging.handlers.RotatingFileHandler(
@@ -105,5 +112,6 @@ def setup_logging(log_dir: str = "logs") -> None:
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
     app_logger.info(
-        "Logging configured — nutrition logs to nutri.log, AI logs to ai_agent.log"
+        "Logging configured — nutrition logs to nutri.log, AI logs to "
+        "ai_agent.log"
     )
